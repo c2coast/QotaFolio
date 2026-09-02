@@ -1,0 +1,511 @@
+name: QotaFolio
+options:
+  bundleIdPrefix: net.c2coast
+  deploymentTarget: { macOS: "26.0" }
+  createIntermediateGroups: true
+  # An Icon Composer package is one file to Xcode; without this, xcodegen expands
+  # its contents and the build no longer recognises an icon in it.
+  fileTypes:
+    icon: { file: true }
+configs:
+  Debug: debug
+  Release: release
+packages:
+  QotaFolioCore: { path: . }
+  Sparkle: { url: https://github.com/sparkle-project/Sparkle, exactVersion: 2.9.4 }
+settings:
+  base:
+    DEVELOPMENT_TEAM: NCCKY76LD4
+    CODE_SIGN_STYLE: Automatic
+    # The one identifier everything else is derived from. The app IS this string; the widget
+    # extension is `.Widgets`, the `qota` tool is `.qota`, the Kit framework is `.Kit`, and
+    # `AppIdentity` derives the container, the App Group, the Keychain service, the defaults
+    # domain and the lease from the app's. A private build sets it on the xcodebuild line
+    # (`QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.mine`) and gets its own everything.
+    #
+    # It is not `PRODUCT_BUNDLE_IDENTIFIER` on purpose: a setting given on the command line
+    # applies to every target in the build, and an extension whose identifier equals its host's
+    # does not register. This knob fans out into three distinct identifiers instead of one.
+    QOTAFOLIO_BUNDLE_ID: net.c2coast.QotaFolio
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "100"
+    VERSIONING_SYSTEM: apple-generic
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: "YES"
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: "YES"
+  configs:
+    Debug:
+      # A development build is a different app to macOS, and that is the whole point. One
+      # identifier here gives a Debug build its own container, its own defaults, its own
+      # Keychain service and its own App Group -- and makes it impossible for a developer's
+      # build to read, write or delete the installed app's data. Its extension and its tool
+      # follow, because they derive from the same string.
+      QOTAFOLIO_BUNDLE_ID: net.c2coast.QotaFolio.dev
+    Release:
+      LD_GENERATE_MAP_FILE: "YES"
+targets:
+  QotaFolioKit:
+    type: framework
+    platform: macOS
+    sources: [Sources/QotaFolioKit]
+    dependencies:
+      - { package: QotaFolioCore, product: QotaFolioCoreXcode }
+      - { package: Sparkle, product: Sparkle }
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).Kit
+        ENABLE_HARDENED_RUNTIME: "YES"
+        GENERATE_INFOPLIST_FILE: "YES"
+        LM_SKIP_METADATA_EXTRACTION: "YES"
+
+  QotaFolioCoreFixtures:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: Sources/UIFixtures
+        excludes: [Kit]
+    dependencies:
+      - { package: QotaFolioCore, product: QotaFolioCoreXcode }
+    settings:
+      base:
+        PRODUCT_MODULE_NAME: UIFixtures
+        PRODUCT_NAME: QotaFolioCoreFixtures
+        SKIP_INSTALL: "YES"
+
+  QotaFolioKitFixtures:
+    type: library.static
+    platform: macOS
+    sources: [Sources/UIFixtures/Kit]
+    dependencies:
+      - { target: QotaFolioKit }
+      - { package: QotaFolioCore, product: QotaFolioCoreXcode }
+    settings:
+      base:
+        SKIP_INSTALL: "YES"
+
+  # The widget extension: the menu-bar / Control Center Control and the desktop widget. It links
+  # the Model target and never Core -- Core's main-actor default isolation makes every
+  # synthesized Codable main-actor-isolated, and an extension decoding on its own queue cannot
+  # use one. It reads the App Group files the app writes and draws them.
+  # `Sources/Surfaces` is compiled into it AND into the app: the account entity, the intent that
+  # opens the app, the ring -- two processes, one source, no framework between them.
+  QotaFolioWidgets:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/QotaFolioWidgets
+        excludes: [Info.plist, "*.entitlements"]
+      - Sources/Surfaces
+    dependencies:
+      - { package: QotaFolioCore, product: QotaFolioModel }
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).Widgets
+        PRODUCT_NAME: QotaFolioWidgets
+        INFOPLIST_FILE: Sources/QotaFolioWidgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/QotaFolioWidgets/QotaFolioWidgets.entitlements
+        ENABLE_APP_SANDBOX: "YES"
+        ENABLE_HARDENED_RUNTIME: "YES"
+        SKIP_INSTALL: "YES"
+        # WidgetKit's providers and App Intents are nonisolated protocols; the extension
+        # compiles without a default actor so their witnesses are what the protocols ask for.
+        # Every type in `Sources/Surfaces` spells its isolation out, because the same file is
+        # compiled into the app, which keeps the main-actor default.
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+  # `qota`: the terminal command. Reads the three group files by path from outside the sandbox
+  # (that is the day-one check it exists to make), links the Model target statically, and ships
+  # inside the app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
+  qota:
+    type: tool
+    platform: macOS
+    sources: [Sources/Qota]
+    dependencies:
+      - { package: QotaFolioCore, product: QotaFolioModel }
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).qota
+        PRODUCT_NAME: qota
+        ENABLE_HARDENED_RUNTIME: "YES"
+        ENABLE_APP_SANDBOX: "NO"
+        SKIP_INSTALL: "YES"
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+
+  QotaFolio:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/App
+      - Sources/Surfaces
+      - Assets/Assets.xcassets
+      # The macOS 26 layered icon (Icon Composer format), authored by hand from
+      # Assets/BrandSources: the Time Fold on the brand ground, three glass layers.
+      # It replaces the flat appiconset; Xcode derives the fallback images from it.
+      - { path: Assets/AppIcon.icon, buildPhase: resources }
+    dependencies:
+      - { target: QotaFolioKit, embed: true }
+      - { package: QotaFolioCore, product: QotaFolioCoreXcode, embed: true }
+      - { target: QotaFolioWidgets, embed: true }
+      - { target: qota, embed: true, copy: { destination: executables } }
+      - { target: QotaFolioCoreFixtures, link: false }
+      - { target: QotaFolioKitFixtures, link: false }
+      - { package: Sparkle, product: Sparkle, link: false }
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID)
+        PRODUCT_NAME: QotaFolio
+        INFOPLIST_FILE: Sources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/QotaFolio.entitlements
+        ENABLE_APP_SANDBOX: "YES"
+        ENABLE_HARDENED_RUNTIME: "YES"
+        ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+        # Deliberately NOT skipping App Intents metadata extraction here: the app carries the
+        # intents Spotlight and the Control perform (Sources/Surfaces), and the processor is
+        # what registers them.
+        LD_ADDITIONAL_DEPLOYMENT_TARGET_FLAGS:
+          - -Xlinker
+          - -rpath
+          - -Xlinker
+          - "@executable_path/../Frameworks"
+        LD_RUNPATH_SEARCH_PATHS: []
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        QOTAFOLIO_RELEASE_BASE_URL: "https://github.com/c2coast/QotaFolio/releases"
+      configs:
+        Debug:
+          # The Debug identifier itself lives at the project level (`QOTAFOLIO_BUNDLE_ID`), so
+          # the extension and the tool follow it. CFBundleIdentifier and the two Sparkle
+          # mach-lookup names interpolate PRODUCT_BUNDLE_IDENTIFIER, which is that string here.
+          #
+          # A Debug build carries the fixture lab (`FixtureAppRuntime`), which imports both
+          # fixture slices, so both archives are linked here. They are dependencies with
+          # `link: false` above, which keeps them out of a Release build entirely.
+          OTHER_LDFLAGS:
+            - "$(inherited)"
+            - "$(BUILT_PRODUCTS_DIR)/libQotaFolioKitFixtures.a"
+            - "$(BUILT_PRODUCTS_DIR)/libQotaFolioCoreFixtures.a"
+    postBuildScripts:
+      - name: Embed, Prune, and Sign Sparkle.framework
+        basedOnDependencyAnalysis: true
+        inputFiles:
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Headers"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Modules"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/PrivateHeaders"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Resources"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Updater.app"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/XPCServices"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Autoupdate"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Sparkle"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/Current"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Modules"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/_CodeSignature"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Autoupdate"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Sparkle"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/_CodeSignature/CodeResources"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders/SPUAppcastItemStateResolver.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders/SPUGentleUserDriverReminders.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders/SPUInstallationType.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders/SPUStandardUserDriver+Private.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders/SPUUserAgent+Private.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders/SUAppcastItem+Private.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders/SUInstallerLauncher+Private.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/Base.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/SUUpdatePermissionPrompt.nib"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ar.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ca.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/cs.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/da.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/de.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/el.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/es.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/fa.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/fi.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/fr.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/he.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/hr.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/hu.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/is.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/it.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ja.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ko.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/nb.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/nl.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/nn.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/pl.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/pt-BR.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/pt-PT.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ro.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ru.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/sk.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/sl.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/sv.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/th.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/tr.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/uk.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/vi.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/zh_CN.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/zh_HK.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/zh_TW.lproj"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/Info.plist"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ReleaseNotesColorStyle.css"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/SUStatus.nib"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/SUUpdateAlert.nib"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/de.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/he.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ar.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/el.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ja.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/fa.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/uk.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/zh_CN.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/nb.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/is.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/sl.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/da.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/it.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/sk.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/sv.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/cs.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ko.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/Base.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/hu.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/zh_HK.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/tr.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/pl.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/zh_TW.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/pt-BR.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/vi.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ru.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/SUUpdatePermissionPrompt.nib/keyedobjects-101300.nib"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/fr.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/fi.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/nl.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/th.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/nn.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/pt-PT.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ro.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/hr.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources/ca.lproj/Sparkle.strings"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents/MacOS"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents/Resources"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents/_CodeSignature"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents/Info.plist"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents/PkgInfo"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents/_CodeSignature/CodeResources"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents/MacOS/Updater"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app/Contents/Resources/SUStatus.nib"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUAppcastSigningValidationStatus.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUDownloadData.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUStandardUpdaterController.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUStandardUserDriver.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUStandardUserDriverDelegate.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUUpdateCheck.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUUpdatePermissionRequest.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUUpdater.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUUpdaterDelegate.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUUpdaterSettings.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUUserDriver.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SPUUserUpdateState.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUAppcast.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUAppcastItem.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUErrors.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUExport.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUStandardVersionComparator.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUUpdatePermissionResponse.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUUpdater.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUUpdaterDelegate.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUVersionComparisonProtocol.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUVersionDisplayProtocol.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/Sparkle.h"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/_CodeSignature"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/Info.plist"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/_CodeSignature/CodeResources"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS/Downloader"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/_CodeSignature"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/Info.plist"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS/Installer"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Modules/module.modulemap"
+          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Modules/module.private.modulemap"
+        outputFiles:
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Sparkle"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Autoupdate"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app/Contents/MacOS/Updater"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc/Contents/MacOS/Installer"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/_CodeSignature/CodeResources"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app/Contents/_CodeSignature/CodeResources"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources"
+          - "$(TARGET_TEMP_DIR)/QotaFolio-Sparkle-v3-$(WRAPPER_NAME)-$(CONFIGURATION)-$(ACTION)-$(CODE_SIGNING_ALLOWED)-$(EXPANDED_CODE_SIGN_IDENTITY).stamp"
+        script: |
+          set -euo pipefail
+          phase_version="3"
+          source_framework="${BUILT_PRODUCTS_DIR}/Sparkle.framework"
+          framework="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework"
+          versions="${framework}/Versions"
+          current="${versions}/Current"
+          stamp_file="${SCRIPT_OUTPUT_FILE_12}"
+
+          if [ ! -d "${source_framework}" ]; then
+            printf '%s\n' "Missing resolved Sparkle framework: ${source_framework}" >&2
+            exit 1
+          fi
+          mkdir -p "$(/usr/bin/dirname "${framework}")"
+          rm -rf "${framework}"
+          /usr/bin/ditto "${source_framework}" "${framework}"
+
+          if [ ! -d "${current}" ]; then
+            printf '%s\n' "Missing Sparkle current-version layout: ${current}" >&2
+            exit 1
+          fi
+          versions_dir="$(cd "${versions}" && /bin/pwd -P)"
+          version_dir="$(cd "${current}" && /bin/pwd -P)"
+          if [ "$(/usr/bin/dirname "${version_dir}")" != "${versions_dir}" ]; then
+            printf '%s\n' "Sparkle Versions/Current resolves outside Versions: ${version_dir}" >&2
+            exit 1
+          fi
+
+          /usr/bin/find "${framework}" -name Downloader.xpc -prune -exec /bin/rm -rf {} +
+          if /usr/bin/find "${framework}" -name Downloader.xpc -print -quit | /usr/bin/grep -q .; then
+            printf '%s\n' "Sparkle Downloader.xpc remains after pruning" >&2
+            exit 1
+          fi
+
+          identity_name="${EXPANDED_CODE_SIGN_IDENTITY_NAME:-${CODE_SIGN_IDENTITY:-}}"
+          timestamp_mode="unsigned"
+          if [ "${CODE_SIGNING_ALLOWED:-YES}" != "NO" ]; then
+            if [ -z "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
+              printf '%s\n' "Missing expanded code-sign identity for Sparkle signing" >&2
+              exit 1
+            fi
+            case "${identity_name}" in
+              Developer\ ID\ Application*) timestamp_flag="--timestamp"; timestamp_mode="secure" ;;
+              Apple\ Development*) timestamp_flag="--timestamp=none"; timestamp_mode="none" ;;
+              *)
+                printf '%s\n' "Unsupported Sparkle signing identity mode: ${identity_name:-<empty>}" >&2
+                exit 1
+                ;;
+            esac
+
+            sign_code() {
+              code="$1"
+              if [ ! -e "${code}" ]; then
+                printf '%s\n' "Missing required Sparkle code object: ${code}" >&2
+                exit 1
+              fi
+              /usr/bin/codesign --force --sign "${EXPANDED_CODE_SIGN_IDENTITY}" \
+                --options runtime "${timestamp_flag}" \
+                --preserve-metadata=identifier,entitlements,requirements \
+                "${code}"
+              /usr/bin/codesign --verify --strict --verbose=2 "${code}"
+            }
+
+            # Sparkle's documented manual order is Installer, Autoupdate, Updater, then framework.
+            sign_code "${version_dir}/XPCServices/Installer.xpc"
+            sign_code "${version_dir}/Autoupdate"
+            sign_code "${version_dir}/Updater.app"
+            sign_code "${framework}"
+            /usr/bin/codesign --verify --deep --strict --verbose=2 "${framework}"
+          fi
+
+          /usr/bin/touch \
+            "${version_dir}/Sparkle" \
+            "${version_dir}/Autoupdate" \
+            "${version_dir}/Updater.app/Contents/MacOS/Updater" \
+            "${version_dir}/Updater.app/Contents/_CodeSignature/CodeResources" \
+            "${version_dir}/XPCServices/Installer.xpc/Contents/MacOS/Installer" \
+            "${version_dir}/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources" \
+            "${version_dir}/XPCServices/Installer.xpc" \
+            "${version_dir}/XPCServices" \
+            "${version_dir}/Updater.app" \
+            "${version_dir}/_CodeSignature/CodeResources" \
+            "${framework}"
+          /usr/bin/touch -h "${current}"
+
+          mkdir -p "$(/usr/bin/dirname "${stamp_file}")"
+          /usr/bin/xcrun python3 - "${stamp_file}" "${source_framework}" "${framework}" \
+            "${phase_version}" "${CONFIGURATION}" "${ACTION}" \
+            "${CODE_SIGNING_ALLOWED:-YES}" "${EXPANDED_CODE_SIGN_IDENTITY:-}" \
+            "${identity_name}" "${timestamp_mode}" <<'PYTHON'
+          import hashlib
+          import os
+          import sys
+          from pathlib import Path
+
+          (stamp_path, source_root, destination_root, phase_version,
+           configuration, action, signing_allowed, identity,
+           identity_name, timestamp_mode) = sys.argv[1:]
+
+          def tree_digest(root: str):
+              root_path = Path(root)
+              digest = hashlib.sha256()
+              entries = [root_path]
+              for current, directories, files in os.walk(root_path, followlinks=False):
+                  current_path = Path(current)
+                  entries.extend(current_path / name for name in sorted(directories))
+                  entries.extend(current_path / name for name in sorted(files))
+              for path in entries:
+                  relative = "." if path == root_path else path.relative_to(root_path).as_posix()
+                  if path.is_symlink():
+                      kind = "symlink"
+                      payload = os.readlink(path).encode()
+                  elif path.is_dir():
+                      kind = "directory"
+                      payload = b""
+                  elif path.is_file():
+                      kind = "file"
+                      payload = path.read_bytes()
+                  else:
+                      kind = "other"
+                      payload = b""
+                  digest.update(kind.encode() + b"\0" + relative.encode() + b"\0")
+                  digest.update(payload)
+                  digest.update(b"\0")
+              return digest.hexdigest()
+
+          stamp_text = "\n".join([
+              f"phase_version={phase_version}",
+              f"source={source_root}",
+              f"source_sha256={tree_digest(source_root)}",
+              f"destination={destination_root}",
+              f"destination_sha256={tree_digest(destination_root)}",
+              f"configuration={configuration}",
+              f"action={action}",
+              f"code_signing_allowed={signing_allowed}",
+              f"expanded_code_sign_identity={identity}",
+              f"identity_name={identity_name}",
+              f"timestamp_mode={timestamp_mode}",
+              "downloader_present=false",
+              "",
+          ])
+          stamp_tmp = Path(stamp_path + ".tmp")
+          stamp_tmp.write_text(stamp_text)
+          stamp_tmp.replace(stamp_path)
+          PYTHON
+
+schemes:
+  QotaFolio:
+    build: { targets: { QotaFolio: all } }

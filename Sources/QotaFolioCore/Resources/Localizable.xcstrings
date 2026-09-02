@@ -1,0 +1,4182 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "about.nonAffiliation": {
+      "comment": "Required trademark and non-affiliation statement.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic, Claude, OpenAI, and ChatGPT are trademarks of their respective owners. QotaFolio is an independent product and is not affiliated with, endorsed by, or sponsored by Anthropic or OpenAI."
+          }
+        }
+      }
+    },
+    "about.version": {
+      "comment": "App version and build number.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "account.ax.label": {
+      "comment": "VoiceOver label for an account card: the user's name for the account, then the provider.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "account.generic": {
+      "comment": "Generic account name used only if a connected row is not yet visible.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account"
+          }
+        }
+      }
+    },
+    "action.cancel": {
+      "comment": "Cancel an in-progress operation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "action.continue": {
+      "comment": "Continue to provider sign-in.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "action.dismiss": {
+      "comment": "Dismiss a terminal sign-in failure.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dismiss"
+          }
+        }
+      }
+    },
+    "action.more": {
+      "comment": "Account actions menu help text.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More actions"
+          }
+        }
+      }
+    },
+    "action.more.forAccount": {
+      "comment": "VoiceOver label for one account row's actions menu. The placeholder is the account's name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More actions for %1$@"
+          }
+        }
+      }
+    },
+    "action.moveDown": {
+      "comment": "Move an account later in display order.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move Down"
+          }
+        }
+      }
+    },
+    "action.moveUp": {
+      "comment": "Move an account earlier in display order.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move Up"
+          }
+        }
+      }
+    },
+    "action.openSettings": {
+      "comment": "Open QotaFolio Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        }
+      }
+    },
+    "action.reconnect": {
+      "comment": "Reconnect an account with the provider.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnect…"
+          }
+        }
+      }
+    },
+    "action.remove": {
+      "comment": "Confirm destructive account removal.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "action.removeAccount": {
+      "comment": "Remove one connected account and its saved sign-in.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Account"
+          }
+        }
+      }
+    },
+    "action.rename": {
+      "comment": "Rename an account.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename…"
+          }
+        }
+      }
+    },
+    "action.retry": {
+      "comment": "Retry refreshing one account.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        }
+      }
+    },
+    "action.save": {
+      "comment": "Save an edited account name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "action.startOver": {
+      "comment": "Start a fresh provider sign-in after a terminal failure.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start over"
+          }
+        }
+      }
+    },
+    "action.tryAgain": {
+      "comment": "Start a fresh attempt after a failure.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
+    },
+    "alert.fresh.scoped": {
+      "comment": "Alert body when a model-scoped window has just turned over. The account, then the scope's name as the provider spells it.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ reset — a fresh %2$@ window."
+          }
+        }
+      }
+    },
+    "alert.fresh.session": {
+      "comment": "Alert body when an account's five-hour window has just turned over. The argument is the account name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ reset — a fresh five-hour window."
+          }
+        }
+      }
+    },
+    "alert.fresh.weekly": {
+      "comment": "Alert body when an account's weekly window has just turned over. The argument is the account name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ reset — a fresh week."
+          }
+        }
+      }
+    },
+    "alert.runningOut": {
+      "comment": "Alert body when an account's window runs dry and no reset time is known. The account, the clock time it runs out, then the other-account clause or nothing.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ runs out at %2$@ at this pace.%3$@"
+          }
+        }
+      }
+    },
+    "alert.runningOut.beforeReset": {
+      "comment": "Alert body when an account's window runs dry before its reset. The account, the clock time it runs out, how long before the reset, then the other-account clause or nothing.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ runs out at %2$@ at this pace — %3$@ before its reset.%4$@"
+          }
+        }
+      }
+    },
+    "alert.runningOut.other": {
+      "comment": "Clause appended to a running-out alert, naming another account and what it has left now. Leading space included. An account name, then a percentage.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " %1$@ has %2$@."
+          }
+        }
+      }
+    },
+    "alert.stranding": {
+      "comment": "Alert body when part of an account's week will expire unused. The account, a percentage, then the weekday it expires.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: about %2$@ of the week expires %3$@."
+          }
+        }
+      }
+    },
+    "announce.addressCopied": {
+      "comment": "VoiceOver announcement after copying the device authorization URL.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web address copied"
+          }
+        }
+      }
+    },
+    "announce.auth.anthropicBrowser": {
+      "comment": "VoiceOver announcement when the Anthropic sign-in hands the user to their browser. Only the host is spoken.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish signing in to %1$@ in your browser. QotaFolio is waiting."
+          }
+        }
+      }
+    },
+    "announce.auth.deviceCode": {
+      "comment": "VoiceOver announcement when the ChatGPT device code appears. The code is spelled one character at a time so it can be transcribed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter this code on the ChatGPT authorization page in your browser: %1$@"
+          }
+        }
+      }
+    },
+    "announce.auth.starting": {
+      "comment": "VoiceOver announcement when a sign-in starts and the naming step is replaced by the progress step.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starting sign-in to %1$@"
+          }
+        }
+      }
+    },
+    "announce.codeCopied": {
+      "comment": "VoiceOver announcement after copying a device code.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code copied"
+          }
+        }
+      }
+    },
+    "announce.connected": {
+      "comment": "VoiceOver announcement after an account successfully connects.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ connected"
+          }
+        }
+      }
+    },
+    "announce.launchAtLogin.disabled": {
+      "comment": "VoiceOver announcement after the app reconciles an Open-at-Login removal made in System Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open at login is off"
+          }
+        }
+      }
+    },
+    "announce.launchAtLogin.enabled": {
+      "comment": "VoiceOver announcement after the app reconciles an Open-at-Login approval made in System Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open at login is on"
+          }
+        }
+      }
+    },
+    "announce.launchAtLogin.needsApproval": {
+      "comment": "VoiceOver announcement after the app reconciles an Open-at-Login registration that is still waiting for approval.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open at login needs your approval in System Settings"
+          }
+        }
+      }
+    },
+    "announce.moved": {
+      "comment": "VoiceOver announcement after account reorder.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved %1$@ to position %2$lld of %3$lld"
+          }
+        }
+      }
+    },
+    "announce.refreshNoVisibleAccounts": {
+      "comment": "VoiceOver announcement after a manual refresh when the defensive zero-visible state is active.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh completed. No accounts are visible."
+          }
+        }
+      }
+    },
+    "announce.refreshUnavailable": {
+      "comment": "VoiceOver announcement after a manual refresh with unavailable accounts.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh completed with %1$lld accounts unavailable; cached data shown"
+          }
+        }
+      }
+    },
+    "announce.renamed": {
+      "comment": "VoiceOver announcement after an account is renamed. The argument is the new name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renamed to %1$@"
+          }
+        }
+      }
+    },
+    "announce.usageUpdated": {
+      "comment": "VoiceOver announcement after a successful manual refresh cohort.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage updated"
+          }
+        }
+      }
+    },
+    "auth.add.heading": {
+      "comment": "Heading for the add-account naming step.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add an account"
+          }
+        }
+      }
+    },
+    "auth.add.refused.finishingQuit": {
+      "comment": "Shown on the add-account naming step when a quit holds account changes closed. Nothing is being deleted.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This account was not added. QotaFolio is finishing quitting, and nothing is being deleted."
+          }
+        }
+      }
+    },
+    "auth.add.refused.limit": {
+      "comment": "Shown on the add-account naming step when the five-account maximum refused the new account.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio holds five accounts. Remove one before you add another."
+          }
+        }
+      }
+    },
+    "auth.add.refused.notReserved": {
+      "comment": "Shown on the add-account naming step when reserving a place for the new account failed for an unexpected reason.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio could not start adding this account. Press Continue again in a moment."
+          }
+        }
+      }
+    },
+    "auth.add.refused.unreadable": {
+      "comment": "Shown on the add-account naming step when the account list could not be read.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio cannot read your account list right now. This account was not added."
+          }
+        }
+      }
+    },
+    "auth.anthropic.body": {
+      "comment": "Anthropic loopback OAuth instructions.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish signing in in your browser. You can reopen the same authorization page without restarting this sign-in."
+          }
+        }
+      }
+    },
+    "auth.anthropic.openAgain": {
+      "comment": "Reopen the live Anthropic authorization URL.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open browser again"
+          }
+        }
+      }
+    },
+    "auth.anthropic.waiting": {
+      "comment": "Anthropic browser OAuth wait state. Only the host is shown.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for %1$@ to confirm…"
+          }
+        }
+      }
+    },
+    "auth.chatgpt.code.label": {
+      "comment": "VoiceOver label for the exact ChatGPT device code.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ChatGPT device code"
+          }
+        }
+      }
+    },
+    "auth.chatgpt.copyAddress": {
+      "comment": "Copy the ChatGPT device authorization URL.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy web address"
+          }
+        }
+      }
+    },
+    "auth.chatgpt.copyCode": {
+      "comment": "Copy the exact ChatGPT device code.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy code"
+          }
+        }
+      }
+    },
+    "auth.chatgpt.expired": {
+      "comment": "The ChatGPT device code is no longer valid.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code expired"
+          }
+        }
+      }
+    },
+    "auth.chatgpt.expired.body": {
+      "comment": "Instructions after a ChatGPT device code expires.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get a new code to continue. The ChatGPT authorization page remains the correct page."
+          }
+        }
+      }
+    },
+    "auth.chatgpt.expires": {
+      "comment": "Visible countdown for the active ChatGPT device code. Never announce every tick.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code expires in %1$lldm %2$llds"
+          }
+        }
+      }
+    },
+    "auth.chatgpt.getNewCode": {
+      "comment": "Request a fresh ChatGPT device code.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get a new code"
+          }
+        }
+      }
+    },
+    "auth.chatgpt.instructions": {
+      "comment": "Instructions for the active ChatGPT device-code flow.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the page below and enter this code:"
+          }
+        }
+      }
+    },
+    "auth.chatgpt.openPage": {
+      "comment": "Open the ChatGPT device authorization page.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open ChatGPT authorization page"
+          }
+        }
+      }
+    },
+    "auth.disclosure": {
+      "comment": "Read-only OAuth and non-affiliation disclosure shown before provider handoff.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio reads usage from your own account through the provider's sign-in, stores its token only in this Mac's Keychain, and is independent and not affiliated with Anthropic or OpenAI."
+          }
+        }
+      }
+    },
+    "auth.fail.alreadyConnected": {
+      "comment": "The grant just made belongs to a provider account the app already holds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have already added this account"
+          }
+        }
+      }
+    },
+    "auth.fail.alreadyConnected.detail": {
+      "comment": "Names the existing account a duplicate sign-in collides with.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This sign-in is the same account as %1$@, so nothing was added."
+          }
+        }
+      }
+    },
+    "auth.fail.browserOpen": {
+      "comment": "Anthropic authorization browser could not open.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open your browser"
+          }
+        }
+      }
+    },
+    "auth.fail.browserOpen.detail": {
+      "comment": "A browser-open failure ends the current Anthropic transaction.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a fresh sign-in attempt."
+          }
+        }
+      }
+    },
+    "auth.fail.denied": {
+      "comment": "Provider denied authorization.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign-in was denied"
+          }
+        }
+      }
+    },
+    "auth.fail.denied.detail": {
+      "comment": "Provider authorization denial guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start over when you're ready."
+          }
+        }
+      }
+    },
+    "auth.fail.deviceUnavailable": {
+      "comment": "ChatGPT device-code sign-in is disabled by the account or workspace.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Device-code sign-in is turned off"
+          }
+        }
+      }
+    },
+    "auth.fail.deviceUnavailable.detail": {
+      "comment": "ChatGPT device-code admin/security failure explanation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio can't add this ChatGPT account until its security setting or workspace policy changes."
+          }
+        }
+      }
+    },
+    "auth.fail.exchange": {
+      "comment": "Provider token exchange failed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't complete sign-in"
+          }
+        }
+      }
+    },
+    "auth.fail.exchange.detail": {
+      "comment": "Single-use token exchange failure guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The authorization code can't be reused. Start over."
+          }
+        }
+      }
+    },
+    "auth.fail.expired": {
+      "comment": "Provider sign-in deadline expired.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This sign-in request expired"
+          }
+        }
+      }
+    },
+    "auth.fail.expired.anthropic": {
+      "comment": "Anthropic deadline-expired guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a fresh Anthropic sign-in attempt."
+          }
+        }
+      }
+    },
+    "auth.fail.expired.chatgpt": {
+      "comment": "ChatGPT deadline-expired guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get a new ChatGPT device code to continue."
+          }
+        }
+      }
+    },
+    "auth.fail.listener": {
+      "comment": "Anthropic loopback listener could not start.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't start the local sign-in listener"
+          }
+        }
+      }
+    },
+    "auth.fail.listener.detail": {
+      "comment": "Anthropic loopback listener failure guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again. If this persists, check the app's network permissions."
+          }
+        }
+      }
+    },
+    "auth.fail.rateLimited": {
+      "comment": "ChatGPT device-code start was rate-limited.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many attempts"
+          }
+        }
+      }
+    },
+    "auth.fail.rateLimited.detail": {
+      "comment": "Rate-limited device-code start guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again shortly."
+          }
+        }
+      }
+    },
+    "auth.fail.readOnlyScope": {
+      "comment": "Read-only reassurance after device-code sign-in is unavailable.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio only reads usage. It never posts, changes account settings, or signs you out."
+          }
+        }
+      }
+    },
+    "auth.fail.scope": {
+      "comment": "The provider granted the sign-in but withheld the profile permission.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio wasn't given permission to read your usage"
+          }
+        }
+      }
+    },
+    "auth.fail.scope.detail": {
+      "comment": "Guidance when the granted scope is short of the requested one.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in again and approve the request to see your account's quota."
+          }
+        }
+      }
+    },
+    "auth.fail.startTransport": {
+      "comment": "ChatGPT device-code start transport failure.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't reach ChatGPT"
+          }
+        }
+      }
+    },
+    "auth.fail.startTransport.detail": {
+      "comment": "Device-code start transport guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check your connection and try again."
+          }
+        }
+      }
+    },
+    "auth.fail.storageUnavailable": {
+      "comment": "Keychain is temporarily unavailable during credential storage.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Keychain is locked"
+          }
+        }
+      }
+    },
+    "auth.fail.storageUnavailable.detail": {
+      "comment": "Actionable Keychain-unavailable guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock your Mac and try again so QotaFolio can save your sign-in."
+          }
+        }
+      }
+    },
+    "auth.fail.store": {
+      "comment": "Keychain credential write failed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't save your sign-in"
+          }
+        }
+      }
+    },
+    "auth.fail.store.detail": {
+      "comment": "Credential write failure guidance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio couldn't save the credential to this Mac's Keychain."
+          }
+        }
+      }
+    },
+    "auth.heading.signIn": {
+      "comment": "Heading for a provider sign-in flow after provider selection.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in to %1$@"
+          }
+        }
+      }
+    },
+    "auth.heading.signIn.chatGPT": {
+      "comment": "Heading for the ChatGPT device-code sign-in flow.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in to ChatGPT"
+          }
+        }
+      }
+    },
+    "auth.name.label": {
+      "comment": "Display-name field in the add-account flow.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account name"
+          }
+        }
+      }
+    },
+    "auth.name.placeholder": {
+      "comment": "Account display-name example.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For example, Personal or Work"
+          }
+        }
+      }
+    },
+    "auth.progress.exchanging": {
+      "comment": "Provider code is being exchanged for credentials.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finishing sign-in…"
+          }
+        }
+      }
+    },
+    "auth.progress.starting": {
+      "comment": "Provider sign-in is starting.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starting sign-in…"
+          }
+        }
+      }
+    },
+    "auth.progress.storing": {
+      "comment": "Credential is being saved to the Mac Keychain.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving sign-in…"
+          }
+        }
+      }
+    },
+    "auth.provider.label": {
+      "comment": "Provider picker label in the add-account flow.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Provider"
+          }
+        }
+      }
+    },
+    "auth.retry.minutesSeconds": {
+      "comment": "Countdown until a rate-limited sign-in attempt can be retried.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can try again in %1$lldm %2$llds"
+          }
+        }
+      }
+    },
+    "auth.retry.seconds": {
+      "comment": "Countdown in seconds until a rate-limited sign-in attempt can be retried.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can try again in %1$llds"
+          }
+        }
+      }
+    },
+    "catalog.advisory.credentialsUnreadableCatalog.many": {
+      "comment": "Recovery advisory when multiple Keychain credentials survive a durably damaged account catalog.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld saved sign-ins are still in your Mac's Keychain, so do not sign in again yet. Adding and changing accounts stays unavailable while the list is damaged."
+          }
+        }
+      }
+    },
+    "catalog.advisory.credentialsUnreadableCatalog.one": {
+      "comment": "Recovery advisory when one Keychain credential survives a durably damaged account catalog.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 saved sign-in is still in your Mac's Keychain, so do not sign in again yet. Adding and changing accounts stays unavailable while the list is damaged."
+          }
+        }
+      }
+    },
+    "catalog.advisory.credentialsWithoutCatalog.many": {
+      "comment": "Recovery advisory when multiple Keychain credentials survive a missing account catalog.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio's account list is missing, but %1$lld saved sign-ins are still in your Mac's Keychain. Nothing has been deleted. Add your accounts again to continue."
+          }
+        }
+      }
+    },
+    "catalog.advisory.credentialsWithoutCatalog.one": {
+      "comment": "Recovery advisory when one Keychain credential survives a missing account catalog.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio's account list is missing, but 1 saved sign-in is still in your Mac's Keychain. Nothing has been deleted. Add your account again to continue."
+          }
+        }
+      }
+    },
+    "catalog.advisory.storeUnreachable": {
+      "comment": "Recovery advisory when the account catalog is missing and the credential store could not be checked.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio couldn't check your saved sign-ins, so it doesn't know which of them are still there. Nothing has been deleted or changed. Quit and reopen QotaFolio to let it check again, or add an account now."
+          }
+        }
+      }
+    },
+    "catalog.advisory.storeUnreachableUnreadableCatalog": {
+      "comment": "Recovery advisory when the account catalog is durably damaged and the credential store could not be checked.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio also couldn't check your saved sign-ins, so it doesn't know which of them remain. Nothing has been deleted or changed, so do not sign in again yet. Adding and changing accounts stays unavailable while the list is damaged."
+          }
+        }
+      }
+    },
+    "catalog.advisory.temporarilyUnreadable": {
+      "comment": "Recovery advisory when the account catalog read never happened and a retry is offered.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing about your saved sign-ins has changed. Adding and changing accounts stays unavailable until the list loads."
+          }
+        }
+      }
+    },
+    "catalog.loading": {
+      "comment": "Startup placeholder while the account catalog loads.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading accounts…"
+          }
+        }
+      }
+    },
+    "catalog.unreadable.body.damaged": {
+      "comment": "Unreadable-catalog guidance when the saved bytes are durably corrupt.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio's saved account list is damaged, so it can't be read. Nothing has been deleted. Reopening QotaFolio won't repair the list — Settings has the option to remove QotaFolio and start over."
+          }
+        }
+      }
+    },
+    "catalog.unreadable.body.temporary": {
+      "comment": "Unreadable-catalog guidance when the read never happened and an in-app retry is offered.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio couldn't read its saved accounts just now. Nothing has been deleted, and the list may load on the next attempt."
+          }
+        }
+      }
+    },
+    "catalog.unreadable.retryFailed": {
+      "comment": "VoiceOver announcement after an in-app catalog retry that did not recover.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio still couldn't read its saved accounts."
+          }
+        }
+      }
+    },
+    "catalog.unreadable.retrySucceeded": {
+      "comment": "VoiceOver announcement after an in-app catalog retry that recovered.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account list loaded."
+          }
+        }
+      }
+    },
+    "catalog.unreadable.title": {
+      "comment": "Global error title when the saved account catalog is unreadable.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account list unavailable"
+          }
+        }
+      }
+    },
+    "empty.body": {
+      "comment": "First-run empty-state explanation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add up to five accounts to see remaining quota and reset times in one place."
+          }
+        }
+      }
+    },
+    "empty.primaryAction": {
+      "comment": "Primary first-run add-account button.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add your first account…"
+          }
+        }
+      }
+    },
+    "empty.title": {
+      "comment": "First-run empty-state title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No accounts yet"
+          }
+        }
+      }
+    },
+    "face.asOf": {
+      "comment": "Header note when the numbers on the card are the last known ones: the clock time they were true at.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As of %1$@"
+          }
+        }
+      }
+    },
+    "face.ax.asOf": {
+      "comment": "VoiceOver clause saying the numbers on the card are the last known ones, with the clock time they were true at.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numbers as of %1$@."
+          }
+        }
+      }
+    },
+    "face.ax.plan": {
+      "comment": "VoiceOver clause naming the account's plan, as the provider spells it.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@."
+          }
+        }
+      }
+    },
+    "face.ax.resetsIn": {
+      "comment": "VoiceOver clause for a window's reset countdown. The argument is the spoken duration.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resets in %1$@."
+          }
+        }
+      }
+    },
+    "face.ax.spent": {
+      "comment": "VoiceOver clause for an account with nothing spendable now and no return time reported.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spent."
+          }
+        }
+      }
+    },
+    "face.ax.spentBack": {
+      "comment": "VoiceOver clause for an account with nothing spendable now, and the clock time it comes back.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spent, back at %1$@."
+          }
+        }
+      }
+    },
+    "face.ax.window": {
+      "comment": "VoiceOver clause for one quota window. The window's name, then the whole percentage used.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$lld percent used."
+          }
+        }
+      }
+    },
+    "face.ax.window.low": {
+      "comment": "VoiceOver clause for one quota window at a fifth or less left. The window's name, then the whole percentage used.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$lld percent used, low."
+          }
+        }
+      }
+    },
+    "face.ax.window.spent": {
+      "comment": "VoiceOver clause for one quota window with nothing left in it. The argument is the window's name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, spent."
+          }
+        }
+      }
+    },
+    "face.backAt": {
+      "comment": "Header note on an account with nothing spendable now: the clock time it comes back.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back at %1$@"
+          }
+        }
+      }
+    },
+    "face.hint.collapse": {
+      "comment": "VoiceOver hint on an open account card: what activating does, and that the card can be reordered from its actions menu.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Closes the account's history. The actions menu can move it up or down."
+          }
+        }
+      }
+    },
+    "face.hint.expand": {
+      "comment": "VoiceOver hint on a closed account card: what activating does, and that the card can be reordered from its actions menu.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens the account's history. The actions menu can move it up or down."
+          }
+        }
+      }
+    },
+    "face.needsSignIn": {
+      "comment": "State line on an account whose grant has lapsed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs sign-in"
+          }
+        }
+      }
+    },
+    "face.needsSignIn.sentence": {
+      "comment": "Complete sentence stating that the account's grant has lapsed and the person signs in again.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs sign-in."
+          }
+        }
+      }
+    },
+    "face.noReading": {
+      "comment": "State line on an account the provider answered nothing usable for.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No reading"
+          }
+        }
+      }
+    },
+    "face.noReading.sentence": {
+      "comment": "Complete sentence stating that the provider answered with nothing usable and no earlier number exists.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No reading."
+          }
+        }
+      }
+    },
+    "face.openSettings": {
+      "comment": "Button on an account with a setup issue; opens QotaFolio Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings…"
+          }
+        }
+      }
+    },
+    "face.setupIssue": {
+      "comment": "State line on an account that cannot be polled until it is repaired.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setup issue"
+          }
+        }
+      }
+    },
+    "face.setupIssue.sentence": {
+      "comment": "Complete sentence stating that the account cannot be polled until it is repaired.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setup issue."
+          }
+        }
+      }
+    },
+    "face.signIn": {
+      "comment": "Button on an account whose grant has lapsed; starts the sign-in again.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign In…"
+          }
+        }
+      }
+    },
+    "face.spent": {
+      "comment": "Header note on an account with nothing spendable now and no return time reported.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spent"
+          }
+        }
+      }
+    },
+    "face.used": {
+      "comment": "The word after a window's percentage on the panel: 38% used.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "used"
+          }
+        }
+      }
+    },
+    "face.waiting": {
+      "comment": "State line on an account that is connected and has not answered yet.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for the first reading"
+          }
+        }
+      }
+    },
+    "face.waiting.sentence": {
+      "comment": "Complete sentence stating that the account is connected and its first reading has not arrived.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for the first reading."
+          }
+        }
+      }
+    },
+    "footer.addAccount": {
+      "comment": "Button that opens the add-account flow, in the panel footer and in Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Account…"
+          }
+        }
+      }
+    },
+    "footer.addAccount.atCap": {
+      "comment": "Tooltip on Add Account when all slots are occupied.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove an account before adding another."
+          }
+        }
+      }
+    },
+    "footer.more.ax": {
+      "comment": "VoiceOver label for the footer's actions menu.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More: Refresh, Settings, Quit"
+          }
+        }
+      }
+    },
+    "footer.more.help": {
+      "comment": "Tooltip for the footer's actions menu.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh, Settings, Quit"
+          }
+        }
+      }
+    },
+    "footer.quit": {
+      "comment": "Button that quits QotaFolio, in the panel footer and on the screen shown when the account list cannot be read.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit QotaFolio"
+          }
+        }
+      }
+    },
+    "footer.refresh.busy": {
+      "comment": "Refresh menu item while a manual refresh is in flight.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refreshing…"
+          }
+        }
+      }
+    },
+    "footer.refreshNow": {
+      "comment": "Footer menu item that refreshes every account.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh Now"
+          }
+        }
+      }
+    },
+    "footer.settings": {
+      "comment": "Footer menu item that opens QotaFolio Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings…"
+          }
+        }
+      }
+    },
+    "footer.tooltip.addAccount": {
+      "comment": "Tooltip for starting the add-account flow.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add an account (⌘N)"
+          }
+        }
+      }
+    },
+    "footer.updated": {
+      "comment": "Quiet footer note: the clock time of the newest reading across the accounts.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updated %1$@"
+          }
+        }
+      }
+    },
+    "footer.updated.ax": {
+      "comment": "VoiceOver label for the footer's updated time. The argument is a clock time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Readings updated at %1$@"
+          }
+        }
+      }
+    },
+    "instrument.block.untouched": {
+      "comment": "One completed five-hour window nobody worked in, shown on hover and read by VoiceOver. The weekday, then the clock time it opened at.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@, untouched"
+          }
+        }
+      }
+    },
+    "instrument.block.used": {
+      "comment": "One completed five-hour window, shown on hover and read by VoiceOver. The weekday, the clock time it opened at, then the whole percentage it closed at.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@, %3$lld percent used"
+          }
+        }
+      }
+    },
+    "instrument.chart.title": {
+      "comment": "Heading over the instrument's chart: the window's name, then the clock time its current occurrence opened.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · since %2$@"
+          }
+        }
+      }
+    },
+    "instrument.credits": {
+      "comment": "Instrument line for prepaid credits when the app has no dollar rate for them.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld credits"
+          }
+        }
+      }
+    },
+    "instrument.credits.value": {
+      "comment": "Instrument line for prepaid credits: the count, then their dollar value.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld credits (%2$@)"
+          }
+        }
+      }
+    },
+    "instrument.extraUsage": {
+      "comment": "Instrument line for overage spend against a monthly cap. The amount spent, then the cap, both in the provider's currency.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extra usage %1$@ of %2$@ this month"
+          }
+        }
+      }
+    },
+    "instrument.landing.close": {
+      "comment": "Instrument sentence for a window projected to finish with little to spare. The projected percentage used, then the reset time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cutting it close: lands near %1$@ used at %2$@."
+          }
+        }
+      }
+    },
+    "instrument.landing.close.range": {
+      "comment": "Instrument sentence for a window projected to finish with little to spare. The projected percentage used, the reset time, then the low and high ends of the range.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cutting it close: lands near %1$@ used at %2$@ — between %3$@ and %4$@."
+          }
+        }
+      }
+    },
+    "instrument.landing.onCourse": {
+      "comment": "Instrument sentence for a window on course. The projected percentage used, then the reset time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On course to land near %1$@ used at %2$@."
+          }
+        }
+      }
+    },
+    "instrument.landing.onCourse.range": {
+      "comment": "Instrument sentence for a window on course. The projected percentage used, the reset time, then the low and high ends of the range.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On course to land near %1$@ used at %2$@ — between %3$@ and %4$@."
+          }
+        }
+      }
+    },
+    "instrument.landing.runningOut": {
+      "comment": "Instrument sentence for a window projected to run dry before its reset, when no instant can be named.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reaches its limit before the reset at this pace."
+          }
+        }
+      }
+    },
+    "instrument.landing.runningOut.at": {
+      "comment": "Instrument sentence for a window projected to run dry before its reset. The clock time it reaches its limit, then the countdown to the reset.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reaches its limit around %1$@ at this pace, with %2$@ still to run before the reset."
+          }
+        }
+      }
+    },
+    "instrument.landing.spent": {
+      "comment": "Instrument sentence for a window with nothing left. The argument is the reset time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spent. Back at %1$@."
+          }
+        }
+      }
+    },
+    "instrument.noExtraUsage": {
+      "comment": "Instrument line when the account has no overage billing and no prepaid credits.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No extra usage"
+          }
+        }
+      }
+    },
+    "instrument.noProjection": {
+      "comment": "Instrument sentence when the app has not assessed this window.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No projection yet."
+          }
+        }
+      }
+    },
+    "instrument.readout": {
+      "comment": "Instrument readout for the sample under the cursor: its clock time, then the percentage used.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ used"
+          }
+        }
+      }
+    },
+    "instrument.readout.flat": {
+      "comment": "Instrument readout for a sample that did not move: its clock time, the percentage used, then the minutes since the previous sample.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ used · no change in %3$lld min"
+          }
+        }
+      }
+    },
+    "instrument.readout.step": {
+      "comment": "Instrument readout for a sample that moved: its clock time, the percentage used, the signed step in points, then the minutes it took.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ used · %3$@%4$lld pt in %5$lld min"
+          }
+        }
+      }
+    },
+    "instrument.silent.learning": {
+      "comment": "Instrument sentence when there is too little history to project from.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learning your pattern — a few more windows and the line continues."
+          }
+        }
+      }
+    },
+    "instrument.silent.noReset": {
+      "comment": "Instrument sentence when the provider named no reset instant.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No reset time reported, so there is no end to project to."
+          }
+        }
+      }
+    },
+    "instrument.silent.notStarted": {
+      "comment": "Instrument sentence when nothing has been spent in the window.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing spent yet."
+          }
+        }
+      }
+    },
+    "instrument.silent.tooEarly": {
+      "comment": "Instrument sentence when the projected range is too wide to name a number inside.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too early to say — the range is wider than a number would be honest about."
+          }
+        }
+      }
+    },
+    "instrument.week.exact": {
+      "comment": "Instrument clause when the week funds exactly as many windows as there is time for. The count, then the weekday of the reset.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %1$lld more fit before %2$@, and the week funds exactly that."
+          }
+        }
+      }
+    },
+    "instrument.week.funded": {
+      "comment": "Instrument clause counting the windows the week can still pay for.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The week can fund about %1$lld more."
+          }
+        }
+      }
+    },
+    "instrument.week.learning": {
+      "comment": "Instrument clause when the week's cost per window is not yet measured.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learning your pattern before counting the ones ahead."
+          }
+        }
+      }
+    },
+    "instrument.week.ledger": {
+      "comment": "Instrument sentence counting the completed five-hour windows of the last seven days: how many were worked in, how many nobody touched. Both counts arrive in words.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ worked, %2$@ untouched."
+          }
+        }
+      }
+    },
+    "instrument.week.none": {
+      "comment": "The count zero in the week's ledger: no completed window was worked in, or none was left untouched.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "none"
+          }
+        }
+      }
+    },
+    "instrument.week.runsOut": {
+      "comment": "Instrument clause when the week is projected to run dry before its reset. The weekday it runs out, then the weekday it resets.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The week runs out on %1$@, before it resets %2$@."
+          }
+        }
+      }
+    },
+    "instrument.week.theReset": {
+      "comment": "Stands in for the weekday of a weekly reset the provider did not name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the reset"
+          }
+        }
+      }
+    },
+    "instrument.week.timeShort": {
+      "comment": "Instrument clause when there is time for fewer windows than the week funds. The count that fit, the weekday of the reset, then the count the week funds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %1$lld more fit before %2$@; the week could fund %3$lld."
+          }
+        }
+      }
+    },
+    "instrument.week.title": {
+      "comment": "Heading over the instrument's row of completed five-hour windows.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Five-hour windows · last seven days"
+          }
+        }
+      }
+    },
+    "instrument.week.weekShort": {
+      "comment": "Instrument clause when the week funds fewer windows than there is time for. The count the week funds, the count that fit, then the weekday of the reset.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The week funds about %1$lld more; there is time for %2$lld before %3$@."
+          }
+        }
+      }
+    },
+    "placement.hidden": {
+      "comment": "Panel advisory when macOS refused to place the status item on the menu bar, and where to allow it.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS has hidden QotaFolio's batteries. Turn them on in System Settings → Menu Bar."
+          }
+        }
+      }
+    },
+    "placement.openSettings": {
+      "comment": "Button on the hidden-item advisory that opens System Settings at the Menu Bar pane.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open…"
+          }
+        }
+      }
+    },
+    "placement.openSettings.help": {
+      "comment": "Tooltip on the hidden-item advisory's button.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings → Menu Bar"
+          }
+        }
+      }
+    },
+    "privacy.hiddenName.anthropic": {
+      "comment": "Stands in for an Anthropic account's name while account names are hidden.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic account"
+          }
+        }
+      }
+    },
+    "privacy.hiddenName.openai": {
+      "comment": "Stands in for a ChatGPT account's name while account names are hidden.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ChatGPT account"
+          }
+        }
+      }
+    },
+    "provider.anthropic": {
+      "comment": "Anthropic provider name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic"
+          }
+        }
+      }
+    },
+    "provider.openai": {
+      "comment": "ChatGPT provider name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ChatGPT"
+          }
+        }
+      }
+    },
+    "reconnect.refused.finishingQuit": {
+      "comment": "Shown on an account card when a quit holds account changes closed and Reconnect was pressed. Nothing is being deleted.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting did not start. QotaFolio is finishing quitting, and nothing is being deleted."
+          }
+        }
+      }
+    },
+    "reconnect.refused.flowOpen": {
+      "comment": "Shown on an account card when Reconnect was pressed while another account sign-in was already running.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting did not start. QotaFolio was already signing in to an account."
+          }
+        }
+      }
+    },
+    "reconnect.refused.notListed": {
+      "comment": "Shown on an account card when Reconnect was pressed for an account that has left the list.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting did not start. This account is no longer in your list."
+          }
+        }
+      }
+    },
+    "reconnect.refused.unreadable": {
+      "comment": "Shown on an account card when the account list could not be read and Reconnect was pressed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting did not start. QotaFolio cannot read your account list right now."
+          }
+        }
+      }
+    },
+    "remove.body": {
+      "comment": "Remove-account confirmation scope.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Its saved sign-in will be deleted from this Mac. Where the provider allows it, QotaFolio also ends the permission it created for itself. Your account is not touched and no other app is signed out."
+          }
+        }
+      }
+    },
+    "remove.heading": {
+      "comment": "Remove-account confirmation title containing the display name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %1$@?"
+          }
+        }
+      }
+    },
+    "remove.refused.alreadyRemoved": {
+      "comment": "Shown in the remove prompt when the account had already gone before Remove was pressed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This account is no longer in your list."
+          }
+        }
+      }
+    },
+    "remove.refused.finishingQuit": {
+      "comment": "Shown in the remove prompt when a quit holds account changes closed. Nothing is being deleted.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This account was not removed. QotaFolio is finishing quitting, and nothing is being deleted."
+          }
+        }
+      }
+    },
+    "remove.refused.notApplied": {
+      "comment": "Shown in the remove prompt when the account list was asked to remove the account and it is still there.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio could not remove this account. It is still in your list."
+          }
+        }
+      }
+    },
+    "remove.refused.unreadable": {
+      "comment": "Shown in the remove prompt when the account list could not be read.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio cannot read your account list right now. This account was not removed."
+          }
+        }
+      }
+    },
+    "rename.empty": {
+      "comment": "Inline validation for an empty account name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter an account name."
+          }
+        }
+      }
+    },
+    "rename.field": {
+      "comment": "Account display-name field label.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account name"
+          }
+        }
+      }
+    },
+    "rename.heading": {
+      "comment": "Rename-account sheet title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename account"
+          }
+        }
+      }
+    },
+    "rename.refused.finishingQuit": {
+      "comment": "Shown in the rename prompt while a quit holds account changes closed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio is finishing quitting. The name was not changed."
+          }
+        }
+      }
+    },
+    "rename.refused.notApplied": {
+      "comment": "Shown in the rename prompt when the account list was written and the new name is not there.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio could not change this name. The account still uses its old name."
+          }
+        }
+      }
+    },
+    "rename.refused.unreadable": {
+      "comment": "Shown in the rename prompt when the account list became unreadable before the new name was written.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio cannot read your account list right now. The name was not changed."
+          }
+        }
+      }
+    },
+    "reset.due": {
+      "comment": "Shown when a provider reset time has passed but fresh quota data has not arrived.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset due"
+          }
+        }
+      }
+    },
+    "reset.relative.daysHours": {
+      "comment": "Compact quota reset countdown with days and hours.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldd %2$lldh"
+          }
+        }
+      }
+    },
+    "reset.relative.hoursMinutes": {
+      "comment": "Compact quota reset countdown with hours and minutes.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldh %2$lldm"
+          }
+        }
+      }
+    },
+    "reset.relative.lessThanMinute": {
+      "comment": "Compact quota reset countdown for less than one minute.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "<1m"
+          }
+        }
+      }
+    },
+    "reset.relative.minutes": {
+      "comment": "Compact quota reset countdown in minutes.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldm"
+          }
+        }
+      }
+    },
+    "reset.unavailable": {
+      "comment": "Shown when a quota reset timestamp is absent or cannot be represented safely.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset time unavailable"
+          }
+        }
+      }
+    },
+    "row.learning": {
+      "comment": "Right-hand text of a quota row with too little history to project from.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learning your pattern"
+          }
+        }
+      }
+    },
+    "row.leftAtReset": {
+      "comment": "Right-hand text of a quota row projected to finish its window comfortably.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~%1$lld%% left at reset"
+          }
+        }
+      }
+    },
+    "row.limitAt": {
+      "comment": "Right-hand text of a quota row projected to reach its limit. The argument is a clock time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limit at %1$@"
+          }
+        }
+      }
+    },
+    "row.noReset": {
+      "comment": "Right-hand text of a quota row whose provider named no reset instant.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No reset time reported"
+          }
+        }
+      }
+    },
+    "row.notStarted": {
+      "comment": "Right-hand text of a quota row nothing has been spent in. The argument is a countdown.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not started · resets in %1$@"
+          }
+        }
+      }
+    },
+    "row.spare": {
+      "comment": "Right-hand text of a quota row projected to finish its window with little to spare.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~%1$lld%% spare"
+          }
+        }
+      }
+    },
+    "row.spent": {
+      "comment": "Right-hand text of a quota row whose window is fully used.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spent"
+          }
+        }
+      }
+    },
+    "row.stale": {
+      "comment": "Right-hand text of a quota row whose reading is old. A whole percentage and how long ago it was true.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld%% · %2$@ ago"
+          }
+        }
+      }
+    },
+    "row.tooEarly": {
+      "comment": "Right-hand text of a quota row whose projected range is too wide to name a number inside.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too early to say"
+          }
+        }
+      }
+    },
+    "settings.accounts.actions": {
+      "comment": "Tooltip for an account row's actions menu in Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename, reconnect, remove"
+          }
+        }
+      }
+    },
+    "settings.accounts.addFlow.label": {
+      "comment": "VoiceOver label for the add-account sheet the Settings window presents.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add account"
+          }
+        }
+      }
+    },
+    "settings.accounts.empty": {
+      "comment": "Settings Accounts tab empty state.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No accounts are configured."
+          }
+        }
+      }
+    },
+    "settings.accounts.order.help": {
+      "comment": "Explains that the order in Settings is the order everywhere.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This order is the panel's and the menu bar's."
+          }
+        }
+      }
+    },
+    "settings.accounts.remove.message": {
+      "comment": "Body of the removal confirmation in Settings. The argument is the account name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ leaves QotaFolio and its saved sign-in is deleted from this Mac. Nothing changes at the provider except that this sign-in ends."
+          }
+        }
+      }
+    },
+    "settings.accounts.remove.title": {
+      "comment": "Title of the removal confirmation in Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove this account?"
+          }
+        }
+      }
+    },
+    "settings.accounts.rename.message": {
+      "comment": "Body of the rename dialog in Settings. The argument is the provider's name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your name for this %1$@ account, as the panel and the menu bar say it."
+          }
+        }
+      }
+    },
+    "settings.accounts.rename.title": {
+      "comment": "Title of the rename dialog in Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename Account"
+          }
+        }
+      }
+    },
+    "settings.accounts.section": {
+      "comment": "Settings Accounts section title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accounts"
+          }
+        }
+      }
+    },
+    "settings.accounts.show": {
+      "comment": "Show an account in the panel and status strip.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show"
+          }
+        }
+      }
+    },
+    "settings.accounts.show.label": {
+      "comment": "VoiceOver label for showing an account in the panel and status strip.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show account"
+          }
+        }
+      }
+    },
+    "settings.accounts.visibility.alwaysOne": {
+      "comment": "States the rule that the last visible account cannot be hidden.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One account always stays visible."
+          }
+        }
+      }
+    },
+    "settings.accounts.visibility.help": {
+      "comment": "Explains the account visibility preference boundary.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hidden accounts remain connected but do not appear in the panel or status-strip election."
+          }
+        }
+      }
+    },
+    "settings.accounts.visibility.lastVisible": {
+      "comment": "Why the last visible account cannot be hidden.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is the only visible account. Show another account first, then hide this one."
+          }
+        }
+      }
+    },
+    "settings.alerts.account.label": {
+      "comment": "VoiceOver label for one account's alerts switch. The argument is the account name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alerts for %1$@"
+          }
+        }
+      }
+    },
+    "settings.alerts.accounts": {
+      "comment": "Settings Alerts per-account section title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accounts"
+          }
+        }
+      }
+    },
+    "settings.alerts.enabled": {
+      "comment": "Master switch for the app's notifications.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show alerts"
+          }
+        }
+      }
+    },
+    "settings.alerts.help": {
+      "comment": "Explains what the app's alerts say and that they carry no actions.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An alert is one sentence in a notification: an account running out before its reset, a window that has just reset, or part of a week that will expire unused. Nothing in it asks you to do anything."
+          }
+        }
+      }
+    },
+    "settings.alerts.openSystemSettings": {
+      "comment": "Opens System Settings at the Notifications pane.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Notification settings…"
+          }
+        }
+      }
+    },
+    "settings.alerts.permission": {
+      "comment": "Settings Alerts section about the system's notification permission.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permission"
+          }
+        }
+      }
+    },
+    "settings.alerts.permission.notAsked": {
+      "comment": "Permission state: the system has not been asked yet.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS will ask for permission the first time an alert is due."
+          }
+        }
+      }
+    },
+    "settings.alerts.permission.off": {
+      "comment": "Permission state: notifications are denied, and where to turn them on.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications from QotaFolio are turned off. Turn them on in System Settings → Notifications → QotaFolio."
+          }
+        }
+      }
+    },
+    "settings.alerts.permission.on": {
+      "comment": "Permission state: notifications are allowed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS allows notifications from QotaFolio."
+          }
+        }
+      }
+    },
+    "settings.alerts.permission.unknown": {
+      "comment": "Permission state: the system gave no readable answer.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio could not read the notification permission."
+          }
+        }
+      }
+    },
+    "settings.alerts.section": {
+      "comment": "Settings Alerts section title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alerts"
+          }
+        }
+      }
+    },
+    "settings.appearance.dark": {
+      "comment": "Appearance choice: always dark.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark"
+          }
+        }
+      }
+    },
+    "settings.appearance.hint": {
+      "comment": "One line under the appearance picker, saying why the menu-bar batteries do not follow this choice.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The batteries stay with the menu bar, which has a light and a dark of its own."
+          }
+        }
+      }
+    },
+    "settings.appearance.label": {
+      "comment": "The appearance picker's row label. The choice covers the panel and the Settings window.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio's windows"
+          }
+        }
+      }
+    },
+    "settings.appearance.light": {
+      "comment": "Appearance choice: always light.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
+          }
+        }
+      }
+    },
+    "settings.appearance.system": {
+      "comment": "Appearance choice: follow the Mac.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
+          }
+        }
+      }
+    },
+    "settings.general.appearance": {
+      "comment": "Settings section for the light/dark choice.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
+    "settings.general.data": {
+      "comment": "Settings section for local QotaFolio data removal.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        }
+      }
+    },
+    "settings.general.launchAtLogin": {
+      "comment": "Launch at Login preference.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open QotaFolio at login"
+          }
+        }
+      }
+    },
+    "settings.general.launchAtLogin.needsApproval": {
+      "comment": "Launch at Login requires approval in System Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS needs your approval before QotaFolio can open at login."
+          }
+        }
+      }
+    },
+    "settings.general.menuBar": {
+      "comment": "Settings section for what the menu-bar batteries are drawn to.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menu bar"
+          }
+        }
+      }
+    },
+    "settings.general.openLoginItems": {
+      "comment": "Open the macOS Login Items settings pane.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Login Items settings…"
+          }
+        }
+      }
+    },
+    "settings.general.shortcut": {
+      "comment": "Settings section for the global panel shortcut.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard"
+          }
+        }
+      }
+    },
+    "settings.general.startup": {
+      "comment": "Settings section for Launch at Login.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Startup"
+          }
+        }
+      }
+    },
+    "settings.general.terminal": {
+      "comment": "Settings section for the qota command.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal"
+          }
+        }
+      }
+    },
+    "settings.privacy.blanket.automatic": {
+      "comment": "Privacy state when this Mac reports screen sharing to the app.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "While your screen is shared or recorded, QotaFolio hides names and colours by itself, and brings them back when it ends."
+          }
+        }
+      }
+    },
+    "settings.privacy.blanket.manual": {
+      "comment": "Privacy state when this Mac cannot report screen sharing to the app.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac does not tell apps when the screen is shared. Turn on Hide account names before you share your screen."
+          }
+        }
+      }
+    },
+    "settings.privacy.blanket.off": {
+      "comment": "Privacy state when the automatic blanket is switched off.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio will not hide names by itself. Use Hide account names when you share your screen."
+          }
+        }
+      }
+    },
+    "settings.privacy.blanket.on": {
+      "comment": "Privacy state while a screen share or recording is in progress.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your screen is being shared right now. Names are hidden and the batteries colourless until it ends."
+          }
+        }
+      }
+    },
+    "settings.privacy.blanket.watchedButOff": {
+      "comment": "Privacy state while the screen is shared and the automatic blanket is switched off.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your screen is being shared right now. Names stay on, as you chose."
+          }
+        }
+      }
+    },
+    "settings.privacy.hideNames": {
+      "comment": "Switch that hides account names on the panel and in the strip's words.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide account names"
+          }
+        }
+      }
+    },
+    "settings.privacy.hideNames.help": {
+      "comment": "Explains what hiding names changes on the panel and in the strip.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With names hidden, each account is called by its provider — “Anthropic account”, “ChatGPT account” — and the batteries are drawn without colour."
+          }
+        }
+      }
+    },
+    "settings.privacy.hideNamesWhileShared": {
+      "comment": "Switch for the automatic blanket: names hidden and batteries colourless while the screen is shared or recorded.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide them while the screen is shared"
+          }
+        }
+      }
+    },
+    "settings.privacy.leaves": {
+      "comment": "One sentence on what leaves the Mac: only the provider requests.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio sends nothing anywhere except its own requests to Anthropic and OpenAI for your usage, made with your sign-in. No analytics, no telemetry, no third parties."
+          }
+        }
+      }
+    },
+    "settings.privacy.leaves.section": {
+      "comment": "Settings Privacy section title about data leaving the Mac.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What leaves this Mac"
+          }
+        }
+      }
+    },
+    "settings.privacy.section": {
+      "comment": "Settings Privacy section title about screen sharing.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen sharing"
+          }
+        }
+      }
+    },
+    "settings.shortcut.ax.current": {
+      "comment": "VoiceOver label for the shortcut control. The argument is the current key combination.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panel shortcut: %@. Activate to record a different one."
+          }
+        }
+      }
+    },
+    "settings.shortcut.ax.none": {
+      "comment": "VoiceOver label for the shortcut control when no shortcut is set.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No panel shortcut. Activate to record one."
+          }
+        }
+      }
+    },
+    "settings.shortcut.clear": {
+      "comment": "Removes the panel shortcut.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "settings.shortcut.label": {
+      "comment": "The panel shortcut's row label.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the panel from anywhere"
+          }
+        }
+      }
+    },
+    "settings.shortcut.none": {
+      "comment": "Shown on the shortcut control when no shortcut is set.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record Shortcut"
+          }
+        }
+      }
+    },
+    "settings.shortcut.recording": {
+      "comment": "Shown on the shortcut control while it waits for a keystroke.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type a shortcut…"
+          }
+        }
+      }
+    },
+    "settings.strip.hint": {
+      "comment": "One line under the menu-bar battery picker, naming both quantities, saying each is drawn on its own and that the Control follows the choice.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This session is what this five-hour session still holds; this week is what the week still holds. Each is drawn on its own; the words say both. The Control shows the same figure."
+          }
+        }
+      }
+    },
+    "settings.strip.label": {
+      "comment": "The row label for which quantity the menu-bar batteries are drawn to.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The menu-bar batteries"
+          }
+        }
+      }
+    },
+    "settings.strip.session": {
+      "comment": "Battery quantity: what this five-hour session still holds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This session"
+          }
+        }
+      }
+    },
+    "settings.strip.week": {
+      "comment": "Battery quantity: what the week still holds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week"
+          }
+        }
+      }
+    },
+    "settings.tab.about": {
+      "comment": "About Settings tab.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        }
+      }
+    },
+    "settings.tab.accounts": {
+      "comment": "Accounts Settings tab.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accounts"
+          }
+        }
+      }
+    },
+    "settings.tab.alerts": {
+      "comment": "Alerts Settings tab.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alerts"
+          }
+        }
+      }
+    },
+    "settings.tab.general": {
+      "comment": "General Settings tab.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
+          }
+        }
+      }
+    },
+    "settings.tab.privacy": {
+      "comment": "Privacy Settings tab.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy"
+          }
+        }
+      }
+    },
+    "settings.tab.updates": {
+      "comment": "Updates Settings tab.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates"
+          }
+        }
+      }
+    },
+    "settings.terminal.copied": {
+      "comment": "Shown after the command's path was copied.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied"
+          }
+        }
+      }
+    },
+    "settings.terminal.copy": {
+      "comment": "Copies the command's path.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        }
+      }
+    },
+    "settings.terminal.hint": {
+      "comment": "One line under the terminal command's path.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prints every account's current usage in Terminal. Add --json for scripts."
+          }
+        }
+      }
+    },
+    "settings.terminal.label": {
+      "comment": "The terminal command's row label — the command itself.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "qota status"
+          }
+        }
+      }
+    },
+    "settings.uninstall.entry": {
+      "comment": "Open the data-removal confirmation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove My Data…"
+          }
+        }
+      }
+    },
+    "settings.updates.checkAutomatically": {
+      "comment": "Sparkle automatic update-check preference.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatically check for updates"
+          }
+        }
+      }
+    },
+    "settings.updates.checkNow": {
+      "comment": "Manually check for a QotaFolio update.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check for Updates…"
+          }
+        }
+      }
+    },
+    "settings.updates.downloadAutomatically": {
+      "comment": "Sparkle automatic update-download preference.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatically download and install updates"
+          }
+        }
+      }
+    },
+    "settings.updates.unavailable": {
+      "comment": "Shown in place of the update controls when the updater could not start.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This copy of QotaFolio cannot update itself. Download the app again to get future versions."
+          }
+        }
+      }
+    },
+    "settings.window.title": {
+      "comment": "Title of the AppKit-owned Settings window.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio Settings"
+          }
+        }
+      }
+    },
+    "strip.ax.account": {
+      "comment": "Spoken menu-bar strip sentence for one account: what it lets you spend now, and what is left of its week.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$lld percent available now, %3$lld percent left this week."
+          }
+        }
+      }
+    },
+    "strip.ax.account.needsSignIn": {
+      "comment": "Spoken menu-bar strip sentence for an account whose grant has lapsed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ needs sign-in."
+          }
+        }
+      }
+    },
+    "strip.ax.account.setupIssue": {
+      "comment": "Spoken menu-bar strip sentence for an account that cannot be polled until it is repaired.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ has a setup issue."
+          }
+        }
+      }
+    },
+    "strip.ax.account.spent": {
+      "comment": "Spoken menu-bar strip sentence for a spent account whose provider named no return time, with what its week still holds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ spent. %2$lld percent left this week."
+          }
+        }
+      }
+    },
+    "strip.ax.account.spentUntil": {
+      "comment": "Spoken menu-bar strip sentence for a spent account, when it returns, and what its week still holds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ spent, back in %2$@. %3$lld percent left this week."
+          }
+        }
+      }
+    },
+    "strip.ax.account.unavailable": {
+      "comment": "Spoken menu-bar strip sentence for an account the provider answered nothing usable for.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ has no reading."
+          }
+        }
+      }
+    },
+    "strip.ax.account.waiting": {
+      "comment": "Spoken menu-bar strip sentence for an account whose first reading has not arrived.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ has no reading yet."
+          }
+        }
+      }
+    },
+    "strip.ax.allSpent": {
+      "comment": "Spoken menu-bar strip sentence when no account has anything left to spend.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All accounts spent."
+          }
+        }
+      }
+    },
+    "strip.ax.app": {
+      "comment": "The first thing VoiceOver reads on the menu-bar strip: the app it belongs to.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio."
+          }
+        }
+      }
+    },
+    "strip.ax.help": {
+      "comment": "VoiceOver help for the native status-item button.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open QotaFolio remaining quota"
+          }
+        }
+      }
+    },
+    "strip.ax.soonestBack": {
+      "comment": "Spoken menu-bar strip sentence naming the spent account that returns first and when.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soonest back: %1$@ in %2$@."
+          }
+        }
+      }
+    },
+    "strip.catalogUnreadable": {
+      "comment": "Menu-bar strip words when the saved account list cannot be read. The retry lives in the panel, so this points there rather than offering one.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio can't read its saved accounts. Open QotaFolio for details."
+          }
+        }
+      }
+    },
+    "strip.loading": {
+      "comment": "Menu-bar strip words while the account list or the first reading is loading.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading remaining quota."
+          }
+        }
+      }
+    },
+    "strip.noAccounts": {
+      "comment": "Menu-bar strip words when no account has been added yet.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No accounts configured. Open QotaFolio to add one."
+          }
+        }
+      }
+    },
+    "strip.noVisibleAccounts": {
+      "comment": "Menu-bar strip words when configured accounts exist but every account is hidden.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No accounts are visible. Open Settings to show one."
+          }
+        }
+      }
+    },
+    "strip.time.short.hours": {
+      "comment": "A whole number of hours in Apple's short form.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldh"
+          }
+        }
+      }
+    },
+    "strip.time.short.hoursAndMinutes": {
+      "comment": "Hours and minutes together in Apple's short form.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldh %2$lldm"
+          }
+        }
+      }
+    },
+    "strip.time.short.minutes": {
+      "comment": "A whole number of minutes in Apple's short form.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldm"
+          }
+        }
+      }
+    },
+    "strip.tooltip.account": {
+      "comment": "Menu-bar strip tooltip line for one account, what it lets you spend now and what is left of its week.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$lld%% now · %3$lld%% this week"
+          }
+        }
+      }
+    },
+    "strip.tooltip.allSpent": {
+      "comment": "Menu-bar strip tooltip line when every account is spent, naming the one that returns first.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All accounts spent — %1$@ is back in %2$@"
+          }
+        }
+      }
+    },
+    "strip.tooltip.needsSignIn": {
+      "comment": "Menu-bar strip tooltip line for an account whose grant has lapsed.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — needs sign-in"
+          }
+        }
+      }
+    },
+    "strip.tooltip.setupIssue": {
+      "comment": "Menu-bar strip tooltip line for an account that cannot be polled until it is repaired.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — setup issue"
+          }
+        }
+      }
+    },
+    "strip.tooltip.spent": {
+      "comment": "Menu-bar strip tooltip line for a spent account whose provider named no return time, with what its week still holds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ spent · %2$lld%% this week"
+          }
+        }
+      }
+    },
+    "strip.tooltip.spentUntil": {
+      "comment": "Menu-bar strip tooltip line for a spent account, when it returns, and what its week still holds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ spent · back in %2$@ · %3$lld%% this week"
+          }
+        }
+      }
+    },
+    "strip.tooltip.unavailable": {
+      "comment": "Menu-bar strip tooltip line for an account the provider answered nothing usable for.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — no reading"
+          }
+        }
+      }
+    },
+    "strip.tooltip.waiting": {
+      "comment": "Menu-bar strip tooltip line for an account whose first reading has not arrived.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — waiting for its first reading"
+          }
+        }
+      }
+    },
+    "time.day": {
+      "comment": "One day, spoken.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 day"
+          }
+        }
+      }
+    },
+    "time.days": {
+      "comment": "A whole number of days, spoken.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld days"
+          }
+        }
+      }
+    },
+    "time.hour": {
+      "comment": "One hour, spoken.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 hour"
+          }
+        }
+      }
+    },
+    "time.hours": {
+      "comment": "A whole number of hours, spoken.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld hours"
+          }
+        }
+      }
+    },
+    "time.lessThanMinute": {
+      "comment": "A duration under one minute, spoken.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "less than a minute"
+          }
+        }
+      }
+    },
+    "time.minute": {
+      "comment": "One minute, spoken.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 minute"
+          }
+        }
+      }
+    },
+    "time.minutes": {
+      "comment": "A whole number of minutes, spoken.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld minutes"
+          }
+        }
+      }
+    },
+    "time.pair": {
+      "comment": "Two duration units said together, spoken: the larger first.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "uninstall.confirm": {
+      "comment": "Confirm local data removal.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove My Data"
+          }
+        }
+      }
+    },
+    "uninstall.confirmation.body": {
+      "comment": "Exact scope of local data removal, and what it costs the user.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio will delete the sign-ins it holds for your accounts, along with your account list, your settings and its update files. There is no way to get them back afterwards — to use QotaFolio again you would sign in to each account once more.\n\nYour Anthropic and ChatGPT accounts stay as they are: nothing is cancelled, and no other app is signed out. QotaFolio does end the permission it created for itself on your Anthropic account. ChatGPT offers no way to do that, so its permission stays until you remove it yourself.\n\nQotaFolio will quit when it is done, and you can then drag it to the Trash."
+          }
+        }
+      }
+    },
+    "uninstall.confirmation.title": {
+      "comment": "Data-removal confirmation title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove your QotaFolio data?"
+          }
+        }
+      }
+    },
+    "uninstall.problems": {
+      "comment": "Introduces the list of removal steps that did not complete.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One part of the removal did not finish:"
+          }
+        }
+      }
+    },
+    "uninstall.quit": {
+      "comment": "Quit the app after local data removal.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit QotaFolio"
+          }
+        }
+      }
+    },
+    "uninstall.removing": {
+      "comment": "Data-removal progress state.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removing your QotaFolio data…"
+          }
+        }
+      }
+    },
+    "uninstall.showInFinder": {
+      "comment": "Select this app bundle in Finder.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show QotaFolio in Finder"
+          }
+        }
+      }
+    },
+    "uninstall.step.credentials": {
+      "comment": "Removal step name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleting your saved sign-ins"
+          }
+        }
+      }
+    },
+    "uninstall.step.localFiles": {
+      "comment": "Removal step name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removing QotaFolio's files and settings"
+          }
+        }
+      }
+    },
+    "uninstall.step.openAtLogin": {
+      "comment": "Removal step name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removing the Open at Login registration"
+          }
+        }
+      }
+    },
+    "uninstall.step.polling": {
+      "comment": "Removal step name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopping the quota checks"
+          }
+        }
+      }
+    },
+    "uninstall.success": {
+      "comment": "Shown after local data removal has run.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your QotaFolio data is removed. Drag QotaFolio to the Trash to finish removing the app."
+          }
+        }
+      }
+    },
+    "updates.halted.detail": {
+      "comment": "Card body when the polling engine has stopped and no quota numbers are available.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio stopped checking your accounts. Your accounts and sign-ins are unchanged. Quit and reopen QotaFolio to start checking again."
+          }
+        }
+      }
+    },
+    "updates.halted.lastKnown": {
+      "comment": "Card banner over cached quota numbers when the polling engine has stopped.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Showing last known remaining quota. Quit and reopen QotaFolio to start checking again."
+          }
+        }
+      }
+    },
+    "updates.halted.reason": {
+      "comment": "Tooltip and VoiceOver hint on a Refresh control disabled because the polling engine stopped.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QotaFolio stopped checking your accounts. Quit and reopen QotaFolio to start checking again."
+          }
+        }
+      }
+    },
+    "updates.halted.sentence": {
+      "comment": "Complete sentence stating that quota updates have stopped for this run of the app.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates stopped."
+          }
+        }
+      }
+    },
+    "updates.halted.title": {
+      "comment": "Card heading when the polling engine has stopped for this run of the app.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates stopped"
+          }
+        }
+      }
+    },
+    "visibility.empty.action": {
+      "comment": "Opens Settings from the defensive no-visible-accounts panel state.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings…"
+          }
+        }
+      }
+    },
+    "visibility.empty.body": {
+      "comment": "Explains that hidden accounts remain configured and directs the user to Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your accounts remain connected. Open Settings to show an account in the panel and status strip."
+          }
+        }
+      }
+    },
+    "visibility.empty.title": {
+      "comment": "Defensive panel state when configured accounts exist but every account is hidden.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No visible accounts"
+          }
+        }
+      }
+    },
+    "window.session": {
+      "comment": "The provider's short rolling quota window — five hours at both providers today.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session"
+          }
+        }
+      }
+    },
+    "window.weekly": {
+      "comment": "Weekly quota window.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

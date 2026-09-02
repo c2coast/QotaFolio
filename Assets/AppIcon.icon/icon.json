@@ -1,0 +1,44 @@
+{
+  "groups": [
+    {
+      "layers": [
+        {
+          "glass": true,
+          "image-name": "fold.svg",
+          "name": "fold"
+        },
+        {
+          "glass": true,
+          "image-name": "future.svg",
+          "name": "future"
+        },
+        {
+          "glass": true,
+          "image-name": "past.svg",
+          "name": "past"
+        }
+      ],
+      "shadow": {
+        "kind": "layer-color",
+        "opacity": 0.35
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.4
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  },
+  "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "srgb:0.09412,0.13725,0.22745,1.00000",
+          "srgb:0.04314,0.06275,0.12549,1.00000"
+        ]
+      }
+    }
+  ]
+}

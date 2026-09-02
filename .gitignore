@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Swift and Xcode build products
+.build/
+.artifacts/
+DerivedData/
+*.xcarchive
+*.xcresult
+*.dSYM
+.swiftpm/
+
+# XcodeGen regenerates the project from project.yml.
+/*.xcodeproj/
+
+# Xcode per-user state
+**/xcuserdata/
+*.xcuserstate
+
+# Python bytecode from Tools/
+__pycache__/
+*.py[cod]
+
+.claude/
