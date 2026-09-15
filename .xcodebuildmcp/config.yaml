@@ -1,0 +1,5 @@
+# QotaFolio is a macOS-only app, so the macOS workflow is the one that matters here:
+# XcodeBuildMCP's default surface is the simulator group, which has no build_macos/test_macos.
+# Tracked on purpose (same reason AMS tracks its own): a fresh clone should get the same tools.
+schemaVersion: 1
+enabledWorkflows: ["macos"]
