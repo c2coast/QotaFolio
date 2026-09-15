@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "xcode": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "xcodebuildmcp@2.7.0",
+        "mcp"
+      ],
+      "env": {
+        "XCODEBUILDMCP_SENTRY_DISABLED": "true",
+        "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer"
+      }
+    },
+    "asc-mcp": {
+      "type": "stdio",
+      "command": "${HOME}/.mint/bin/asc-mcp",
+      "args": [
+        "--workers",
+        "provisioning"
+      ]
+    },
+    "xcode-bridge": {
+      "type": "stdio",
+      "command": "xcrun",
+      "args": [
+        "mcpbridge"
+      ]
+    }
+  }
+}
