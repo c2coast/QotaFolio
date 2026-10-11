@@ -1,30 +1,13 @@
-# Proof that the tree assembles: the project generates and every target compiles with no
-# signing identity anywhere.
-name: Build
-
+# This repo's whole CI: the org's one check, run from c2coast/ci's main. Every repo carries
+# exactly this file; the required check it reports is `ci / check`. pull_request_target runs the
+# copy of this file on the default branch, so a branch cannot replace the check that judges it;
+# `edited` runs it again when a pull request's base changes.
+name: ci
 on:
-  push:
-    branches: [main]
-  pull_request:
-
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
 permissions:
   contents: read
-
 jobs:
-  build:
-    # Pinned to the macOS line the app requires, rather than macos-latest, which moves.
-    # The image's default Xcode is a 26.x, which is what the project is written against.
-    runs-on: macos-26
-    env:
-      HOMEBREW_NO_AUTO_UPDATE: "1"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      # The runner has no XcodeGen, and the repository tracks no generated project.
-      - run: brew install xcodegen
-      - run: xcodegen generate --no-env --spec project.yml --project . --project-root .
-
-      - name: Compile every target
-        run: |
-          xcodebuild -project QotaFolio.xcodeproj -scheme QotaFolio -configuration Debug \
-            -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -quiet build
+  ci:
+    uses: c2coast/ci/.github/workflows/check.yml@main
