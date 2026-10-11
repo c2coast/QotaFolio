@@ -139,27 +139,6 @@ nonisolated func surfaceHoldingAddFlow(
     private var lastObservedFlowPhase: AccountFlowPhase?
     private let flowObserver: PanelFlowObserver
 
-    private lazy var hostingController: NSHostingController<PanelRoot<Content>> = {
-        let root = PanelRoot(
-            catalog: catalog,
-            store: store,
-            addFlow: addFlow,
-            accountPrompt: accountPrompt,
-            openSettings: openSettingsAction,
-            requestContentResize: { [weak self] in
-                self?.requestContentResize()
-            },
-            contentTargetHeightDidChange: { [weak self] height in
-                self?.contentTargetHeightDidChange(height)
-            },
-            settingsAddFlowSurface: { [weak self] in
-                self?.settingsAddFlowSurface
-            },
-            content: contentFactory
-        )
-        return NSHostingController(rootView: root)
-    }()
-
     public init(
         catalog: any AccountCataloging,
         store: any AccountsStoring,
@@ -294,7 +273,7 @@ nonisolated func surfaceHoldingAddFlow(
             // glass's own shadow — measured, on the same desktop, masked against unmasked —
             // and it costs the material the bleed its own edge needs. The cut of the panel's
             // contents to the slab's outline is done in `PanelRoot`, where the outline is.
-            panel.contentViewController = hostingController
+            panel.contentViewController = makeHostingController()
         }
 
         layoutPanel(relativeTo: anchoredToTheButton ? button : nil)
@@ -305,6 +284,35 @@ nonisolated func surfaceHoldingAddFlow(
         } else {
             panel.orderFrontRegardless()
         }
+    }
+
+    /// The panel's SwiftUI host, built on the panel's first showing. The panel keeps it from then
+    /// on: `contentViewController` is set once, in `present`, and nothing clears it.
+    ///
+    /// A method and not a `lazy var`, because of where `Content`'s conformance to `View` is used.
+    /// `Content` is generic, so that conformance may be isolated to an actor, and Swift 6.4 lets
+    /// such a conformance pass only into code isolated the same way (`IsolatedConformances`).
+    /// `PanelRoot`'s initializer is main-actor code. A stored property's initial value is not
+    /// checked as main-actor code, even in this main-actor class; a method of this class is.
+    private func makeHostingController() -> NSHostingController<PanelRoot<Content>> {
+        let root = PanelRoot(
+            catalog: catalog,
+            store: store,
+            addFlow: addFlow,
+            accountPrompt: accountPrompt,
+            openSettings: openSettingsAction,
+            requestContentResize: { [weak self] in
+                self?.requestContentResize()
+            },
+            contentTargetHeightDidChange: { [weak self] height in
+                self?.contentTargetHeightDidChange(height)
+            },
+            settingsAddFlowSurface: { [weak self] in
+                self?.settingsAddFlowSurface
+            },
+            content: contentFactory
+        )
+        return NSHostingController(rootView: root)
     }
 
     public func hide(reason: PanelDismissReason) {
