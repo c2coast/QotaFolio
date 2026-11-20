@@ -33,7 +33,7 @@ public nonisolated struct AppIdentity: Equatable, Sendable {
     /// The Info.plist key naming the team a build was signed by.
     ///
     /// It carries `$(DEVELOPMENT_TEAM)`, which is the same build setting
-    /// `Sources/QotaFolio.entitlements` spells the App Group with — so whoever builds this is
+    /// `app/main/QotaFolio.entitlements` spells the App Group with — so whoever builds this is
     /// signed for a group their own build can open. That is what lets someone who is not us
     /// clone the repository, give their own team, and run what they built.
     /// `AppIdentityDerivationTests` reads both files and checks they still agree, because a
