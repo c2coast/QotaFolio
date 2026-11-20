@@ -170,8 +170,12 @@ public struct Ceiling: Sendable {
         let first: Limit.Kind? = if let weekOut, modelOut.map({ weekOut <= $0 }) ?? true { .week } else if modelOut != nil { model } else { nil }
         let red = Tone.level(.nearlyGone)
         var dots: [Dot] = []
-        var ends: [(point: CGPoint, text: String, strong: Bool, kind: Limit.Kind)] = []
+        var ends: [(point: CGPoint, name: String, said: String, strong: Bool, kind: Limit.Kind)] = []
         let nowWeek = now.week.work, nowModel = modelWork(now)
+        // What a forecast's end says: the time it runs out, or what it leaves at the reset.
+        func said(_ path: (out: Date?, rate: Double, landing: Double)) -> String {
+            path.out.map(words.quarterDay) ?? "~\(left(path.landing))% left"
+        }
         if !picture.spent {
             if let model, !picture.modelSpent, let path = modelVerdict?.path {
                 if first == .week, let weekOut {
@@ -184,8 +188,7 @@ public struct Ceiling: Sendable {
                     let point = at(end, value)
                     stroke(.forecast(model), [[at(now.at, nowModel), point]], 1.25, tone, dash: [3, 3], round: true)
                     dots.append(Dot(center: point, radius: 2.5, tone: tone, ring: false))
-                    ends.append((point, path.out.map { "\(name) · \(words.quarterDay($0))" } ?? "\(name) ~\(left(path.landing))% left",
-                                 first == model, model))
+                    ends.append((point, name, said(path), first == model, model))
                 }
             }
             if let path = weekVerdict?.path {
@@ -195,8 +198,7 @@ public struct Ceiling: Sendable {
                 let point = at(end, value)
                 stroke(.forecast(.week), [[at(now.at, nowWeek), point]], 1.5, tone, dash: [3, 3], round: true)
                 dots.append(Dot(center: point, radius: 3, tone: tone, ring: false))
-                ends.append((point, path.out.map { "Weekly · \(words.quarterDay($0))" } ?? "Weekly ~\(left(path.landing))% left",
-                             first == .week, .week))
+                ends.append((point, "Weekly", said(path), first == .week, .week))
             }
         }
         if model != nil { dots.append(Dot(center: at(now.at, nowModel), radius: 2.5, tone: modelTone, ring: false)) }
@@ -210,7 +212,11 @@ public struct Ceiling: Sendable {
         let ordered = ends.filter(\.strong) + ends.filter { !$0.strong }
         for end in ordered { placer.dot(end.point, 4) }
         for end in ordered {
-            placer.put(end.text, .forecast(end.kind), end.strong ? .semibold : .medium, end.strong ? .ink : .chartInk, around(end.point))
+            // "Weekly · Wed 19:15", or the time alone where the name leaves it no room: the dot
+            // sits on the limit's named ceiling.
+            let text = end.said.hasPrefix("~") ? "\(end.name) \(end.said)" : "\(end.name) · \(end.said)"
+            placer.put(text, or: end.said, .forecast(end.kind), end.strong ? .semibold : .medium, end.strong ? .ink : .chartInk,
+                       around(end.point))
         }
         for (kind, value, text) in [(Limit.Kind.week, weekCeiling, "Weekly limit")] + (model.map { [($0, modelCeiling, "\(name) limit")] } ?? []) {
             let yr = y(value(now)), y0 = y(value(picture.points[0]))
@@ -219,7 +225,13 @@ public struct Ceiling: Sendable {
                 Placer.Spot(w - 2, yr + 11, .end), Placer.Spot(3, y0 + 11, .start),
             ])
         }
-        for fall in picture.falls {
+        // When the steps of several banked resets crowd, the largest keep their words: a step's
+        // height says what it gave back, and the smallest step says least without them.
+        let largestFirst = picture.falls.enumerated().sorted { a, b in
+            let (x, y) = (a.element.givenBack[.week] ?? 0, b.element.givenBack[.week] ?? 0)
+            return x != y ? x > y : a.offset < b.offset
+        }
+        for (_, fall) in largestFirst {
             guard let q = picture.points.first(where: { $0.at == fall.after.at }) else { continue }
             let back = fall.givenBack[.week] ?? 0
             let xs = x(q.at), yNew = y(weekCeiling(q)), yOld = y(weekCeiling(q) - back), ym = (yNew + yOld) / 2 + 3.5

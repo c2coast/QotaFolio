@@ -3,7 +3,8 @@ import Kit
 
 /// The rule that places the words inside the plot: each tries its places in order and takes the
 /// first that lies inside the plot and touches no word and no dot placed before it. A word with
-/// no such place is left out, never drawn over another.
+/// a shorter form tries that in each place next. A word with no such place is left out, never
+/// drawn over another.
 struct Placer {
     let width: Double
     let height: Double
@@ -35,16 +36,19 @@ struct Placer {
         taken.append(CGRect(x: center.x - radius, y: center.y - radius, width: 2 * radius, height: 2 * radius))
     }
 
-    mutating func put(_ text: String, _ kind: Ceiling.Label.Kind, _ weight: Weight, _ tone: Tone, _ spots: [Spot]) {
-        let wide = ChartType.width(text, weight)
-        for spot in spots {
-            let x0 = spot.anchor == .end ? spot.x - wide : spot.anchor == .middle ? spot.x - wide / 2 : spot.x
-            let box = CGRect(x: x0 - 1, y: spot.y - 9, width: wide + 2, height: 11)
-            guard box.minX >= 0, box.maxX <= width, box.minY >= 0, box.maxY <= height,
-                  !taken.contains(where: { overlap($0, box) }) else { continue }
-            taken.append(box)
-            placed.append(Ceiling.Label(kind: kind, text: text, weight: weight, tone: tone, box: box))
-            return
+    mutating func put(_ text: String, or short: String? = nil, _ kind: Ceiling.Label.Kind, _ weight: Weight, _ tone: Tone,
+                      _ spots: [Spot]) {
+        for text in [text] + (short.map { [$0] } ?? []) {
+            let wide = ChartType.width(text, weight)
+            for spot in spots {
+                let x0 = spot.anchor == .end ? spot.x - wide : spot.anchor == .middle ? spot.x - wide / 2 : spot.x
+                let box = CGRect(x: x0 - 1, y: spot.y - 9, width: wide + 2, height: 11)
+                guard box.minX >= 0, box.maxX <= width, box.minY >= 0, box.maxY <= height,
+                      !taken.contains(where: { overlap($0, box) }) else { continue }
+                taken.append(box)
+                placed.append(Ceiling.Label(kind: kind, text: text, weight: weight, tone: tone, box: box))
+                return
+            }
         }
     }
 }
