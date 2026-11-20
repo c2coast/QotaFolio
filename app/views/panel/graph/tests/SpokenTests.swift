@@ -11,10 +11,11 @@ struct SpokenTests {
     static let spoken = SpokenGraph(picture: try! Record.picture("after-banked-reset"), words: TimeWords(calendar: Record.calendar),
                                     size: CGSize(width: 360, height: 146))
 
-    @Test("The graph is one element: its name is the caption's, its value the forecast's sentence")
+    @Test("The graph is one element: its name is the caption's, its value the forecast's sentence, then the record's")
     func element() {
         #expect(Self.spoken.name == "Points used this week, to Wed 21:00")
         #expect(Self.spoken.value == "At the last three hours’ pace, the week reaches its limit around Wed 19:15, 1h 45m before it resets.")
+        #expect(Self.spoken.record == "A full banked reset at Tue 20:13 gave back 98 points.")
     }
 
     /// The week starts a week before its reset, Wed 12 Nov at 21:00. From the poll of Fri 14 Nov at

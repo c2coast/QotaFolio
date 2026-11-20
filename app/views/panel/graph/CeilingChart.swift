@@ -78,6 +78,7 @@ public struct WeekGraph: View {
 
     public var body: some View {
         let sentences = picture.sentences(in: words)
+        let spoken = SpokenGraph(picture: picture, words: words, size: CGSize(width: width, height: CeilingChart.size.height))
         VStack(alignment: .leading, spacing: 10) {
             Text("Points used this week · to \(words.day(picture.resets.instant))")
                 .font(.system(size: 11, weight: .medium))
@@ -94,11 +95,8 @@ public struct WeekGraph: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spoken.name)
         .accessibilityValue(spoken.value)
+        .accessibilityCustomContent(AccessibilityCustomContentKey("What the record shows"), spoken.record.map { Text($0) }, importance: .high)
         .accessibilityChartDescriptor(spoken)
-    }
-
-    var spoken: SpokenGraph {
-        SpokenGraph(picture: picture, words: words, size: CGSize(width: width, height: CeilingChart.size.height))
     }
 }
 

@@ -2,9 +2,10 @@ import Kit
 import SwiftUI
 
 /// What the graph says to a person who cannot see it. The graph's part of the card is one element:
-/// its name is the caption's words, and its value is the forecast's sentence. It also offers
-/// VoiceOver's audio graph the lines it draws, read from the geometry, with the record's sentence
-/// as the chart's summary.
+/// its name is the caption's words, and its value is the forecast's sentence. The record's
+/// sentence follows as the element's content of high importance, which VoiceOver speaks after the
+/// value. It also offers VoiceOver's audio graph the lines it draws, read from the geometry, with
+/// the record's sentence as the chart's summary.
 ///
 /// The audio graph's time axis runs in the chart's own points, folds and all, so it plays the week
 /// as it is drawn. Each place says the clock time there, and a place inside a fold says the
@@ -12,7 +13,8 @@ import SwiftUI
 public struct SpokenGraph: AXChartDescriptorRepresentable, Sendable {
     public let name: String
     public let value: String
-    let summary: String?
+    /// The record's sentence, when there is one.
+    public let record: String?
     let ceiling: Ceiling
     let words: TimeWords
 
@@ -20,7 +22,7 @@ public struct SpokenGraph: AXChartDescriptorRepresentable, Sendable {
         let sentences = picture.sentences(in: words)
         name = "Points used this week, to \(words.day(picture.resets.instant))"
         value = sentences.forecast
-        summary = sentences.record
+        record = sentences.record
         ceiling = Ceiling(picture: picture, size: size, words: words)
         self.words = words
     }
@@ -39,7 +41,7 @@ public struct SpokenGraph: AXChartDescriptorRepresentable, Sendable {
         let points = AXNumericDataAxisDescriptor(title: "Points of the week", range: 0...ceiling.top, gridlinePositions: []) {
             "\(Int($0.rounded())) points"
         }
-        return AXChartDescriptor(title: name, summary: summary, xAxis: time, yAxis: points, series: series())
+        return AXChartDescriptor(title: name, summary: record, xAxis: time, yAxis: points, series: series())
     }
 
     public func updateChartDescriptor(_ descriptor: AXChartDescriptor) {}
