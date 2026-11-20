@@ -24,6 +24,25 @@ enum Record {
 
     static let fable = Limit.Kind.modelWeek("Fable")
 
+    /// The chart page's twelve moments of the record, by name, from `fixtures/moments.json`.
+    static let moments: [String: Moment] = {
+        let data = try! Data(contentsOf: fixtures.appending(path: "moments.json"))
+        let list = try! JSONDecoder().decode([Moment].self, from: data)
+        return Dictionary(uniqueKeysWithValues: list.map { ($0.name, $0) })
+    }()
+
+    struct Moment: Decodable {
+        let name, label, account: String
+        let at: Double
+    }
+
+    /// The account's week at a named moment.
+    static func picture(_ name: String) throws -> WeekPicture {
+        let moment = try #require(moments[name])
+        let forecast = moment.account == "A" ? a : b
+        return try #require(forecast.picture(at: Date(timeIntervalSince1970: moment.at)))
+    }
+
     static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "UTC")!
