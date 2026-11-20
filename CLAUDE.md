@@ -8,12 +8,12 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 |---|---|
 | `Sources/` | The code of version 1.0.0: the app, its widget, the `qota` command and their libraries. |
 | `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. The app does not link it yet. |
-| `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`. |
+| `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`. |
 | `kit/engine/forecast/` | The Engine: the forecast for each limit at every poll, the falls, and the score against what then happened. |
 | `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
-| `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in four forms and the view that draws them. `tests/` holds its tests, the `GraphTests` target. The app does not take it yet. |
+| `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in four forms, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. The app does not take it yet. |
 | `Assets/` | The app icon. |
 | `project.yml` | The XcodeGen spec. XcodeGen writes `QotaFolio.xcodeproj` from it, and git ignores that project. |
 | `Package.swift` | The Swift package of `QotaFolioModel` and `QotaFolioCore`, whose code is in `Sources/`. |
@@ -42,10 +42,14 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - **The account's forecast** says which limit the account meets first, and when: spent, the model's week spent, not started, silent, a limit runs out first, or the week lasts. On a tie it names the week.
 - **The week picture** is one account's week at one poll, as the graph draws it: the week's bounds, its points with their work, the falls, the gaps, the stretches at the limit, the verdicts and the account's forecast. It holds no drawing.
 - **The sentences** are the two lines under the graph: what the forecast says, and what the record shows. They are the chart page's words, and every time in them carries its day.
+- **The time words** are `TimeWords` in `kit/model/`: how the product says a time, "Wed 21:00" on a 24-hour clock and "Wed 9:00 PM" on a 12-hour one. The sentences and the graph both say a time through them, so the two never disagree.
 - **The chart page** is the web prototype whose graph the owner picked. **The chart page's answer** is `kit/tests/fixtures/chart-page.json`: the page's own code run on the frozen record, with its week, its forecast and its sentences at every poll. Nothing in this repository writes it.
 - **The graph** is the Ceiling graph of one week picture: the work done as a line that never falls, under a ceiling that steps up at each banked reset, and the forecast running on to its ceiling. **The geometry** is the value `Ceiling`: everything the graph draws, in the chart's own points. The view only strokes it, and the tests read it.
 - **A fold** is a stretch of the time axis in which nothing could happen, drawn as a narrow strip of fixed width: 34 points for a long stretch at the limit, 56 for the days after the forecast runs out or after the week was spent. `TimeAxis` holds the rule.
-- **A label** is a word inside the plot. Each tries its places in order and takes the first free one. A label with no free place is left out, never drawn over another, because the sentences carry everything a label says.
+- **A label** is a word inside the plot. Each tries its places in order and takes the first free one; a forecast's label then tries its time alone. A label with no free place is left out, never drawn over another, because the sentences carry everything a label says. Two are always kept: the time the first limit runs out, and the week's limit. Every line stops short of a label, so a label on a line reads whole. `ChartType` measures a label and the canvas draws the same line of type.
+- **The contrast** is measured from the colours as drawn, on the plate and on the band, in every look: the ceiling's line reaches 3 to 1, and every word 4.5 to 1. `ContrastTests` holds it.
+- **A worst week** is a week the record does not hold, made up from readings in `app/views/panel/graph/tests/WorstWeeks.swift` and run through the Engine: a clock change, crowded banked resets, ceilings that meet, a long model name, a week's first poll. It is not a fixture. The labels' rule is tested on every worst week and every named moment, on both clocks, at 280, 360 and 520 points.
+- **What the graph says aloud** is `SpokenGraph`: the graph's part of the card is one element, named by the caption's words, whose value is the forecast's sentence, followed by the record's. It offers VoiceOver's audio graph each limit's use, limit and forecast, on a time axis that says a clock time at each place.
 - **A named moment** is a time of the frozen record with a name, such as `after-banked-reset`. `kit/tests/fixtures/moments.json` holds the chart page's twelve.
 
 ## The rules today
@@ -60,7 +64,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 1. Run `make check`. It runs every rule in about a second. It prints each breach, then a last line that starts with `check: pass` or `check: fail`.
 2. If you changed Swift, run `make test`. It builds the app scheme unsigned, `tools/forecast` included, and runs the tests of `kit/` and of the graph with no host application. It prints each test, then a last line that starts with `test: pass` or `test: fail`.
 3. If you changed the forecast or its sentences, run `tools/forecast`. It prints every poll's verdict for each limit, what then happened, and the account's two sentences. Then it prints the score of each limit and of the account. Give it a path to read another history file, and `--json` for one line per poll with every number in full. `--at after-banked-reset` prints one named moment. `--at "2025-11-18 23:45"` prints one time in the Mac's zone, and `--account A` keeps one account.
-4. If you changed the graph, run `tools/forecast --draw after-banked-reset`. It writes the graph's part of the card at that moment to a PNG, and prints the two sentences and the file's path. Nothing opens on screen: read the file. `--dark`, `--increased-contrast`, `--reduce-transparency` and `--12-hour` set the look, and `--out` names the file. A run after a change builds the tool through its scheme, in a few seconds once `.build/` holds a build; a run with nothing changed takes a tenth of a second.
+4. If you changed the graph, run `tools/forecast --draw after-banked-reset`. It writes the graph's part of the card at that moment to a PNG, and prints the two sentences and the file's path. Nothing opens on screen: read the file. `--dark`, `--increased-contrast`, `--reduce-transparency` and `--12-hour` set the look, `--width` the chart's width in points, and `--out` names the file. The graph and the sentences say times in the Mac's zone, so `TZ=America/New_York tools/forecast --draw …` draws a week in New York. A run after a change builds the tool through its scheme, in a few seconds once `.build/` holds a build; a run with nothing changed takes a tenth of a second.
 5. The build needs no signing. To build the app alone:
 
 	```bash

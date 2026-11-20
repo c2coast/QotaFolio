@@ -14,8 +14,8 @@
 # from moments.json beside the history file, such as after-banked-reset, or a day and a time in
 # the Mac's zone. --account keeps one account. --draw writes the graph's part of the card at the
 # moment to a PNG, light unless --dark, with the chart 360 points wide unless --width says, into
-# the temporary folder unless --out names the file, and
-# prints its sentences and the file's path. Nothing opens on screen.
+# the temporary folder unless --out names the file, and prints its sentences and the file's path.
+# Nothing opens on screen.
 #
 # The tool is the project's target `forecast`, which the app scheme builds too. This script builds
 # it through the scheme of the same name, into .build/DerivedData beside make test's products, and
