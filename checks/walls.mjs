@@ -35,6 +35,22 @@ export const walls = [
     calls: [],
   },
   {
+    folder: "app/lease/",
+    imports: ["Darwin", "Dispatch", "Foundation"],
+    importFix: "The lease is a lock on a file it is handed. The app derives the file from its identity and passes it in.",
+    calls: [
+      { call: "homeDirectory", pattern: /\bhomeDirectory\w*|\bNSHomeDirectory\b/g, fix: "The lease takes its file. The app finds the home folder." },
+    ],
+  },
+  {
+    folder: "app/lease/tests/",
+    imports: ["Darwin", "Foundation", "Testing"],
+    importFix: "The lease's tests take a real lock in a temporary folder, and need nothing else.",
+    calls: [
+      { call: "homeDirectory", pattern: /\bhomeDirectory\w*|\bNSHomeDirectory\b/g, fix: "A test of the lease works in a temporary folder, never in the home folder." },
+    ],
+  },
+  {
     folder: "app/recorder/legacy/",
     imports: ["Foundation", "Kit"],
     importFix: "The reader of 1.0.0's history turns the file's bytes into kit's values, and needs nothing else.",

@@ -107,6 +107,8 @@ targets:
     platform: macOS
     sources:
       - Sources/App
+      - path: app/lease
+        excludes: ["tests/**"]
       - Assets/Assets.xcassets
       # The macOS 26 layered icon (Icon Composer format), authored by hand from
       # Assets/BrandSources: the Time Fold on the brand ground, three glass layers.
@@ -512,6 +514,18 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         GENERATE_INFOPLIST_FILE: "YES"
 
+  # The tests of the app's shell, with no host application. They compile the shell's folders from source,
+  # as the app does.
+  AppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - app/lease
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        GENERATE_INFOPLIST_FILE: "YES"
+
   # tools/forecast. The app scheme builds it, so a change that breaks the tool fails the build.
   # The script tools/forecast builds it through the scheme of the same name.
   forecast:
@@ -532,6 +546,6 @@ targets:
 schemes:
   QotaFolio:
     build: { targets: { QotaFolio: all, forecast: all } }
-    test: { targets: [KitTests, GraphTests] }
+    test: { targets: [KitTests, GraphTests, AppTests] }
   forecast:
     build: { targets: { forecast: all } }

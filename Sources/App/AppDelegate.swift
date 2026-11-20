@@ -48,13 +48,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         do {
-            switch try SingleInstanceLease.acquire() {
-            case .acquired(let lease):
+            let leaseFile = URL.homeDirectory.appending(path: AppIdentity.current.singleInstanceLeaseRelativeToData)
+            switch try SingleInstanceLease.acquire(at: leaseFile) {
+            case .held(let lease):
                 self.lease = lease
                 lease.observeDoorbell { [weak self] in
                     self?.revealRunningInstance()
                 }
-            case .alreadyRunning(let doorbell):
+            case .taken(let doorbell):
                 // The user asked for QotaFolio and QotaFolio is already here. This process has
                 // no window and no Dock icon of its own, so standing down in silence leaves
                 // the user unable to tell the app is running. Ring the instance that can show
