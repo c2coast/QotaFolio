@@ -32,13 +32,13 @@ Each feature file starts with an H1 title and one paragraph about the user-visib
 
 ## Features
 
-| Feature | Covers | State on 19 Nov 2026 (9912f39) |
-|---|---|---|
-| [Usage panel](./usage-panel.md) | Opening the panel, account cards and their states, card details, reorder, footer, reopen, Quit | **Proven end to end** (`panel-open`, `panel-cards`, `panel-footer`, `panel-quit`). Every other journey was run once while the map was written. |
-| [Menu-bar batteries](./menu-bar-strip.md) | One battery per account, the spoken sentence, session or week, hidden names | Run once while the map was written. |
-| [qota command](./qota-cli.md) | `qota status`, `--json`, `--version`, errors, agreement with the panel | Run once while the map was written. `qota-follows-panel` **fails** in the lab (see its Gotchas). |
-| [Add an account](./add-account.md) | The naming step, Cancel, the ChatGPT device-code step, the recovery advisory | `add-continue` and `add-device-code-live` **fail** in the lab (see Gotchas). The rest were run once. |
-| [Settings](./settings.md) | Opening Settings, the tabs, strip and appearance choices, account visibility, hidden names | `settings-hide-account` **fails** through this harness (see Gotchas). The rest were run once. |
+| Feature | Covers |
+|---|---|
+| [Usage panel](./usage-panel.md) | Opening the panel, account cards and their states, card details, reorder, footer, reopen, Quit |
+| [Menu-bar batteries](./menu-bar-strip.md) | One battery per account, the spoken sentence, session or week, hidden names |
+| [qota command](./qota-cli.md) | `qota status`, `--json`, `--version`, errors, agreement with the panel |
+| [Add an account](./add-account.md) | The naming step, Cancel, the ChatGPT device-code step, the recovery advisory |
+| [Settings](./settings.md) | Opening Settings, the tabs, strip and appearance choices, account visibility, hidden names |
 
 ## Not covered by this map yet
 
