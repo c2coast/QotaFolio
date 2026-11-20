@@ -59,7 +59,7 @@ final class ProductionSparkleUpdateDelegate: NSObject, SPUUpdaterDelegate {
 
     /// The environment variable a development build reads its appcast feed from.
     ///
-    /// `Tools/release/qotafolio_release.py` reads this literal out of this file so that the
+    /// `tools/release/qotafolio_release.py` reads this literal out of this file so that the
     /// gate and the code cannot drift apart. Renaming it here is safe; changing the shape of
     /// this line fails the gate loudly rather than leaving it proving nothing.
     nonisolated static let developmentFeedURLVariable = "QOTAFOLIO_DEBUG_FEED_URL"

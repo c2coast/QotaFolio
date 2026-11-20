@@ -48,7 +48,7 @@ unset_settings() {
 }
 require_settings() {
     [ -f "$SETTINGS" ] \
-        || fail "this Mac has no release settings: copy Tools/release/ship.env.example to $SETTINGS and fill it in"
+        || fail "this Mac has no release settings: copy tools/release/ship.env.example to $SETTINGS and fill it in"
     local unset_names; unset_names="$(unset_settings)"
     [ -z "$unset_names" ] || fail "$SETTINGS does not set ${unset_names% }"
 }
@@ -67,7 +67,7 @@ health() {
     printf 'INFO|version|%s (%s)\n' "$VERSION" "$BUILD"
     local unset_names; unset_names="$(unset_settings)"
     if [ ! -f "$SETTINGS" ]; then
-        check fail settings "This Mac has no release settings; copy Tools/release/ship.env.example to $SETTINGS."
+        check fail settings "This Mac has no release settings; copy tools/release/ship.env.example to $SETTINGS."
     elif [ -n "$unset_names" ]; then
         printf 'DETAIL|settings|unset: %s\n' "${unset_names% }"
         check fail settings "The release settings do not name everything the lane needs."

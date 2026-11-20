@@ -57,7 +57,7 @@ xcodebuild -project QotaFolio.xcodeproj -scheme QotaFolio -configuration Debug \
 
 A Debug build is a different app to macOS on purpose — its own container, its own Keychain service, its own App Group — so a development build can never read or damage an installed QotaFolio's data. It also carries the fixture lab: launch it with `QOTAFOLIO_UI_SCENARIO=mixed` and the real app runs over invented accounts, holding no grant and reaching no network, which is how every picture on this page was taken. The header of [`FixtureAppRuntime.swift`](Sources/App/Composition/Fixture/FixtureAppRuntime.swift) lists the scenarios and every `QOTAFOLIO_UI_*` knob beside them.
 
-The release lane is one script, [`Tools/release/ship.sh`](Tools/release/ship.sh); [`docs/release`](docs/release/README.md) explains what it does and why.
+The release lane is one script, [`tools/release/ship.sh`](tools/release/ship.sh); [`docs/release`](docs/release/README.md) explains what it does and why.
 
 ## Security reports
 
