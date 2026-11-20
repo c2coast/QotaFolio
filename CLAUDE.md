@@ -9,7 +9,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | `Sources/` | The code of version 1.0.0: the app, its widget, the `qota` command and their libraries. |
 | `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it, and the app does not. |
 | `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`. |
-| `kit/engine/forecast/` | The Engine: the forecast for each limit at every poll, the falls, and the score against what then happened. |
+| `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
 | `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
@@ -34,7 +34,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - **The landing check** is the `check` of `c2coast/ci`. It runs once for each pull request, on a fresh clone, when the pull request lands.
 - **A reading** is what one poll of an account said: each limit, how much of it is used, and when it resets.
 - **A limit** is the week, a model's week such as Fable's, a session, or any other length a provider sends. Its kind is which limit it is.
-- **The Engine** makes a forecast from one account's readings. A forecast holds a verdict for each limit at every poll: spent, silent with its reason, runs out at a time, or lasts with a landing.
+- **The Engine** makes a forecast from one account's readings. A forecast holds a verdict for the week and for the model's week at every poll: spent, silent with its reason, runs out at a time, or lasts with a landing. A limit of any other length has no verdict.
 - **A fall** is a banked reset inside one week: points given back between two polls. One Fable point is half a weekly point.
 - **The frozen record** is `kit/tests/fixtures/usage-history.json`: nine days of the owner's two accounts, A and B, in version 1.0.0's file. Every time is moved by a whole number of weeks, which changes no verdict.
 - **The prototype's answer** is `kit/tests/fixtures/prototype.json`: the pace prototype's verdicts and scores on the frozen record. Nothing in this repository writes it.
@@ -63,7 +63,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 
 1. Run `make check`. It runs every rule in about a second. It prints each breach, then a last line that starts with `check: pass` or `check: fail`.
 2. If you changed Swift, run `make test`. It builds the app scheme unsigned, `tools/forecast` included, and runs the tests of `kit/` and of the graph with no host application. It prints each test, then a last line that starts with `test: pass` or `test: fail`.
-3. If you changed the forecast or its sentences, run `tools/forecast`. It prints every poll's verdict for each limit, what then happened, and the account's two sentences. Then it prints the score of each limit and of the account. Give it a path to read another history file, and `--json` for one line per poll with every number in full. `--at after-banked-reset` prints one named moment. `--at "2025-11-18 23:45"` prints one time in the Mac's zone, and `--account A` keeps one account.
+3. If you changed the forecast or its sentences, run `tools/forecast`. It prints every poll's verdict for the week and the model's week, what then happened, and the account's two sentences. Then it prints the score of the week, of the model's week and of the account. Give it a path to read another history file, and `--json` for one line per poll with every number in full. `--at after-banked-reset` prints one named moment. `--at "2025-11-18 23:45"` prints one time in the Mac's zone, and `--account A` keeps one account.
 4. If you changed the graph, run `tools/forecast --draw after-banked-reset`. It writes the graph's part of the card at that moment to a PNG, and prints the two sentences and the file's path. Nothing opens on screen: read the file. `--dark`, `--increased-contrast`, `--reduce-transparency` and `--12-hour` set the look, `--width` the chart's width in points, and `--out` names the file. The graph and the sentences say times in the Mac's zone, so `TZ=America/New_York tools/forecast --draw …` draws a week in New York. A run after a change builds the tool through its scheme, in a few seconds once `.build/` holds a build; a run with nothing changed takes a tenth of a second.
 5. The build needs no signing. To build the app alone:
 
