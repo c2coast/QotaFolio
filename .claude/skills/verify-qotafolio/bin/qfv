@@ -2,8 +2,8 @@
 # qfv — build, launch, drive, photograph and stop a QotaFolio Debug build over fixture accounts.
 #
 # One lane is one bundle identifier, net.c2coast.QotaFolio.dev.<lane>. AppIdentity derives every
-# place the app owns from it: its group, its preferences, its Keychain service and the support folder
-# that holds its single-instance lease. So the installed app (net.c2coast.QotaFolio) and a
+# name the app owns from it: its group, its preferences domain, its Keychain service and the support
+# folder that holds its single-instance lease. So the installed app (net.c2coast.QotaFolio) and a
 # developer's own `.dev` build are never touched.
 # Every subcommand prints JSON on stdout. Run `qfv help` for the list.
 set -euo pipefail
