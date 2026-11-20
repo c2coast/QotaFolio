@@ -39,4 +39,20 @@ struct LegacyHistoryTests {
             """
         #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(from: Data(file.utf8)) }
     }
+
+    /// The Engine reads a model's week only where every reading carries it. Read on, this file
+    /// would give a forecast with no Fable, and nobody would be told.
+    @Test("A model's week sampled at other times than the week is refused, by its name")
+    func refusesModelWeekOffTheWeek() {
+        let file = """
+            {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 250, "windows": [
+              {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100, 200], "sampleUsedBasisPoints": [100, 200],
+               "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800, "lastObservedAt": 200},
+              {"key": "Fable|weekly", "scope": "Fable", "period": {"weekly": {}}, "sampleTimes": [100, 250],
+               "sampleUsedBasisPoints": [100, 300], "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800,
+               "lastObservedAt": 250}]}]}
+            """
+        let error = #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(from: Data(file.utf8)) }
+        #expect(error?.description.contains("Fable|weekly") == true)
+    }
 }
