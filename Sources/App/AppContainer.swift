@@ -43,7 +43,9 @@ final class AppContainer {
                 log.notice("The settings of 1.0.0 are carried: the home domain holds \(keys, privacy: .public) keys.")
             }
         } catch {
-            log.error("The settings of 1.0.0 could not be read, and nothing was carried: \(String(describing: error), privacy: .public)")
+            // The domain and the code say why, and leave the path, with the user's name in it, out of the log.
+            let reason = error as NSError
+            log.error("The settings of 1.0.0 could not be read, and nothing was carried: \(reason.domain, privacy: .public) \(reason.code, privacy: .public)")
         }
     }
 
