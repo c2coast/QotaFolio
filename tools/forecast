@@ -1,11 +1,14 @@
 #!/bin/bash
-# What the forecast said at every recorded poll, what then happened, and how often it was right.
+# What the forecast said at every recorded poll, in each limit's verdict and in the sentences a
+# person reads, what then happened, and how often it was right.
 #
-#   tools/forecast [--json] [usage-history.json]
+#   tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm>] [--account <id>] [usage-history.json]
 #
 # With no path it reads the frozen record, kit/tests/fixtures/usage-history.json. Any history file
 # of version 1.0.0 works, such as a dated copy of the app's own. --json prints one line for each
-# poll and one for each limit's score, with every number at full precision.
+# poll and one for each score, with every number at full precision. --at prints one moment: a name
+# from moments.json beside the history file, such as after-banked-reset, or a day and a time in
+# the Mac's zone. --account keeps one account.
 #
 # It builds kit/ and the reader of 1.0.0's history into .build/forecast/ when their source is newer.
 set -euo pipefail
@@ -23,7 +26,5 @@ if [[ ! -x "$out/forecast" || -n "$(find "${kit[@]}" "${rest[@]}" -newer "$out/f
   swiftc -O -swift-version 6 -parse-as-library -I "$out" -L "$out" -lKit -o "$out/forecast" "${rest[@]}"
 fi
 
-for argument in "$@"; do
-  [[ "$argument" == --* ]] || exec "$out/forecast" "$@"
-done
-exec "$out/forecast" "$@" "$root/kit/tests/fixtures/usage-history.json"
+# The frozen record goes first. A path among the arguments replaces it.
+exec "$out/forecast" "$root/kit/tests/fixtures/usage-history.json" "$@"

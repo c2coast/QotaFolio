@@ -1,61 +1,145 @@
 import Foundation
 import Kit
 
-/// `tools/forecast`: what the forecast said at every recorded poll, what then happened, and how
-/// often it was right. Reads a history file of version 1.0.0; the shell script `tools/forecast`
-/// builds this and passes the frozen record when no path is given.
+/// `tools/forecast`: what the forecast said at every recorded poll, in each limit's verdict and in
+/// the sentences a person reads, what then happened, and how often it was right. Reads a history
+/// file of version 1.0.0. The shell script `tools/forecast` builds this and passes the frozen
+/// record first; a path the person gives replaces it.
+///
+/// `--at` prints one moment: a name from `moments.json` beside the history file, or a day and a
+/// time, "2025-11-18 23:45", in the Mac's time zone. `--account` keeps one account.
 @main
 enum ForecastTool {
+    static let usage = "usage: tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm>] [--account <id>] [usage-history.json]\n"
+
     static func main() throws {
         var arguments = Array(CommandLine.arguments.dropFirst())
-        let json = arguments.contains("--json")
-        arguments.removeAll { $0 == "--json" }
-        guard arguments.count == 1 else {
-            FileHandle.standardError.write(Data("usage: tools/forecast [--json] [usage-history.json]\n".utf8))
-            exit(2)
+        var path = arguments.removeFirst()
+        var json = false, at: String?, only: String?
+        while !arguments.isEmpty {
+            let argument = arguments.removeFirst()
+            switch argument {
+            case "--json": json = true
+            case "--at" where !arguments.isEmpty: at = arguments.removeFirst()
+            case "--account" where !arguments.isEmpty: only = arguments.removeFirst()
+            case _ where !argument.hasPrefix("--"): path = argument
+            default: fail(usage)
+            }
         }
-        let accounts = try LegacyHistory.readings(from: Data(contentsOf: URL(fileURLWithPath: arguments[0])))
-        let forecasts = accounts.map(Forecast.init(readings:))
-        let recordEnd = forecasts.compactMap { $0.polls.last?.reading.at }.max() ?? .distantPast
+        let history = URL(fileURLWithPath: path)
+        let all = try LegacyHistory.readings(from: Data(contentsOf: history)).map(Forecast.init(readings:))
+        let recordEnd = all.compactMap { $0.polls.last?.reading.at }.max() ?? .distantPast
         // The week first, then each model's week, as the polls carry them.
-        let kinds = [Limit.Kind.week] + Set(forecasts.flatMap { $0.polls.flatMap(\.verdicts.keys) })
+        let kinds = [Limit.Kind.week] + Set(all.flatMap { $0.polls.flatMap(\.verdicts.keys) })
             .filter { $0 != .week }.sorted { ($0.model ?? "") < ($1.model ?? "") }
-        let scores = kinds.map { Score(of: forecasts, limit: $0, recordEnd: recordEnd) }
-        if json {
-            printJSON(forecasts, kinds, scores, recordEnd)
-        } else {
-            printText(arguments[0], forecasts, kinds, scores, recordEnd)
+
+        if let at {
+            guard let moment = moment(at, beside: history) else { fail("no moment \(at) beside \(path), and not a day and a time\n" + usage) }
+            let account = only ?? moment.account
+            printMoment(moment.at, moment.label, all.filter { account == nil || $0.polls.first?.reading.account.rawValue == account }, kinds)
+            return
         }
+        let forecasts = all.filter { only == nil || $0.polls.first?.reading.account.rawValue == only }
+        let scores = kinds.map { Score(of: forecasts, limit: $0, recordEnd: recordEnd) }
+        let account = Score(accountsOf: forecasts, recordEnd: recordEnd)
+        if json {
+            printJSON(forecasts, kinds, scores, account, recordEnd)
+        } else {
+            printText(path, forecasts, kinds, scores, account, recordEnd)
+        }
+    }
+
+    static func fail(_ message: String) -> Never {
+        FileHandle.standardError.write(Data(message.utf8))
+        exit(2)
     }
 
     static func label(_ kind: Limit.Kind) -> String { kind.model ?? "week" }
 
+    /// The sentences' calendar: Gregorian, in the zone given.
+    static func calendar(_ zone: TimeZone) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
+        return calendar
+    }
+
+    // MARK: - A moment
+
+    struct Moment: Decodable {
+        let name, label, account: String
+        let at: Double
+    }
+
+    /// A named moment from `moments.json` beside the history file, or a day and a time in the Mac's
+    /// zone, which names no account.
+    static func moment(_ text: String, beside history: URL) -> (at: Date, label: String?, account: String?)? {
+        let file = history.deletingLastPathComponent().appending(path: "moments.json")
+        if let data = try? Data(contentsOf: file), let moments = try? JSONDecoder().decode([Moment].self, from: data),
+           let named = moments.first(where: { $0.name == text }) {
+            return (Date(timeIntervalSince1970: named.at), named.label, named.account)
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        return formatter.date(from: text).map { ($0, nil, nil) }
+    }
+
+    static func printMoment(_ at: Date, _ name: String?, _ forecasts: [Forecast], _ kinds: [Limit.Kind]) {
+        let zone = TimeZone.current
+        for forecast in forecasts {
+            guard let poll = forecast.poll(at: at), let picture = forecast.picture(at: at) else {
+                print("\(forecast.polls.first?.reading.account.rawValue ?? "?"): no poll at or before \(day(at, zone))")
+                continue
+            }
+            print("\(name.map { "\($0). " } ?? "")Account \(picture.account.rawValue) at \(day(at, zone)), "
+                + "the poll of \(day(poll.reading.at, zone)). Times are \(zone.identifier).")
+            for kind in kinds {
+                guard let verdict = poll.verdicts[kind], let used = poll.reading.limit(kind)?.used else { continue }
+                print("  \(pad(label(kind), 5))  \(pad(percent(used.value), 6))  \(said(verdict, zone))")
+            }
+            let sentences = picture.sentences(in: calendar(zone))
+            print("  says   \(sentences.forecast)")
+            if let record = sentences.record { print("  shows  \(record)") }
+        }
+    }
+
     // MARK: - For a person
 
-    static func printText(_ path: String, _ forecasts: [Forecast], _ kinds: [Limit.Kind], _ scores: [Score], _ end: Date) {
+    static func printText(_ path: String, _ forecasts: [Forecast], _ kinds: [Limit.Kind], _ scores: [Score], _ account: Score, _ end: Date) {
         let zone = TimeZone.current
         print("The forecast at every poll of \(path)")
         print("Times are \(zone.identifier). \"then\" is what happened next; right or wrong once it is known.")
+        print("\"says\" is the forecast's sentence for the account; \"shows\" is the record's.")
         for forecast in forecasts {
             let outcomes = kinds.map { forecast.outcomes(of: $0, recordEnd: end) }
             for (i, poll) in forecast.polls.enumerated() {
+                let head = [poll.reading.account.rawValue, day(poll.reading.at, zone)]
                 for (k, kind) in kinds.enumerated() {
                     guard let verdict = poll.verdicts[kind], let used = poll.reading.limit(kind)?.used else { continue }
-                    let head = [poll.reading.account.rawValue, day(poll.reading.at, zone), pad(label(kind), 5), pad(percent(used.value), 6)]
                     let then = outcomes[k][i]
-                    print((head + [pad(said(verdict, zone), 54), happened(then, zone), judged(verdict, then)])
+                    print((head + [pad(label(kind), 5), pad(percent(used.value), 6), pad(said(verdict, zone), 54), happened(then, zone), judged(verdict, then)])
                         .joined(separator: "  ").trimmingCharacters(in: .whitespaces))
                 }
+                guard let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: calendar(zone)) else { continue }
+                print((head + ["says ", sentences.forecast]).joined(separator: "  "))
+                if let record = sentences.record { print((head + ["shows", record]).joined(separator: "  ")) }
             }
         }
         print("")
         print("Score over \(forecasts.map { "\($0.polls.count)" }.joined(separator: " + ")) polls; the record ends \(day(end, zone)).")
         for (kind, score) in zip(kinds, scores) {
-            let median = score.medianError.map { String(format: "%.4f hours", $0) } ?? "none"
-            print("  \(pad(label(kind), 5))  \(score.right) right of \(score.judged) judged, \(score.flips) flips, "
-                + "median timing error \(median) over \(score.timingErrors.count) run-outs "
+            print("  \(pad(label(kind), 7))  \(score.right) right of \(score.judged) judged, \(score.flips) flips, "
+                + "median timing error \(median(score)) over \(score.timingErrors.count) run-outs "
                 + "(\(score.spoken) spoke, \(score.silent) silent)")
         }
+        print("  account  \(account.right) right of \(account.judged) judged, \(account.named) of \(account.timingErrors.count) run-outs "
+            + "named the limit that ran out first, \(account.flips) flips, median timing error \(median(account)) "
+            + "(\(account.spoken) spoke, \(account.silent) silent)")
+    }
+
+    static func median(_ score: Score) -> String {
+        score.medianError.map { String(format: "%.4f hours", $0) } ?? "none"
     }
 
     static func said(_ verdict: Verdict, _ zone: TimeZone) -> String {
@@ -109,6 +193,8 @@ enum ForecastTool {
         let account: String
         let t: Double
         let limits: [String: Said]
+        let says: String?
+        let shows: String?
     }
 
     struct Said: Encodable {
@@ -123,11 +209,11 @@ enum ForecastTool {
 
     struct Scored: Encodable {
         let limit: String
-        let spoken, silent, judged, right, flips, errors: Int
+        let spoken, silent, judged, right, named, flips, errors: Int
         let medianError: Double?
     }
 
-    static func printJSON(_ forecasts: [Forecast], _ kinds: [Limit.Kind], _ scores: [Score], _ end: Date) {
+    static func printJSON(_ forecasts: [Forecast], _ kinds: [Limit.Kind], _ scores: [Score], _ account: Score, _ end: Date) {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         func emit(_ value: some Encodable) { print(String(decoding: try! encoder.encode(value), as: UTF8.self)) }
@@ -155,12 +241,14 @@ enum ForecastTool {
                     }
                     limits[label(kind)] = said
                 }
-                emit(Line(account: poll.reading.account.rawValue, t: poll.reading.at.timeIntervalSince1970, limits: limits))
+                let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: calendar(.current))
+                emit(Line(account: poll.reading.account.rawValue, t: poll.reading.at.timeIntervalSince1970, limits: limits,
+                          says: sentences?.forecast, shows: sentences?.record))
             }
         }
-        for (kind, score) in zip(kinds, scores) {
-            emit(Scored(limit: label(kind), spoken: score.spoken, silent: score.silent, judged: score.judged,
-                        right: score.right, flips: score.flips, errors: score.timingErrors.count, medianError: score.medianError))
+        for (name, score) in zip(kinds.map(label) + ["account"], scores + [account]) {
+            emit(Scored(limit: name, spoken: score.spoken, silent: score.silent, judged: score.judged, right: score.right,
+                        named: score.named, flips: score.flips, errors: score.timingErrors.count, medianError: score.medianError))
         }
     }
 }
