@@ -65,14 +65,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 2. If you changed Swift, run `make test`. It builds the app scheme unsigned, `tools/forecast` included, and runs the tests of `kit/` and of the graph with no host application. It prints each test, then a last line that starts with `test: pass` or `test: fail`.
 3. If you changed the forecast or its sentences, run `tools/forecast`. It prints every poll's verdict for the week and the model's week, what then happened, and the account's two sentences. Then it prints the score of the week, of the model's week and of the account. Give it a path to read another history file, and `--json` for one line per poll with every number in full. `--at after-banked-reset` prints one named moment. `--at "2025-11-18 23:45"` prints one time in the Mac's zone, and `--account A` keeps one account.
 4. If you changed the graph, run `tools/forecast --draw after-banked-reset`. It writes the graph's part of the card at that moment to a PNG, and prints the two sentences and the file's path. Nothing opens on screen: read the file. `--dark`, `--increased-contrast`, `--reduce-transparency` and `--12-hour` set the look, `--width` the chart's width in points, and `--out` names the file. The graph and the sentences say times in the Mac's zone, so `TZ=America/New_York tools/forecast --draw …` draws a week in New York. A run after a change builds the tool through its scheme, in a few seconds once `.build/` holds a build; a run with nothing changed takes a tenth of a second.
-5. The build needs no signing. To build the app alone:
-
-	```bash
-	xcodegen generate --no-env --spec project.yml --project . --project-root .
-	xcodebuild -project QotaFolio.xcodeproj -scheme QotaFolio -configuration Debug \
-	  -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build
-	```
-
+5. To build with no tests, follow "Build from source" in `README.md`. The build needs no signing. The app scheme builds the app and `tools/forecast` together.
 6. The landing check runs the same rules, because they are tests. It also builds the app and runs its tests.
 
 ## Adding to the tree
