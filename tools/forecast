@@ -1,0 +1,29 @@
+#!/bin/bash
+# What the forecast said at every recorded poll, what then happened, and how often it was right.
+#
+#   tools/forecast [--json] [usage-history.json]
+#
+# With no path it reads the frozen record, kit/tests/fixtures/usage-history.json. Any history file
+# of version 1.0.0 works, such as a dated copy of the app's own. --json prints one line for each
+# poll and one for each limit's score, with every number at full precision.
+#
+# It builds kit/ and the reader of 1.0.0's history into .build/forecast/ when their source is newer.
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+out="$root/.build/forecast"
+
+kit=()
+while IFS= read -r -d '' file; do kit+=("$file"); done < <(find "$root/kit" -name '*.swift' -not -path "$root/kit/tests/*" -print0)
+rest=("$root"/app/recorder/legacy/*.swift "$root/tools/forecast.swift")
+
+if [[ ! -x "$out/forecast" || -n "$(find "${kit[@]}" "${rest[@]}" -newer "$out/forecast" 2>/dev/null)" ]]; then
+  mkdir -p "$out"
+  swiftc -O -swift-version 6 -parse-as-library -module-name Kit -emit-module -emit-module-path "$out/Kit.swiftmodule" \
+    -emit-library -static -o "$out/libKit.a" "${kit[@]}"
+  swiftc -O -swift-version 6 -parse-as-library -I "$out" -L "$out" -lKit -o "$out/forecast" "${rest[@]}"
+fi
+
+for argument in "$@"; do
+  [[ "$argument" == --* ]] || exec "$out/forecast" "$@"
+done
+exec "$out/forecast" "$@" "$root/kit/tests/fixtures/usage-history.json"
