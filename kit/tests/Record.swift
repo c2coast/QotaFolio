@@ -19,6 +19,9 @@ enum Record {
     static let a = Forecast(readings: accounts[0])
     static let b = Forecast(readings: accounts[1])
 
+    /// The last poll of either account: where the record ends.
+    static let end = accounts.compactMap { $0.last?.at }.max()!
+
     static let fable = Limit.Kind.modelWeek("Fable")
 
     static let calendar: Calendar = {

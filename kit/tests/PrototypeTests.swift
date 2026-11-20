@@ -13,11 +13,13 @@ struct PrototypeTests {
         return try! JSONDecoder().decode(Expected.self, from: data)
     }()
 
-    @Test("Every verdict and every point given back", arguments: [0, 1])
+    @Test("Every verdict, every point given back and every outcome", arguments: [0, 1])
     func everyPoll(account: Int) {
         let want = Self.expected.accounts[account]
         let forecast = [Record.a, Record.b][account]
         #expect(forecast.polls.count == want.polls.count)
+        let weekOutcomes = forecast.outcomes(of: .week, recordEnd: Record.end)
+        let fableOutcomes = forecast.outcomes(of: Record.fable, recordEnd: Record.end)
         for (i, (poll, wanted)) in zip(forecast.polls, want.polls).enumerated() {
             let at = "\(want.account) poll \(i), \(Record.minute(poll.reading.at))"
             #expect(poll.reading.at.timeIntervalSince1970 == wanted.t, "\(at)")
@@ -25,6 +27,8 @@ struct PrototypeTests {
             #expect(Said(poll.verdicts[Record.fable]) == wanted.fableVerdict, "\(at) Fable")
             #expect(poll.givenBack[.week] == wanted.weekGivenBack, "\(at) week given back")
             #expect(poll.givenBack[Record.fable] == wanted.fableGivenBack, "\(at) Fable given back")
+            #expect(Then(weekOutcomes[i]) == wanted.weekTruth, "\(at) week outcome")
+            #expect(Then(fableOutcomes[i]) == wanted.fableTruth, "\(at) Fable outcome")
         }
     }
 
@@ -47,6 +51,21 @@ struct PrototypeTests {
         case .model: "Fable"
         case .full: "full"
         case .unexplained: "unexplained"
+        }
+    }
+
+    /// The prototype's own score for each limit, over both accounts: verdicts right out of judged,
+    /// flips, and the median timing error of run-outs said and seen.
+    @Test("The score of each limit")
+    func scores() {
+        for (name, kind) in [("week", Limit.Kind.week), ("fable", Record.fable)] {
+            let score = Score(of: [Record.a, Record.b], limit: kind, recordEnd: Record.end)
+            let want = Self.expected.scores[name]!
+            let got: [Int] = [score.spoken, score.silent, score.judged, score.right, score.flips, score.timingErrors.count]
+            let wanted: [Int] = [want.spoken, want.silent, want.judged, want.right, want.flips, want.errors]
+            #expect(Record.end.timeIntervalSince1970 == Self.expected.lastPoll)
+            #expect(got == wanted, "\(name): spoken, silent, judged, right, flips, timed run-outs")
+            #expect(score.medianError == want.medianError, "\(name)")
         }
     }
 
@@ -75,8 +94,29 @@ struct PrototypeTests {
         static func word(_ speed: Verdict.Speed) -> String { speed == .burn ? "burn" : "week" }
     }
 
+    /// An outcome as the prototype writes one.
+    struct Then: Decodable, Equatable {
+        var kind: String, at: Double?, slack: Double?, landing: Double?
+
+        init(_ outcome: Outcome) {
+            switch outcome {
+            case .spent: kind = "spent"
+            case .unknown: kind = "censored"
+            case .ranOut(let date, let gap): (kind, at, slack) = ("runsOut", date.timeIntervalSince1970, gap)
+            case .lasted(let landing): (kind, self.landing) = ("lasts", landing)
+            }
+        }
+    }
+
     struct Expected: Decodable {
+        let lastPoll: Double
+        let scores: [String: Score]
         let accounts: [Account]
+
+        struct Score: Decodable {
+            let spoken, silent, judged, right, flips, errors: Int
+            let medianError: Double
+        }
 
         struct Account: Decodable {
             let account: String
@@ -96,6 +136,7 @@ struct PrototypeTests {
             let t: Double
             let weekVerdict, fableVerdict: Said
             let weekGivenBack, fableGivenBack: Double
+            let weekTruth, fableTruth: Then
         }
     }
 }
