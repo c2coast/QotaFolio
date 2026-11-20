@@ -88,8 +88,7 @@ public nonisolated struct BatteryCell: Hashable, Sendable, Identifiable {
   /// One window's own share, whichever was asked for, and nothing behind it. The other window
   /// stays in the words, where it can be said rather than guessed at from a second length.
   ///
-  /// The rule itself is in the model, where the Control reaches it too, so the battery on the
-  /// bar and the battery in Control Center can never be drawn to different quantities.
+  /// The rule itself is in the model, beside the cell it reads.
   public func figure(showing: StripShows) -> StripFigure {
     StripFigure(
       showing: showing,
@@ -220,8 +219,8 @@ extension StatusStripModel {
     now: Date,
     namesHidden: Bool
   ) -> BatteryCell {
-    // The arithmetic is `AccountLevel`'s — one rule for the strip, the panel's card, the
-    // Control, the widget and `qota`. The cell keeps only the strip's own vocabulary and its
+    // The arithmetic is `AccountLevel`'s — one rule for the strip, the panel's card and
+    // `qota`. The cell keeps only the strip's own vocabulary and its
     // whole-minutes countdown.
     let level = AccountLevel.make(account: account, snapshot: snapshot, status: status)
 
@@ -280,9 +279,8 @@ extension StatusStripModel {
     return sentences.joined(separator: " ")
   }
 
-  /// One account's spoken sentence. Public because Spotlight's answer says the same words the
-  /// strip does — one voice, two surfaces.
-  public static func spokenSentence(for cell: BatteryCell) -> String {
+  /// One account's spoken sentence.
+  static func spokenSentence(for cell: BatteryCell) -> String {
     switch cell.state {
     case .reading, .low:
       return qfLocalized(

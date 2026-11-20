@@ -4,7 +4,7 @@ import Foundation
 /// does not have to render them again.
 ///
 /// The words are Core's — they go through `qfLocalized` and a string catalog, and neither of
-/// those belongs in a target a widget extension links. So Core writes them here once, and
+/// those belongs in the target `qota` links. So Core writes them here once, and
 /// `qota status` prints what the panel's rows say without linking a line of policy.
 public nonisolated struct RecommendationSentences: Codable, Equatable, Sendable {
     /// One line per window: the number that is not already on the row.
@@ -37,7 +37,7 @@ public nonisolated struct RecommendationRowText: Codable, Equatable, Sendable {
 /// One window of one account, as the file states it.
 ///
 /// The verdict is a string and not the enum, on purpose. A reader of this file — the `qota`
-/// command, the widget, a shell script — must be able to decode a document written by a
+/// command, a shell script — must be able to decode a document written by a
 /// QotaFolio that knows a verdict this one does not, and an enum makes that a decode failure
 /// where a string makes it a word nobody matched.
 public nonisolated struct RecommendedWindow: Codable, Equatable, Sendable {
@@ -125,8 +125,8 @@ public nonisolated struct RecommendedAccount: Codable, Equatable, Sendable, Iden
 
 /// `recommendation.json`: the fleet's current reading, and the words for it.
 ///
-/// Written on every assessment, on the snapshot book's clock. Read by the `qota` command, by
-/// the widget and by the Control — three readers outside this process.
+/// Written on every assessment, on the snapshot book's clock. Read by the `qota` command,
+/// outside this process.
 ///
 /// **This is the file's own shape and not the brain's.** `FleetAssessment` carries bands,
 /// evidence and an activity profile, and it will carry more; a reader outside this app needs

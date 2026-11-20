@@ -151,7 +151,6 @@ verify() {
         "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app" \
         "$APP/Contents/Frameworks/QotaFolioKit.framework" \
         "$APP/Contents/Frameworks/QotaFolioCoreXcode.framework" \
-        "$APP/Contents/PlugIns/QotaFolioWidgets.appex" \
         "$APP/Contents/MacOS/qota"; do
         codesign -dvv "$object" 2>&1 | grep "Authority=$expect" >/dev/null \
             || fail "$(basename "$object") is not signed by $expect"
@@ -163,7 +162,8 @@ verify() {
     codesign -d --entitlements - "$APP" 2>/dev/null | grep "get-task-allow" >/dev/null \
         && fail "a debug entitlement is in the shipped app"
     [ -e "$APP/Contents/embedded.provisionprofile" ] && fail "a provisioning profile is embedded and none belongs"
-    [ -d "$APP/Contents/Resources/Metadata.appintents" ] || fail "the App Intents metadata is missing"
+    [ -e "$APP/Contents/PlugIns" ] && fail "the app carries a PlugIns folder, and it has no extension"
+    [ -e "$APP/Contents/Resources/Metadata.appintents" ] && fail "the app carries App Intents metadata, and it has no intent"
     find "$APP/Contents/Frameworks/Sparkle.framework" -name "Downloader.xpc" | grep . >/dev/null \
         && fail "the pruned Sparkle downloader is back"
     local v b

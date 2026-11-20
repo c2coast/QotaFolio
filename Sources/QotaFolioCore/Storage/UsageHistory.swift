@@ -144,11 +144,11 @@ public actor UsageHistoryWriter {
             assessment = next
             recommendationIsUnwritten = true
         }
-        // The two small files go down NOW, not at the deadline. The Control and the widget are
-        // reloaded the moment the store publishes this assessment, and what they read is these
-        // bytes — a reload that outran the write would show the previous reading. They are a
-        // few kilobytes and the write is an atomic rename into the page cache; the deadline
-        // exists for the trace book, which is forty times larger and keeps its own clock.
+        // The two small files go down NOW, not at the deadline. `qota status` reads these
+        // bytes, and a person who runs it after the panel moved expects the panel's reading.
+        // They are a few kilobytes and the write is an atomic rename into the page cache; the
+        // deadline exists for the trace book, which is forty times larger and keeps its own
+        // clock.
         publishSmallFiles(at: now)
         return next
     }

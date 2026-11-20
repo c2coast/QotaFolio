@@ -17,15 +17,15 @@ settings:
   base:
     DEVELOPMENT_TEAM: NCCKY76LD4
     CODE_SIGN_STYLE: Automatic
-    # The one identifier everything else is derived from. The app IS this string; the widget
-    # extension is `.Widgets`, the `qota` tool is `.qota`, the `QotaFolioKit` framework is `.Kit`,
-    # and `AppIdentity` derives the container, the App Group, the Keychain service, the defaults
-    # domain and the lease from the app's. A private build sets it on the xcodebuild line
+    # The one identifier everything else is derived from. The app IS this string; the `qota`
+    # tool is `.qota` and the `QotaFolioKit` framework is `.Kit`, and `AppIdentity` derives the
+    # container, the App Group, the Keychain service, the defaults domain and the lease from the
+    # app's. A private build sets it on the xcodebuild line
     # (`QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.mine`) and gets its own everything.
     #
     # It is not `PRODUCT_BUNDLE_IDENTIFIER` on purpose: a setting given on the command line
-    # applies to every target in the build, and an extension whose identifier equals its host's
-    # does not register. This knob fans out into three distinct identifiers instead of one.
+    # applies to every target in the build, and the tool and the framework need identifiers of
+    # their own. This knob fans out into three distinct identifiers instead of one.
     QOTAFOLIO_BUNDLE_ID: net.c2coast.QotaFolio
     MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "100"
@@ -40,7 +40,7 @@ settings:
       # A development build is a different app to macOS, and that is the whole point. One
       # identifier here gives a Debug build its own container, its own defaults, its own
       # Keychain service and its own App Group -- and makes it impossible for a developer's
-      # build to read, write or delete the installed app's data. Its extension and its tool
+      # build to read, write or delete the installed app's data. Its tool and its framework
       # follow, because they derive from the same string.
       QOTAFOLIO_BUNDLE_ID: net.c2coast.QotaFolio.dev
     Release:
@@ -85,40 +85,9 @@ targets:
       base:
         SKIP_INSTALL: "YES"
 
-  # The widget extension: the menu-bar / Control Center Control and the desktop widget. It links
-  # the Model target and never Core -- Core's main-actor default isolation makes every
-  # synthesized Codable main-actor-isolated, and an extension decoding on its own queue cannot
-  # use one. It reads the App Group files the app writes and draws them.
-  # `Sources/Surfaces` is compiled into it AND into the app: the account entity, the intent that
-  # opens the app, the ring -- two processes, one source, no framework between them.
-  QotaFolioWidgets:
-    type: app-extension
-    platform: macOS
-    sources:
-      - path: Sources/QotaFolioWidgets
-        excludes: [Info.plist, "*.entitlements"]
-      - Sources/Surfaces
-    dependencies:
-      - { package: QotaFolioCore, product: QotaFolioModel }
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).Widgets
-        PRODUCT_NAME: QotaFolioWidgets
-        INFOPLIST_FILE: Sources/QotaFolioWidgets/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Sources/QotaFolioWidgets/QotaFolioWidgets.entitlements
-        ENABLE_APP_SANDBOX: "YES"
-        ENABLE_HARDENED_RUNTIME: "YES"
-        SKIP_INSTALL: "YES"
-        # WidgetKit's providers and App Intents are nonisolated protocols; the extension
-        # compiles without a default actor so their witnesses are what the protocols ask for.
-        # Every type in `Sources/Surfaces` spells its isolation out, because the same file is
-        # compiled into the app, which keeps the main-actor default.
-        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-
-  # `qota`: the terminal command. Reads the three group files by path from outside the sandbox
-  # (that is the day-one check it exists to make), links the Model target statically, and ships
-  # inside the app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
+  # `qota`: the terminal command. Reads the three group files by path, links the Model target
+  # statically, and ships inside the app at Contents/MacOS/qota. No daemon, no socket, no
+  # network, never a token.
   qota:
     type: tool
     platform: macOS
@@ -130,7 +99,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).qota
         PRODUCT_NAME: qota
         ENABLE_HARDENED_RUNTIME: "YES"
-        ENABLE_APP_SANDBOX: "NO"
         SKIP_INSTALL: "YES"
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
 
@@ -139,7 +107,6 @@ targets:
     platform: macOS
     sources:
       - Sources/App
-      - Sources/Surfaces
       - Assets/Assets.xcassets
       # The macOS 26 layered icon (Icon Composer format), authored by hand from
       # Assets/BrandSources: the Time Fold on the brand ground, three glass layers.
@@ -148,7 +115,6 @@ targets:
     dependencies:
       - { target: QotaFolioKit, embed: true }
       - { package: QotaFolioCore, product: QotaFolioCoreXcode, embed: true }
-      - { target: QotaFolioWidgets, embed: true }
       - { target: qota, embed: true, copy: { destination: executables } }
       - { target: QotaFolioCoreFixtures, link: false }
       - { target: QotaFolioKitFixtures, link: false }
@@ -162,9 +128,8 @@ targets:
         ENABLE_APP_SANDBOX: "YES"
         ENABLE_HARDENED_RUNTIME: "YES"
         ENABLE_USER_SCRIPT_SANDBOXING: "NO"
-        # Deliberately NOT skipping App Intents metadata extraction here: the app carries the
-        # intents Spotlight and the Control perform (Sources/Surfaces), and the processor is
-        # what registers them.
+        # The app declares no App Intents, so there is no metadata to extract.
+        LM_SKIP_METADATA_EXTRACTION: "YES"
         LD_ADDITIONAL_DEPLOYMENT_TARGET_FLAGS:
           - -Xlinker
           - -rpath
@@ -176,8 +141,8 @@ targets:
       configs:
         Debug:
           # The Debug identifier itself lives at the project level (`QOTAFOLIO_BUNDLE_ID`), so
-          # the extension and the tool follow it. CFBundleIdentifier and the two Sparkle
-          # mach-lookup names interpolate PRODUCT_BUNDLE_IDENTIFIER, which is that string here.
+          # the tool and the framework follow it. CFBundleIdentifier and the App Group
+          # interpolate PRODUCT_BUNDLE_IDENTIFIER, which is that string here.
           #
           # A Debug build carries the fixture lab (`FixtureAppRuntime`), which imports both
           # fixture slices, so both archives are linked here. They are dependencies with

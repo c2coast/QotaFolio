@@ -81,7 +81,7 @@ nonisolated func run(arguments: [String]) -> Never {
     }
 
     let reading: SurfaceReading
-    switch SurfaceReading.read(container: container, identity: identity, now: now) {
+    switch SurfaceReading.read(container: container, now: now) {
     case .noApp:
         fail("qota: QotaFolio has not run yet, or has no accounts. Open QotaFolio and add one.", .noApp)
     case .unreadable:

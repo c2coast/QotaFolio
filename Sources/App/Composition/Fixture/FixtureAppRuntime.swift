@@ -1,6 +1,5 @@
 #if DEBUG
 import AppKit
-import SwiftUI
 import QotaFolioCore
 import QotaFolioKit
 import QotaFolioKitFixtures
@@ -20,7 +19,7 @@ import UIFixtures
 ///   bar's geometry). `light` puts the light backdrop up. Unset, the real desktop shows.
 /// - `QOTAFOLIO_UI_STRIP=session|week` — which quantity the menu-bar batteries are drawn to. Set
 ///   as the person's own choice, in this launch's throwaway defaults, so the Settings picker
-///   shows it and the Control published beside it follows.
+///   shows it.
 /// - `QOTAFOLIO_UI_BACKDROP=0` — the appearance without the backdrop, over the real desktop and
 ///   the real menu bar. This is how the one thing the choice must not do is checked: the panel
 ///   goes dark and the batteries stay with the bar they sit in.
@@ -70,8 +69,6 @@ final class FixtureAppRuntime: AppRuntime {
     private let privacy: ScreenPrivacy
     private let alerts: AlertDeliverer
     private let alertCenter: FixtureAlertCenter
-    private let surfaceRelay: SurfaceRelay
-    private let stripPreferences: StripPreferences
     private let panelShortcut: GlobalShortcutStore
     private let settingsPresenter: SettingsWindowPresenter
     private let defaults: UserDefaults
@@ -79,7 +76,6 @@ final class FixtureAppRuntime: AppRuntime {
     private let scenario: FixtureUIScenario
     private let options: Options
     private var backdrop: FixtureBackdropWindow?
-    private var previewWindows: [NSWindow] = []
     private var keyMonitor: Any?
     private var mouseMonitor: Any?
     private var resizeObserver: NSObjectProtocol?
@@ -221,17 +217,6 @@ final class FixtureAppRuntime: AppRuntime {
         stripPreferences.shows = options.stripShows
         let alerts = AlertDeliverer(store: store, preferences: alertPreferences, center: alertCenter, defaults: defaults)
 
-        // The same relay production runs, so a fixture launch reloads the Control and the
-        // widget with the scenario it published. The fixture catalog holds no commit chain.
-        let surfaceRelay = SurfaceRelay(
-            catalog: catalog,
-            store: store,
-            visibility: visibility,
-            privacy: privacy,
-            stripShows: stripPreferences,
-            drainCatalog: {}
-        )
-
         let statusSurface = AppKitStatusItemSurface()
         let statusItem = StatusItemController(
             catalog: catalog,
@@ -310,8 +295,6 @@ final class FixtureAppRuntime: AppRuntime {
         self.privacy = privacy
         self.alerts = alerts
         self.alertCenter = alertCenter
-        self.surfaceRelay = surfaceRelay
-        self.stripPreferences = stripPreferences
         self.panelShortcut = panelShortcut
         self.settingsPresenter = settingsPresenter
         self.defaults = defaults
@@ -323,37 +306,14 @@ final class FixtureAppRuntime: AppRuntime {
     func start() {
         guard !started else { return }
         started = true
-        // The same road the production runtime installs, so Spotlight photographed against a
-        // fixture answers with the fixture's accounts and its Open lands on the real panel.
-        QotaFolioIntentRuntime.install(revealPanel: { [weak self] in
-            self?.statusItem.showPanel()
-        })
-        IntentServices.install(store: store, catalog: catalog, privacy: privacy, stripShows: stripPreferences)
         panelShortcut.activate { [weak self] in
             self?.statusItem.togglePanel()
         }
-        // The Control, the widget and `qota` read files, and a fixture build holds none —
-        // this writes the scenario into the group container through the real codecs, so those
-        // surfaces can be photographed on a Mac with no grant.
+        // `qota` reads files, and a fixture build holds none — this writes the scenario into
+        // the group container through the real codecs, so `qota status` can be run against it on
+        // a Mac with no grant.
         if ProcessInfo.processInfo.environment["QOTAFOLIO_UI_PUBLISH_FILES"] == "1" {
             publishScenarioFiles()
-            surfaceRelay.start()
-        }
-        // The widget's own views, hosted in this process over the published reading, for a Mac
-        // where nobody may drive the widget gallery. The same source files WidgetKit renders.
-        if let spec = ProcessInfo.processInfo.environment["QOTAFOLIO_UI_WIDGET_PREVIEW"] {
-            Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .milliseconds(900))
-                self?.showWidgetPreviews(spec)
-            }
-        }
-        // The Control's battery symbols, loaded from the embedded extension's own compiled
-        // catalog, at menu-bar size on both bar polarities.
-        if ProcessInfo.processInfo.environment["QOTAFOLIO_UI_SYMBOL_PREVIEW"] == "1" {
-            Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .milliseconds(900))
-                self?.showSymbolPreview()
-            }
         }
         // Every key the panel receives while it is up, on record: a keyboard walk is expected
         // to appear here, a stranger's keystroke is not.
@@ -461,12 +421,9 @@ final class FixtureAppRuntime: AppRuntime {
         resizeObserver = nil
         backdrop?.orderOut(nil)
         backdrop = nil
-        for window in previewWindows { window.orderOut(nil) }
-        previewWindows.removeAll()
         store.stop()
         statusItem.remove()
         privacy.stop()
-        surfaceRelay.stop()
         panelShortcut.deactivate()
         defaults.removePersistentDomain(forName: defaultsDomain)
     }
@@ -508,112 +465,6 @@ final class FixtureAppRuntime: AppRuntime {
         } catch {
             print("QF_PUBLISH_FAILED \(error)")
         }
-        fflush(stdout)
-    }
-
-    // MARK: - Widget and symbol previews: the extension's faces in this process's own windows
-
-    /// Hosts the widget's real views — the ones `Sources/Surfaces` compiles into the extension
-    /// — at the widget's sizes, over the published reading, and prints one capture region.
-    private func showWidgetPreviews(_ spec: String) {
-        guard case .reading(let reading) = SurfaceReading.read() else {
-            print("QF_WIDGET_PREVIEW no-reading")
-            fflush(stdout)
-            return
-        }
-        var x: CGFloat = 240
-        let y: CGFloat = 420
-        var frames: [NSRect] = []
-        for kind in spec.split(separator: ",").map({ $0.trimmingCharacters(in: .whitespaces) }) {
-            let dark = kind.hasSuffix("dark")
-            let size = kind.hasPrefix("medium") ? NSSize(width: 360, height: 170) : NSSize(width: 170, height: 170)
-            let content: AnyView = kind.hasPrefix("medium")
-                ? AnyView(MediumFleetView(reading: reading, now: Date()))
-                : AnyView(SmallFleetView(reading: reading, now: Date()))
-            let root = content
-                .padding(14)
-                .frame(width: size.width, height: size.height)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            let window = NSPanel(
-                contentRect: NSRect(origin: NSPoint(x: x, y: y), size: size),
-                styleMask: [.borderless, .nonactivatingPanel],
-                backing: .buffered,
-                defer: false
-            )
-            window.isOpaque = false
-            window.backgroundColor = .clear
-            window.hasShadow = true
-            window.level = .floating
-            window.isReleasedWhenClosed = false
-            if dark { window.appearance = NSAppearance(named: .darkAqua) }
-            window.contentView = NSHostingView(rootView: root)
-            window.orderFrontRegardless()
-            previewWindows.append(window)
-            frames.append(window.frame)
-            x += size.width + 36
-        }
-        printCaptureRegion(around: frames, label: "QF_WIDGET_REGION")
-    }
-
-    /// The 23 generated battery symbols, straight out of the embedded extension's compiled
-    /// asset catalog, at menu-bar point size on a light and a dark bar.
-    private func showSymbolPreview() {
-        let appexURL = Bundle.main.bundleURL
-            .appendingPathComponent("Contents/PlugIns/QotaFolioWidgets.appex")
-        guard let appex = Bundle(url: appexURL) else {
-            print("QF_SYMBOL_PREVIEW no-appex")
-            fflush(stdout)
-            return
-        }
-        let names = stride(from: 0, through: 100, by: 20).map { "qf.battery.\($0)" }
-            + ["qf.battery.spent", "qf.battery.empty"]
-        let images = names.compactMap { name in
-            appex.image(forResource: name).map { (name, $0) }
-        }
-        print("QF_SYMBOL_PREVIEW loaded=\(images.count) of \(names.count)")
-
-        func row(_ dark: Bool) -> some View {
-            HStack(spacing: 14) {
-                ForEach(images, id: \.0) { _, image in
-                    Image(nsImage: image)
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 14)
-                        .foregroundStyle(dark ? Color.white : Color.black.opacity(0.9))
-                }
-            }
-            .padding(.horizontal, 16)
-            .frame(height: 34)
-            .frame(maxWidth: .infinity)
-            .background(dark ? Color(white: 0.12) : Color(white: 0.94))
-        }
-        let root = VStack(spacing: 0) { row(false); row(true) }
-        let size = NSSize(width: CGFloat(images.count) * 34 + 48, height: 68)
-        let window = NSPanel(
-            contentRect: NSRect(x: 240, y: 640, width: size.width, height: size.height),
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false
-        )
-        window.isOpaque = true
-        window.hasShadow = true
-        window.level = .floating
-        window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: root)
-        window.orderFrontRegardless()
-        previewWindows.append(window)
-        printCaptureRegion(around: [window.frame], label: "QF_SYMBOL_REGION")
-    }
-
-    /// One `screencapture -R` region, top-left coordinates, covering the given frames with air.
-    private func printCaptureRegion(around frames: [NSRect], label: String) {
-        guard let primary = NSScreen.screens.first, !frames.isEmpty else { return }
-        let union = frames.dropFirst().reduce(frames[0]) { $0.union($1) }
-        let margin: CGFloat = 28
-        let x = Int(union.minX - margin - primary.frame.minX)
-        let y = Int(primary.frame.maxY - union.maxY - margin)
-        print("\(label) \(x),\(y),\(Int(union.width + margin * 2)),\(Int(union.height + margin * 2))")
         fflush(stdout)
     }
 

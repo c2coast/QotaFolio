@@ -7,7 +7,7 @@ import Foundation
 /// starts to matter, which is why it is where the colour changes; at a fifth it is nearly gone.
 ///
 /// It is the fuel gauge anyone can already read, and it is the same three steps on the menu-bar
-/// battery, on a card's window row, on the widget's ring and on a block in the week — so a
+/// battery, on a card's window row and on a block in the week — so a
 /// glance at any of them is answered the same way. Which provider an account belongs to is
 /// written on the card in its name and its mark; the colour is spent on the one thing a battery
 /// is for.
@@ -64,8 +64,8 @@ public nonisolated enum LevelPalette {
 
     /// One colour, as sRGB components in 0…1.
     ///
-    /// Not a `Color` and not a `CGColor`: this type is read by a SwiftUI card, a WidgetKit ring
-    /// and a Core Graphics bitmap, and it belongs to none of them.
+    /// Not a `Color` and not a `CGColor`: this type is read by a SwiftUI card and a Core
+    /// Graphics bitmap, and it belongs to neither of them.
     public struct Ink: Hashable, Sendable {
         public let red: Double
         public let green: Double

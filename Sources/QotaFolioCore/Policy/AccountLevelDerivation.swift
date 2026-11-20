@@ -4,9 +4,9 @@ extension AccountLevel {
     /// The level of one account as the app's own surfaces derive it: the catalog row's word on
     /// the grant, the poller's word on the account, the snapshot's numbers.
     ///
-    /// The one place the poll phase becomes the level's flags, so the strip and the surface
-    /// relay cannot read the same phase two ways. Surfaces outside the app have no poll phase
-    /// — the files carry none — and call `AccountLevel.make` with the catalog's word alone.
+    /// The one place the poll phase becomes the level's flags, so the strip and the panel
+    /// cannot read the same phase two ways. `qota` has no poll phase — the files carry none —
+    /// and calls `AccountLevel.make` with the catalog's word alone.
     public nonisolated static func make(
         account: AccountConfig,
         snapshot: UsageSnapshot?,

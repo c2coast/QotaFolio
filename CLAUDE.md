@@ -6,7 +6,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 
 | Path | What it holds |
 |---|---|
-| `Sources/` | The code of version 1.0.0: the app, its widget, the `qota` command and their libraries. |
+| `Sources/` | The code of version 1.0.0, less its widget: the app, the `qota` command and their libraries. |
 | `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it, and the app does not. |
 | `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`, `Whole`. |
 | `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
@@ -18,7 +18,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | `project.yml` | The XcodeGen spec. XcodeGen writes `QotaFolio.xcodeproj` from it, and git ignores that project. |
 | `Package.swift` | The Swift package of `QotaFolioModel` and `QotaFolioCore`, whose code is in `Sources/`. |
 | `checks/` | The rules of the codebase, as node test files. |
-| `tools/` | Scripts and tools. `tools/forecast` prints the forecast and its sentences on a recorded history, and draws the graph. It is the project's `forecast` target, which the app scheme builds too. `tools/release/ship.sh` is the release lane. `tools/make-battery-symbols.py` writes the battery symbols in `Sources/`. |
+| `tools/` | Scripts and tools. `tools/forecast` prints the forecast and its sentences on a recorded history, and draws the graph. It is the project's `forecast` target, which the app scheme builds too. `tools/release/ship.sh` is the release lane. |
 | `docs/` | The release documents and the pictures in `README.md`. |
 | `.ci.toml` | The stacks of the landing check that read each path. |
 

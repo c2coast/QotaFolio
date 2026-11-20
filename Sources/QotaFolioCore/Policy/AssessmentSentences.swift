@@ -137,7 +137,7 @@ nonisolated extension AssessmentSentences {
     /// Everything `recommendation.json` needs a person's language for.
     ///
     /// The words are Core's — they go through `qfLocalized` and a string catalog, and neither
-    /// belongs in a target a widget extension links. So they are rendered once, here, and
+    /// belongs in the target `qota` links. So they are rendered once, here, and
     /// written into the file; `qota status` prints what the panel's rows say without linking
     /// a line of policy.
     public static func recommendation(_ assessment: FleetAssessment) -> RecommendationSentences {

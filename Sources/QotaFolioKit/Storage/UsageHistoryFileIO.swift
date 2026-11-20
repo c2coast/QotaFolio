@@ -281,8 +281,8 @@ private nonisolated enum UsageHistoryLocationSource: Sendable {
     }
 
     /// The same derivation `FileCatalogStore` uses, for the same reason: the two books sit
-    /// beside `catalog.json` in the App Group container, so the widget and the `qota` command
-    /// read the app's samples without asking the app for them, and one removal takes all four
+    /// beside `catalog.json` in the App Group container, so the `qota` command
+    /// reads the app's samples without asking the app for them, and one removal takes all four
     /// files without naming any of them.
     private static func productionLocation(_ file: SharedFile) throws -> CatalogLocation {
         let container: SharedContainer

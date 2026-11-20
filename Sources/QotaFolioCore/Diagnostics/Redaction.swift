@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-public nonisolated enum DiagOperation: String, Sendable { case performStore, refresh, revoke, usageGET, profileGET, deviceAuthStart, deviceAuthPoll, exchange, keychainRead, keychainWrite, catalogLoad, catalogPersist, reconcile, quiesce, updateCheck, leaseAcquire, endpointAdmission, containerMigrate }
+public nonisolated enum DiagOperation: String, Sendable { case performStore, refresh, revoke, usageGET, profileGET, deviceAuthStart, deviceAuthPoll, exchange, keychainRead, keychainWrite, catalogLoad, catalogPersist, reconcile, quiesce, updateCheck, leaseAcquire, endpointAdmission }
 
 public nonisolated enum DiagOutcome: String, Sendable { case ok, transient, permanent, refused, contractViolation }
 
