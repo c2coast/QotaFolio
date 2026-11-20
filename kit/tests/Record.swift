@@ -16,6 +16,9 @@ enum Record {
         return try! LegacyHistory.readings(from: data)
     }()
 
+    static let a = Forecast(readings: accounts[0])
+    static let b = Forecast(readings: accounts[1])
+
     static let fable = Limit.Kind.modelWeek("Fable")
 
     static let calendar: Calendar = {
