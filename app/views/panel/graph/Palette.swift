@@ -37,8 +37,8 @@ public struct Palette: Hashable, Sendable {
     /// The words that come second: the record's sentence and the caption over the chart.
     public var secondaryInk: RGBA { weight(light: 0.50, lightIncreased: 0.70, dark: 0.55, darkIncreased: 0.75) }
 
-    /// What shows through the hole of the week's dot, and the halo under the chart's words: the
-    /// plate's own lean, lighter on a light plate and darker on a dark one.
+    /// What shows through the hole of the week's dot: the plate's own lean, lighter on a light
+    /// plate and darker on a dark one.
     public var hole: RGBA {
         appearance.dark ? RGBA(0, 0, 0, appearance.increasedContrast ? 0.72 : 0.60)
                         : RGBA(1, 1, 1, appearance.increasedContrast ? 0.92 : 0.86)

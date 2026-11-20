@@ -44,7 +44,7 @@ struct Placer {
             guard box.minX >= 0, box.maxX <= width, box.minY >= 0, box.maxY <= height,
                   !taken.contains(where: { overlap($0, box) }) else { continue }
             taken.append(box)
-            placed.append(Ceiling.Label(kind: kind, text: text, weight: weight, tone: tone, box: box, halo: true))
+            placed.append(Ceiling.Label(kind: kind, text: text, weight: weight, tone: tone, box: box))
             return
         }
     }
@@ -88,7 +88,7 @@ struct Ticks {
             guard a >= 0, a + wide <= width, !taken.contains(where: { a < $0.1 + 6 && $0.0 < a + wide + 6 }) else { return }
             taken.append((a, a + wide))
             labels.append(Ceiling.Label(kind: kind, text: text, weight: weight, tone: current ? .ink : .chartInk,
-                                        box: CGRect(x: a, y: h + 4, width: wide, height: 11), halo: false))
+                                        box: CGRect(x: a, y: h + 4, width: wide, height: 11)))
         }
 
         if axis.secondsPerPoint * 50 >= 20 * hour {

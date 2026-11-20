@@ -21,7 +21,8 @@ public struct Ceiling: Sendable {
     /// Every line, in the order it is drawn.
     public let strokes: [Stroke]
     public let dots: [Dot]
-    /// The words inside the plot, each in its own box. No two boxes overlap.
+    /// The words inside the plot, each in its own box. No two boxes overlap, and every line stops
+    /// short of a box, so a word that sits on a line reads whole.
     public let labels: [Label]
     /// The words under the plot: days, hours and the reset's time.
     public let ticks: [Label]
@@ -65,8 +66,6 @@ public struct Ceiling: Sendable {
         public let tone: Tone
         /// The words sit centred in the box, which holds them with a point to spare.
         public let box: CGRect
-        /// Drawn over a halo of the chart's hole colour, so a line under the words does not cut them.
-        public let halo: Bool
 
         public enum Kind: Hashable, Sendable {
             /// Where a limit's forecast ends: when it runs out, or what it leaves at the reset.

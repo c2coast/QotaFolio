@@ -22,7 +22,7 @@ public struct CeilingChart: View {
             let ceiling = Ceiling(picture: picture, size: size, words: words) { text, weight in
                 context.resolve(Self.text(text, weight)).measure(in: CGSize(width: CGFloat.infinity, height: .infinity))
             }
-            draw(ceiling, in: context)
+            draw(ceiling, in: context, size: size)
         }
     }
 
@@ -36,16 +36,22 @@ public struct CeilingChart: View {
         return Text(words).font(.system(size: 10, weight: weight)).monospacedDigit()
     }
 
-    private func draw(_ ceiling: Ceiling, in context: GraphicsContext) {
+    private func draw(_ ceiling: Ceiling, in context: GraphicsContext, size: CGSize) {
         for band in ceiling.bands {
             context.fill(Path(band), with: .color(Color(palette.band)))
         }
+        // Every line stops a point short of each word's box, so a word on a line reads whole and
+        // whatever lies under the line, plate or band, shows round the word as it is.
+        var lines = context
+        var open = Path(CGRect(origin: .zero, size: size).insetBy(dx: -8, dy: -8))
+        for label in ceiling.labels + ceiling.ticks { open.addRect(label.box.insetBy(dx: -1, dy: 0)) }
+        lines.clip(to: open, style: FillStyle(eoFill: true))
         for stroke in ceiling.strokes {
             var path = Path()
             for line in stroke.lines { path.addLines(line) }
             let style = StrokeStyle(lineWidth: stroke.width, lineCap: stroke.round ? .round : .butt,
                                     lineJoin: stroke.round ? .round : .miter, dash: stroke.dash.map { CGFloat($0) })
-            context.stroke(path, with: .color(Color(palette.colour(stroke.tone)).opacity(stroke.opacity)), style: style)
+            lines.stroke(path, with: .color(Color(palette.colour(stroke.tone)).opacity(stroke.opacity)), style: style)
         }
         for dot in ceiling.dots {
             context.fill(circle(dot.center, dot.radius), with: .color(Color(palette.colour(dot.tone))))
@@ -53,26 +59,9 @@ public struct CeilingChart: View {
         }
         for label in ceiling.ticks + ceiling.labels {
             let centre = CGPoint(x: label.box.midX, y: label.box.midY)
-            if label.halo { halo(label, at: centre, in: context) }
             var text = context.resolve(Self.text(label.text, label.weight))
             text.shading = .color(Color(palette.colour(label.tone)))
             context.draw(text, at: centre, anchor: .center)
-        }
-    }
-
-    /// A halo of the hole's colour around the words, so the lines under them do not cut them: the
-    /// words drawn eight times, a point and a quarter out, in one layer at the hole's weight.
-    private func halo(_ label: Ceiling.Label, at centre: CGPoint, in context: GraphicsContext) {
-        var text = context.resolve(Self.text(label.text, label.weight))
-        let hole = palette.hole
-        text.shading = .color(Color(.sRGB, red: hole.red, green: hole.green, blue: hole.blue))
-        var layer = context
-        layer.opacity = hole.alpha
-        layer.drawLayer { inner in
-            for k in 0..<8 {
-                let angle = Double(k) * .pi / 4
-                inner.draw(text, at: CGPoint(x: centre.x + 1.25 * cos(angle), y: centre.y + 1.25 * sin(angle)), anchor: .center)
-            }
         }
     }
 
