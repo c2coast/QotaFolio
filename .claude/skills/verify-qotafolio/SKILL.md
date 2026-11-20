@@ -16,13 +16,22 @@ Q="$(git rev-parse --show-toplevel)/.claude/skills/verify-qotafolio/bin/qfv"
 
 Read [features/README.md](features/README.md) next. It indexes the user-facing features and holds one recipe per feature.
 
-## How the lab is isolated
+## What shows on the operator's screen
 
-- **One lane, one app identity.** `qfv` builds with `QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.verify`. That one setting gives the lab copy its own sandbox container, App Group, defaults, Keychain service and single-instance lease (`Sources/QotaFolioModel/Identity/AppIdentity.swift`). The installed app is `net.c2coast.QotaFolio`. A developer's own Debug build is `net.c2coast.QotaFolio.dev`. Neither is touched.
-- **The lease is per identity.** It is a locked file inside the app's own sandbox container (`Sources/App/SingleInstanceLease.swift`). So the lab runs beside the installed app. A second start of the same lane does not run: it rings the first instance, which shows its panel, and exits. `qfv launch` refuses when the lane already runs.
-- **Fixtures, not accounts.** `qfv launch <scenario>` sets `QOTAFOLIO_UI_SCENARIO`. The Debug build then builds `FixtureAppRuntime` (`Sources/App/Composition/Fixture/FixtureAppRuntime.swift`) instead of the production runtime: the real status item, panel, strip and Settings over invented accounts, with no Keychain and no network. An unknown scenario name falls through to the production runtime, so `qfv launch` accepts only names it reads from `Sources/UIFixtures/FixtureUIScenarios.swift`.
+The lab runs on the operator's own Mac, beside his work. Ask him before you run `qfv launch`.
+
+- From `qfv launch` until `qfv clean`, the lab's item sits in his menu bar beside the installed app's.
+- While it runs, the lab holds the panel shortcut ⌃⌥Q, the same keys the installed app uses. Its log shows `QF_HOTKEY register … status=0`.
+- Every press that opens the panel, a menu or Settings shows that window on his screen. So does `qfv reopen`.
+
+`build`, `doctor`, `help` and `log` show nothing, so run them at any time. Keep runs short, and end every run with `qfv clean`.
+
+## How the lab keeps lanes apart
+
+- **One lane, one app identity.** `qfv` builds with `QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.verify`. `AppIdentity` (`Sources/QotaFolioModel/Identity/AppIdentity.swift`) derives every place the app owns from that one identifier: its App Group, its preferences, its Keychain service and its support folder. The installed app is `net.c2coast.QotaFolio`. A developer's own Debug build is `net.c2coast.QotaFolio.dev`. Neither is touched.
+- **The lease is per identity.** It is a locked file in the lane's support folder, `~/Library/Application Support/net.c2coast.QotaFolio.dev.<lane>/single-instance.lock` (`app/lease/`). So the lab runs beside the installed app. A second start of the same lane does not run: it rings the first instance, which shows its panel, and exits. `qfv launch` refuses when the lane already runs.
+- **Fixtures, not accounts.** `qfv launch <scenario>` sets `QOTAFOLIO_UI_SCENARIO`. The Debug build then builds `FixtureAppRuntime` (`Sources/App/Composition/Fixture/FixtureAppRuntime.swift`) instead of the production runtime: the real status item, panel, strip and Settings over invented accounts, with no Keychain and no network. It keeps its settings in one domain, `net.c2coast.QotaFolio.dev.<lane>.fixture`, which it empties when it starts and when it quits, and it never carries the settings of version 1.0.0. An unknown scenario name falls through to the production runtime, so `qfv launch` accepts only names it reads from `Sources/UIFixtures/FixtureUIScenarios.swift`.
 - **Parallel lanes.** Set `QFV_LANE=<lower-case letters and digits>` on every `qfv` call to get a second identity, build folder and evidence stream. Each lane needs its own build (about 30 s cold).
-- **What stays shared with the operator.** The screen, the menu bar and the global shortcut. While a lab instance runs it registers the panel shortcut ⌃⌥Q for itself (`QF_HOTKEY register … status=0` in its log), the same keys the installed app uses. Its panel appears on the operator's screen when opened. Keep runs short and always end with `qfv clean`.
 
 ## Launch
 
@@ -35,7 +44,7 @@ Read [features/README.md](features/README.md) next. It indexes the user-facing f
 - Extra `QOTAFOLIO_UI_*=value` arguments pass straight to the app, for example `"$Q" launch face QOTAFOLIO_UI_STRIP=week`. The header of `FixtureAppRuntime.swift` documents every one.
 - `qfv launch` always adds `QOTAFOLIO_UI_PUBLISH_FILES=1`, so the scenario is written into the lane's App Group through the app's own codecs and `qota` has something to read.
 - **Ready means usable.** `launch` returns only after the status item exists in the accessibility tree with its spoken sentence, and after the app has printed `QF_PUBLISHED`. It fails with the log path if the app exits or the item does not appear within 20 s.
-- `build` prints `{"ok":…,"exit":…,"source":"<HEAD>-<hash of uncommitted app changes>"}`. On failure, read the axbuild report it names, per the `axiom-build` skill.
+- `build` prints `{"ok":…,"exit":…,"source":"<stamp>"}`. The stamp is a hash of every file the build reads, committed or not: each path that `.ci.toml` gives the `swift` stack. On failure, read the axbuild report it names, per the `axiom-build` skill.
 
 ## Doctor
 
@@ -102,10 +111,10 @@ Proof standards:
 "$Q" clean
 ```
 
-`clean` quits the lane's instance through its own Quit, removes the published files from the lane's App Group, unregisters the lane's build from LaunchServices and PlugInKit, and deletes the lane's run state. It prints the evidence folder, which stays, and the installed app's pid, which is still running.
+`clean` quits the lane's instance through its own Quit. Then it removes what the run left on this Mac: the published files in the lane's App Group, the lane's support folder with its lease, and the fixture's settings domain. It unregisters the lane's build from LaunchServices and deletes the lane's run state. It prints `left`, the places that are still there, which is empty when `ok` is `true`. It also prints the evidence folder, which stays, and the installed app's pid, which is still running.
 
 - `qfv stop` only ends the instance. It tries the user's Quit first (cancelling an open add flow first). When Quit cannot be reached, it sends SIGTERM, then SIGKILL, to the recorded pid and to nothing else. `stoppedBy` says which.
-- A Quit runs the app's own termination, which deletes the fixture's throwaway defaults domain. A signal skips that, so one small preferences file may stay inside the lane's own container. It is never read again.
+- A Quit runs the app's own termination, which empties the fixture's settings domain. A signal skips that, so the settings stay until the next launch empties them or `qfv clean` removes them.
 - Run `clean` after every failed attempt too, so no instance holds the lane, the shortcut or a place in the menu bar.
 - The build in `.build/verify/<lane>/` stays for the next run. Delete that folder to start cold.
 

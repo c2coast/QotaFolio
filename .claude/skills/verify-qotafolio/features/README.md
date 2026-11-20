@@ -42,7 +42,5 @@ Each feature file starts with an H1 title and one paragraph about the user-visib
 
 ## Not covered by this map yet
 
-- The desktop widget and the menu-bar Control (the widget extension). They render in system processes the lab cannot drive. `QOTAFOLIO_UI_WIDGET_PREVIEW=small,medium` hosts their views inside the lab for a picture.
-- Shortcuts and Spotlight actions (`Sources/App/Intents`, `Sources/Surfaces`). `shortcuts run` would reach the installed app's actions too, so it is not used.
 - The panel shortcut ⌃⌥Q, notifications, Sparkle updates and Remove My Data. Each needs synthetic keyboard input, the notification centre, the network, or real data.
 - The Claude Code plugin and the Agent Dashboard are not in the repo yet.

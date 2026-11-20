@@ -1,9 +1,10 @@
 #!/bin/bash
 # qfv — build, launch, drive, photograph and stop a QotaFolio Debug build over fixture accounts.
 #
-# One lane is one bundle identifier, net.c2coast.QotaFolio.dev.<lane>, with its own sandbox
-# container, App Group, defaults, Keychain service and single-instance lease. The installed
-# app (net.c2coast.QotaFolio) and a developer's own `.dev` build are never touched.
+# One lane is one bundle identifier, net.c2coast.QotaFolio.dev.<lane>. AppIdentity derives every
+# place the app owns from it: its group, its preferences, its Keychain service and the support folder
+# that holds its single-instance lease. So the installed app (net.c2coast.QotaFolio) and a
+# developer's own `.dev` build are never touched.
 # Every subcommand prints JSON on stdout. Run `qfv help` for the list.
 set -euo pipefail
 
@@ -20,7 +21,12 @@ RUN="$STATE/run"
 TOOLS="$ROOT/.build/verify/tools"
 AX="$TOOLS/qfv-ax"
 EVIDENCE_ROOT="$ROOT/.artifacts/verify"
+# What a run leaves on this Mac, all named by the lane's identity: the files it publishes for qota, the
+# support folder that holds its lease, and the preferences the fixture empties when it starts and quits.
 GROUP_FILES="$HOME/Library/Group Containers/NCCKY76LD4.group.$BUNDLE_ID/Library/Application Support/QotaFolio"
+SUPPORT="$HOME/Library/Application Support/$BUNDLE_ID"
+FIXTURE_DOMAIN="$BUNDLE_ID.fixture"
+FIXTURE_PREFERENCES="$HOME/Library/Preferences/$FIXTURE_DOMAIN.plist"
 SCENARIO_SOURCE="$ROOT/Sources/UIFixtures/FixtureUIScenarios.swift"
 
 json_str() {  # a JSON string literal
@@ -245,15 +251,16 @@ cmd_stop() {  # the lane's instance, ended: the user's Quit first, the pid's sig
 
 cmd_clean() {  # stop, then remove what the run left on this Mac; the evidence stays
   local stopped; stopped=$(cmd_stop)
-  rm -f "$GROUP_FILES"/*.json
-  [ -d "$APP" ] && {
-    pluginkit -r "$APP/Contents/PlugIns/QotaFolioWidgets.appex" 2>/dev/null || true
-    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$APP" 2>/dev/null || true
-  }
+  rm -rf "$GROUP_FILES" "$SUPPORT"
+  defaults delete "$FIXTURE_DOMAIN" >/dev/null 2>&1 || true
+  rm -f "$FIXTURE_PREFERENCES"   # macOS can keep an empty file for a domain it has emptied
+  [ -d "$APP" ] && { /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$APP" 2>/dev/null || true; }
   local dir; dir=$(run_dir)
   rm -rf "$RUN"
-  local released; released=$(released_pid)
-  printf '{"ok":true,"stop":%s,"evidence":%s,"releasedAppPid":%s}\n' "$stopped" "$(json_str "$dir")" "${released:-null}"
+  local released place left=""; released=$(released_pid)
+  for place in "$GROUP_FILES" "$SUPPORT" "$FIXTURE_PREFERENCES"; do if [ -e "$place" ]; then left="$left${left:+,}$(json_str "$place")"; fi; done
+  printf '{"ok":%s,"stop":%s,"left":[%s],"evidence":%s,"releasedAppPid":%s}\n' \
+    "$([ -z "$left" ] && echo true || echo false)" "$stopped" "$left" "$(json_str "$dir")" "${released:-null}"
 }
 
 cmd_help() {
@@ -273,7 +280,7 @@ qfv — QotaFolio verification lane "$LANE" ($BUNDLE_ID). Every command prints J
   qfv reopen                              start the app a second time; it rings the running one
   qfv quit                                the user's Quit, through the panel's More menu
   qfv stop                                quit, or signal the recorded pid if Quit cannot
-  qfv clean                               stop, remove published files and registrations; keep evidence
+  qfv clean                               stop, remove what the lane left on this Mac; keep evidence
 Selectors: id=<AXIdentifier>, role=<AXRole>, label=<substring>, nth=<k>, joined by &.
 Evidence: $EVIDENCE_ROOT/<run>/ ; latest run: $EVIDENCE_ROOT/latest
 EOF
