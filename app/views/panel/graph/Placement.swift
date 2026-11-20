@@ -35,9 +35,8 @@ struct Placer {
         taken.append(CGRect(x: center.x - radius, y: center.y - radius, width: 2 * radius, height: 2 * radius))
     }
 
-    mutating func put(_ text: String, _ kind: Ceiling.Label.Kind, _ weight: Weight, _ tone: Tone, _ spots: [Spot],
-                      measure: (String, Weight) -> CGSize) {
-        let wide = measure(text, weight).width
+    mutating func put(_ text: String, _ kind: Ceiling.Label.Kind, _ weight: Weight, _ tone: Tone, _ spots: [Spot]) {
+        let wide = ChartType.width(text, weight)
         for spot in spots {
             let x0 = spot.anchor == .end ? spot.x - wide : spot.anchor == .middle ? spot.x - wide / 2 : spot.x
             let box = CGRect(x: x0 - 1, y: spot.y - 9, width: wide + 2, height: 11)
@@ -75,15 +74,14 @@ struct Ticks {
     private(set) var strokes: [Ceiling.Stroke] = []
     private(set) var labels: [Ceiling.Label] = []
 
-    init(axis: TimeAxis, picture: WeekPicture, words: TimeWords, width: Double, height h: Double,
-         measure: (String, Weight) -> CGSize) {
+    init(axis: TimeAxis, picture: WeekPicture, words: TimeWords, width: Double, height h: Double) {
         let now = picture.now.at
         var grid: [[CGPoint]] = [], dotted: [[CGPoint]] = []
         var taken: [(Double, Double)] = []
         func line(_ x: Double) -> [CGPoint] { [CGPoint(x: x, y: 0), CGPoint(x: x, y: h)] }
         func put(_ x: Double, _ text: String, current: Bool, _ anchor: Placer.Anchor = .middle, kind: Ceiling.Label.Kind = .tick) {
             let weight: Weight = current ? .semibold : .regular
-            let wide = measure(text, weight).width
+            let wide = ChartType.width(text, weight)
             let a = anchor == .middle ? x - wide / 2 : anchor == .end ? x - wide : x
             guard a >= 0, a + wide <= width, !taken.contains(where: { a < $0.1 + 6 && $0.0 < a + wide + 6 }) else { return }
             taken.append((a, a + wide))

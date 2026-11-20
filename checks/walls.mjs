@@ -30,8 +30,8 @@ export const walls = [
   },
   {
     folder: "app/views/panel/graph/tests/",
-    imports: ["AppKit", "Foundation", "Graph", "Kit", "Testing"],
-    importFix: "The graph's tests read its geometry, with words measured by AppKit's fonts. Nothing else.",
+    imports: ["Accessibility", "Foundation", "Graph", "Kit", "Testing"],
+    importFix: "The graph's tests read its geometry and what it says aloud. Nothing else.",
     calls: [],
   },
   {

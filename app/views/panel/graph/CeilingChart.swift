@@ -1,8 +1,8 @@
 import Kit
 import SwiftUI
 
-/// The Ceiling graph of a week picture: a canvas that works out the geometry at its own size, with
-/// its words measured as they will be drawn, and strokes it. It holds no state, and nothing moves.
+/// The Ceiling graph of a week picture: a canvas that works out the geometry at its own size and
+/// strokes it. It holds no state, and nothing moves.
 public struct CeilingChart: View {
     /// The chart's size in the panel: the plot, 360 by 128 points, and the axis's words under it.
     public static let size = CGSize(width: 360, height: 128 + Ceiling.axisBand)
@@ -19,21 +19,9 @@ public struct CeilingChart: View {
 
     public var body: some View {
         Canvas { context, size in
-            let ceiling = Ceiling(picture: picture, size: size, words: words) { text, weight in
-                context.resolve(Self.text(text, weight)).measure(in: CGSize(width: CGFloat.infinity, height: .infinity))
-            }
+            let ceiling = Ceiling(picture: picture, size: size, words: words)
             draw(ceiling, in: context, size: size)
         }
-    }
-
-    /// The chart's type: 10 points, with figures of one width, as the app's.
-    static func text(_ words: String, _ weight: Weight) -> Text {
-        let weight: Font.Weight = switch weight {
-        case .regular: .regular
-        case .medium: .medium
-        case .semibold: .semibold
-        }
-        return Text(words).font(.system(size: 10, weight: weight)).monospacedDigit()
     }
 
     private func draw(_ ceiling: Ceiling, in context: GraphicsContext, size: CGSize) {
@@ -57,11 +45,12 @@ public struct CeilingChart: View {
             context.fill(circle(dot.center, dot.radius), with: .color(Color(palette.colour(dot.tone))))
             if dot.ring { context.fill(circle(dot.center, dot.radius * 0.44), with: .color(Color(palette.hole))) }
         }
-        for label in ceiling.ticks + ceiling.labels {
-            let centre = CGPoint(x: label.box.midX, y: label.box.midY)
-            var text = context.resolve(Self.text(label.text, label.weight))
-            text.shading = .color(Color(palette.colour(label.tone)))
-            context.draw(text, at: centre, anchor: .center)
+        context.withCGContext { cg in
+            for label in ceiling.ticks + ceiling.labels {
+                let ink = palette.colour(label.tone)
+                cg.setFillColor(CGColor(srgbRed: ink.red, green: ink.green, blue: ink.blue, alpha: ink.alpha))
+                ChartType.draw(label.text, label.weight, centredIn: label.box, in: cg)
+            }
         }
     }
 

@@ -82,7 +82,7 @@ public struct Ceiling: Sendable {
         }
     }
 
-    public init(picture: WeekPicture, size: CGSize, words: TimeWords, measure: (String, Weight) -> CGSize) {
+    public init(picture: WeekPicture, size: CGSize, words: TimeWords) {
         let w = size.width, h = size.height - Self.axisBand
         let axis = TimeAxis(picture: picture, width: w)
         let x = axis.x
@@ -120,7 +120,7 @@ public struct Ceiling: Sendable {
             if b - a >= 46 && span.to.timeIntervalSince(span.from) >= 5 * hour { bandNames.append(((a + b) / 2, span.kind)) }
         }
 
-        let ticks = Ticks(axis: axis, picture: picture, words: words, width: w, height: h, measure: measure)
+        let ticks = Ticks(axis: axis, picture: picture, words: words, width: w, height: h)
         strokes += ticks.strokes
         stroke(.baseline, [[CGPoint(x: 0, y: h), CGPoint(x: w, y: h)]], 1, .grid)
 
@@ -210,14 +210,14 @@ public struct Ceiling: Sendable {
         let ordered = ends.filter(\.strong) + ends.filter { !$0.strong }
         for end in ordered { placer.dot(end.point, 4) }
         for end in ordered {
-            placer.put(end.text, .forecast(end.kind), end.strong ? .semibold : .medium, end.tone, around(end.point), measure: measure)
+            placer.put(end.text, .forecast(end.kind), end.strong ? .semibold : .medium, end.tone, around(end.point))
         }
         for (kind, value, text) in [(Limit.Kind.week, weekCeiling, "Weekly limit")] + (model.map { [($0, modelCeiling, "\(name) limit")] } ?? []) {
             let yr = y(value(now)), y0 = y(value(picture.points[0]))
             placer.put(text, .limit(kind), .regular, .chartInk, [
                 Placer.Spot(w - 2, yr - 4, .end), Placer.Spot(3, y0 - 4, .start),
                 Placer.Spot(w - 2, yr + 11, .end), Placer.Spot(3, y0 + 11, .start),
-            ], measure: measure)
+            ])
         }
         for fall in picture.falls {
             guard let q = picture.points.first(where: { $0.at == fall.after.at }) else { continue }
@@ -226,11 +226,11 @@ public struct Ceiling: Sendable {
             placer.put("↺ \(fall.hours > 2 ? "≥" : "+")\(Int(jsRound(back)))", .reset, .regular, .chartInk, [
                 Placer.Spot(xs - 3, ym, .end), Placer.Spot(xs + 3, ym, .start), Placer.Spot(xs - 3, yNew - 4, .end),
                 Placer.Spot(xs + 3, yNew - 4, .start), Placer.Spot(xs + 3, yOld + 11, .start),
-            ], measure: measure)
+            ])
         }
         for band in bandNames {
             placer.put(band.kind == .unrecorded ? "not recorded" : "not watched", band.kind, .regular, .chartInk,
-                       [Placer.Spot(band.center, h - 4, .middle)], measure: measure)
+                       [Placer.Spot(band.center, h - 4, .middle)])
         }
 
         plot = CGSize(width: w, height: h)

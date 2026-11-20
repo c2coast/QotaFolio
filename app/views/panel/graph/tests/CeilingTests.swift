@@ -1,28 +1,17 @@
-import AppKit
 import Foundation
 import Graph
 import Kit
 import Testing
 
 /// The Ceiling graph's geometry at the chart page's twelve moments of the frozen record, at the
-/// panel's size, in UTC. The words are measured in the system font at 10 points with figures of one
-/// width, as the chart draws them.
+/// panel's size, in UTC.
 @Suite("The Ceiling graph at the page's twelve moments")
 struct CeilingTests {
     static let names = Record.moments.keys.sorted()
     static let size = CGSize(width: 360, height: 146)
 
     static func ceiling(_ name: String) throws -> Ceiling {
-        Ceiling(picture: try Record.picture(name), size: size, words: TimeWords(calendar: Record.calendar), measure: measure)
-    }
-
-    static func measure(_ text: String, _ weight: Weight) -> CGSize {
-        let weight: NSFont.Weight = switch weight {
-        case .regular: .regular
-        case .medium: .medium
-        case .semibold: .semibold
-        }
-        return (text as NSString).size(withAttributes: [.font: NSFont.monospacedDigitSystemFont(ofSize: 10, weight: weight)])
+        Ceiling(picture: try Record.picture(name), size: size, words: TimeWords(calendar: Record.calendar))
     }
 
     @Test("No two words overlap, inside the plot or under it", arguments: names)
