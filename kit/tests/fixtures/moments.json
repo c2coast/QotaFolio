@@ -1,0 +1,14 @@
+[
+ {"name": "after-banked-reset", "label": "After a banked reset", "account": "A", "at": 1763509500},
+ {"name": "after-a-gap", "label": "After a gap", "account": "A", "at": 1763544000},
+ {"name": "spent-week", "label": "Spent week", "account": "B", "at": 1763646000},
+ {"name": "new-week", "label": "New week", "account": "A", "at": 1763595300},
+ {"name": "fable-near-its-limit", "label": "Fable nearer its cap", "account": "B", "at": 1763148000},
+ {"name": "last-reading", "label": "Now", "account": "A", "at": 1763735495},
+ {"name": "longest-gap", "label": "Worst: 21.7-hour gap", "account": "B", "at": 1763408400},
+ {"name": "out-in-15-minutes", "label": "Worst: out in 15 minutes", "account": "A", "at": 1763080560},
+ {"name": "fable-spent-week-not", "label": "Worst: Fable spent, week not", "account": "B", "at": 1763172000},
+ {"name": "before-the-reset", "label": "Worst: 20 minutes to reset", "account": "A", "at": 1763585940},
+ {"name": "record-starts-mid-week", "label": "Worst: record starts mid-week", "account": "B", "at": 1762977600},
+ {"name": "new-week-at-zero", "label": "Worst: 0% and hidden names", "account": "A", "at": 1763586120}
+]

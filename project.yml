@@ -18,8 +18,8 @@ settings:
     DEVELOPMENT_TEAM: NCCKY76LD4
     CODE_SIGN_STYLE: Automatic
     # The one identifier everything else is derived from. The app IS this string; the widget
-    # extension is `.Widgets`, the `qota` tool is `.qota`, the Kit framework is `.Kit`, and
-    # `AppIdentity` derives the container, the App Group, the Keychain service, the defaults
+    # extension is `.Widgets`, the `qota` tool is `.qota`, the `QotaFolioKit` framework is `.Kit`,
+    # and `AppIdentity` derives the container, the App Group, the Keychain service, the defaults
     # domain and the lease from the app's. A private build sets it on the xcodebuild line
     # (`QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.mine`) and gets its own everything.
     #
@@ -506,6 +506,89 @@ targets:
           stamp_tmp.replace(stamp_path)
           PYTHON
 
+  # The new tree's pure Swift: the values and the Engine. Foundation only, no clock, no files.
+  # tools/forecast links it, and the app does not. A library ships nonisolated API and lets its caller
+  # choose where it runs.
+  Kit:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: kit
+        excludes: ["tests/**"]
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        SKIP_INSTALL: "YES"
+
+  # Kit's tests, with no host application: they run in the test runner, so nothing appears on
+  # screen. The reader of version 1.0.0's history is compiled in, because the tests read the
+  # recorded week through it. The fixtures are read from the source tree, not copied in.
+  KitTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: kit/tests
+        excludes: ["fixtures/**"]
+      - app/recorder/legacy
+    dependencies:
+      - { target: Kit }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        GENERATE_INFOPLIST_FILE: "YES"
+
+  # The Ceiling graph: its geometry, its colours and the view that draws them. tools/forecast links
+  # it, and the app does not.
+  Graph:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: app/views/panel/graph
+        excludes: ["tests/**"]
+    dependencies:
+      - { target: Kit }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        SKIP_INSTALL: "YES"
+
+  # The graph's tests, with no host application. They read the frozen record through the same
+  # helper and reader as Kit's tests.
+  GraphTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - app/views/panel/graph/tests
+      - kit/tests/Record.swift
+      - app/recorder/legacy
+    dependencies:
+      - { target: Graph }
+      - { target: Kit }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        GENERATE_INFOPLIST_FILE: "YES"
+
+  # tools/forecast. The app scheme builds it, so a change that breaks the tool fails the build.
+  # The script tools/forecast builds it through the scheme of the same name.
+  forecast:
+    type: tool
+    platform: macOS
+    sources:
+      - tools/forecast.swift
+      - tools/forecast-draw.swift
+      - app/recorder/legacy
+    dependencies:
+      - { target: Kit }
+      - { target: Graph }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        SKIP_INSTALL: "YES"
+
 schemes:
   QotaFolio:
-    build: { targets: { QotaFolio: all } }
+    build: { targets: { QotaFolio: all, forecast: all } }
+    test: { targets: [KitTests, GraphTests] }
+  forecast:
+    build: { targets: { forecast: all } }

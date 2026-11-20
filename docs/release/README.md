@@ -3,11 +3,11 @@
 One script does the whole lane:
 
 ```bash
-Tools/release/ship.sh health   # is this Mac ready?
-Tools/release/ship.sh ship     # archive → … → draft
+tools/release/ship.sh health   # is this Mac ready?
+tools/release/ship.sh ship     # archive → … → draft
 ```
 
-[`ship.sh`](../../Tools/release/ship.sh) names its steps in its own header, one sentence each, and says where the artifacts land. Who signs and where it publishes are facts about a Mac, not about the source, so they live in `~/.config/qotafolio/ship.env`; [`ship.env.example`](../../Tools/release/ship.env.example) is that file with each setting explained. The version is `project.yml`'s `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` — bump them there and nowhere else. This page is the why behind those steps.
+[`ship.sh`](../../tools/release/ship.sh) names its steps in its own header, one sentence each, and says where the artifacts land. Who signs and where it publishes are facts about a Mac, not about the source, so they live in `~/.config/qotafolio/ship.env`; [`ship.env.example`](../../tools/release/ship.env.example) is that file with each setting explained. The version is `project.yml`'s `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` — bump them there and nowhere else. This page is the why behind those steps.
 
 **Nothing publishes itself.** The last step writes `go.sh` and stops; a person runs it.
 

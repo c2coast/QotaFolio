@@ -17,7 +17,7 @@ DerivedData/
 **/xcuserdata/
 *.xcuserstate
 
-# Python bytecode from Tools/
+# Python bytecode from tools/
 __pycache__/
 *.py[cod]
 

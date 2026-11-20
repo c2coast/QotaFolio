@@ -1,0 +1,19 @@
+# Which stacks of the landing check read each path. A prefix is a plain path prefix, and case matters.
+# A path that the rules of checks/ read lists node, because the rules are node tests. Sources/ is the old
+# tree, which no rule reads. A new top-level folder adds its prefix in the pull request that brings it.
+[paths]
+"Sources/" = ["swift"]
+"kit/" = ["swift", "node"]
+"app/" = ["swift", "node"]
+"Assets/" = ["swift"]
+"project.yml" = ["swift"]
+"Package.swift" = ["swift", "node"]
+"checks/" = ["node"]
+"tools/" = ["swift", "node"]
+"Makefile" = []
+"docs/" = []
+"LICENSE" = []
+".ci.toml" = []
+".gitignore" = []
+".mcp.json" = []
+".xcodebuildmcp/" = []

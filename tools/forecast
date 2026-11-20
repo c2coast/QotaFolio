@@ -1,0 +1,47 @@
+#!/bin/bash
+# What the forecast said at every recorded poll, in each limit's verdict and in the sentences a
+# person reads, what then happened, and how often it was right. Or, with --draw, the graph at one
+# moment as a picture.
+#
+#   tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm>] [--account <id>] [usage-history.json]
+#   tools/forecast --draw <moment name | yyyy-MM-dd HH:mm> [--dark] [--increased-contrast]
+#                  [--reduce-transparency] [--12-hour] [--width <points>] [--out <file.png>] [--account <id>]
+#                  [usage-history.json]
+#
+# With no path it reads the frozen record, kit/tests/fixtures/usage-history.json. Any history file
+# of version 1.0.0 works, such as a dated copy of the app's own. --json prints one line for each
+# poll and one for each score, with every number at full precision. --at prints one moment: a name
+# from moments.json beside the history file, such as after-banked-reset, or a day and a time in
+# the Mac's zone. --account keeps one account. --draw writes the graph's part of the card at the
+# moment to a PNG, light unless --dark, with the chart 360 points wide unless --width says, into
+# the temporary folder unless --out names the file, and prints its sentences and the file's path.
+# Nothing opens on screen.
+#
+# The tool is the project's target `forecast`, which the app scheme builds too. This script builds
+# it through the scheme of the same name, into .build/DerivedData beside make test's products, and
+# only when a source of it is newer than the tool.
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+tool="$root/.build/DerivedData/Build/Products/Debug/forecast"
+
+newer() {
+  find "$root/kit" "$root/app/recorder/legacy" "$root/app/views/panel/graph" "$root/tools" "$root/project.yml" \
+    \( -path "$root/kit/tests" -o -path "$root/app/views/panel/graph/tests" \) -prune -o \
+    \( -name '*.swift' -o -name project.yml \) -newer "$tool" -print | head -1
+}
+
+if [[ ! -x "$tool" || -n "$(newer)" ]]; then
+  cd "$root"
+  mkdir -p .build
+  xcodegen generate --no-env --quiet --spec project.yml --project . --project-root .
+  if ! xcodebuild build -project QotaFolio.xcodeproj -scheme forecast -destination "platform=macOS,arch=$(uname -m)" \
+      -derivedDataPath .build/DerivedData CODE_SIGNING_ALLOWED=NO > .build/forecast.log 2>&1; then
+    grep -E 'error:' .build/forecast.log >&2 || true
+    echo "tools/forecast did not build. The whole log is .build/forecast.log." >&2
+    exit 1
+  fi
+  touch "$tool"
+fi
+
+# The frozen record goes first. A path among the arguments replaces it.
+exec "$tool" "$root/kit/tests/fixtures/usage-history.json" "$@"
