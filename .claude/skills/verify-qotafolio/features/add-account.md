@@ -39,6 +39,6 @@ Preconditions:
 
 - `add-continue` fails through this harness. `qfv ax set` writes the text field's accessibility value, and the field shows it, but the step does not advance. The Continue button is disabled while the trimmed name is empty (`NameProviderStep.swift`), so the likely cause is that an accessibility value write does not reach SwiftUI's binding. Typing would, and this lab posts no keyboard events. Not yet determined whether VoiceOver typing has the same problem.
 - `add-device-code-live` fails in the lab because the `device-code` scenario is pinned to a fixed date, 1 September 2026, with a 15-minute expiry. Every launch after that shows the expired state. A scenario anchored to the launch time, as `face` is, would show the live code.
-- Do not press `Open ChatGPT authorization page`, `Copy web address`, `Copy code` or the Anthropic `Open browser` button. They open the operator's browser or replace his clipboard.
-- The panel closes when the operator clicks elsewhere, and an add flow closes with it. Keep each step in one `&&` chain.
+- Do not press `Open ChatGPT authorization page`, `Copy web address`, `Copy code` or the Anthropic `Open browser` button. They open the owner's browser or replace his clipboard.
+- The panel closes when the owner clicks elsewhere, and an add flow closes with it. Keep each step in one `&&` chain.
 - `qfv quit` presses `Cancel` before it quits, so an open add flow does not block the cleanup.

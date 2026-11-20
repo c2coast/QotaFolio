@@ -14,7 +14,7 @@ This folder is the maintained source for verifying what a QotaFolio user can see
 - Drive through `"$Q" ax …` against the lane's pid. Selectors are stable accessibility identifiers wherever the app has one; `label=` and `nth=` are used only where it has none, and the recipe says so.
 - The panel closes when anyone clicks elsewhere. Open it and use it in one `&&` chain: `"$Q" ax press id=qotafolio.statusItem && "$Q" ax wait id=qotafolio.panel 5 && …`.
 - Treat every command as literal. Keep quoted selectors and values unchanged.
-- Never press a control that leaves the Mac: `Open ChatGPT authorization page`, `Open browser`, `Copy code`, `Copy web address`, `Copy` (Terminal row). They open the operator's browser or overwrite his clipboard.
+- Never press a control that leaves the Mac: `Open ChatGPT authorization page`, `Open browser`, `Copy code`, `Copy web address`, `Copy` (Terminal row). They open the owner's browser or overwrite his clipboard.
 - End every run with `"$Q" clean`.
 
 ## Proof and skip reporting
@@ -43,4 +43,3 @@ Each feature file starts with an H1 title and one paragraph about the user-visib
 ## Not covered by this map yet
 
 - The panel shortcut ⌃⌥Q, notifications, Sparkle updates and Remove My Data. Each needs synthetic keyboard input, the notification centre, the network, or real data.
-- The Claude Code plugin and the Agent Dashboard are not in the repo yet.

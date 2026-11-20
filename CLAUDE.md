@@ -13,7 +13,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
 | `app/` | The app's code in the new tree. The app compiles `app/lease/`, `app/settings/legacy/` and `app/settings/hidden/`, and signs with the entitlements file in `app/main/`. `qota` compiles `app/settings/hidden/` too. Tools and tests link the other folders. |
-| `app/main/` | The app's entitlements file, and in `tests/` the `AppTests` that pin the names `AppIdentity` derives. |
+| `app/main/` | The app's entitlements file, and `tests/AppIdentityTests.swift`, the part of `AppTests` that pins the names `AppIdentity` derives. |
 | `app/lease/` | The lease. `tests/` holds its tests, in `AppTests`. |
 | `app/settings/legacy/` | The carry. `tests/` holds its tests, in `AppTests`. |
 | `app/settings/hidden/` | The hidden accounts: the key under which the app keeps the list in its preferences domain, and the filter that leaves them out of `qota status`. `tests/` holds its tests, in `AppTests`. |
@@ -32,12 +32,12 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 
 ## The words
 
-- **The identity** is the app's bundle identifier. `AppIdentity` derives every name the app owns from it: its App Group, its preferences domain, its Keychain service and its support folder. The release is `net.c2coast.QotaFolio`, and a development build adds `.dev`.
-- **The lease** is a locked file in the identity's support folder. It lets one copy of each identity run.
+- **The identity** is the app's bundle identifier. `AppIdentity` derives every name the app owns from it and the signing team: its App Group, its preferences domain, its Keychain service and its support folder. The release is `net.c2coast.QotaFolio`, and a development build adds `.dev`.
+- **The lease** is a locked file in the identity's support folder. It lets one copy of each identity run. Version 1.0.0 keeps its own lease inside its sandbox container, where this lease cannot see it. So `AppDelegate` makes a second check: it refuses to start while another process runs with the same identifier.
 - **The carry** copies the settings of version 1.0.0, once, from its sandbox container into the app's preferences domain.
-- **The lab** is the verify skill's development copy of the app, over invented accounts. Its identity is `net.c2coast.QotaFolio.dev.verify`, so it runs beside the installed app.
+- **The lab** is the fixture runtime, `FixtureAppRuntime`: the real app over invented accounts, which every Debug build carries. The verify skill drives it under its own identity, `net.c2coast.QotaFolio.dev.verify`, so it runs beside the installed app.
 - **The old tree** is `Sources/`. No rule reads it. Put new code in the new tree.
-- **The new tree** is every folder except `Sources/`.
+- **The new tree** is every folder except `Sources/` and `.claude/`.
 - **A rule** is a test in `checks/` that reads the source of the new tree.
 - **A wall** is a rule about one folder: the modules its Swift files may import and the calls they may not make. `checks/walls.mjs` holds the walls.
 - **A breach** is one place that breaks a rule. It prints as `file:line` and then the fix.

@@ -10,13 +10,14 @@ The panel opens under the menu-bar batteries and shows one card per visible acco
 - `panel-details` opens a card to show its seven-day history.
 - `panel-reorder` moves an account up or down from the card's More menu.
 - `panel-footer` offers Add Account and a More menu with Refresh Now, Settings and Quit.
-- `panel-reopen` shows the panel when the app is started again while it runs.
+- `panel-reopen` shows the panel when a second copy of the app starts while the first runs.
 - `panel-quit` quits the app from the footer.
 
 ## How to get to it (user POV)
 
 - Click the batteries in the menu bar.
-- Start QotaFolio again from Finder, Spotlight or the Dock while it is running.
+- Open a second copy of the same build while the first runs. It shows the first copy's panel and quits.
+- Open QotaFolio again from Finder, Spotlight or the Dock while it runs (not driven here; see Gotchas).
 - Press the panel shortcut, ⌃⌥Q by default (not driven here; see Gotchas).
 
 ## Driving it with qfv
@@ -32,15 +33,16 @@ Preconditions:
 - **Open a card.** Click a card. Run `"$Q" ax press id=qotafolio.account.00000000-0000-4000-8000-000000000001.summary && sleep 1 && "$Q" snap card-open`. Static texts `Five-hour windows · last seven days` and the plan appear inside that card, and the panel frame grows taller.
 - **Move an account up.** Choose More on the second card, then Move Up. Run `"$Q" ax press id=qotafolio.account.00000000-0000-4000-8000-000000000002.moreActions && "$Q" ax press id=qotafolio.account.00000000-0000-4000-8000-000000000002.moveUp`. The first summary in the tree is now `Attilus`, and `"$Q" ax find id=qotafolio.statusItem` speaks `Attilus` before `Personal`.
 - **Use the footer.** Choose More in the footer. Run `"$Q" ax press id=qotafolio.footer.more && "$Q" ax wait id=qotafolio.footer.quit 3`. The menu holds `Refresh Now` (`qotafolio.footer.refresh`), `Settings…` (`qotafolio.footer.settings`) and `Quit QotaFolio` (`qotafolio.footer.quit`).
-- **Start the app again.** Close the panel by pressing the batteries once more, then run `"$Q" reopen && "$Q" ax wait id=qotafolio.panel 3`. The second process exits 0, the first keeps its pid, and the panel is open.
+- **Start the app again.** Close the panel by pressing the batteries once more, then run `"$Q" reopen && "$Q" ax wait id=qotafolio.panel 3`. `qfv reopen` starts a second process of the lane's build. That process exits 0, the first keeps its pid, and the panel is open.
 - **Quit.** Run `"$Q" quit`. It prints `exitedAfterMs`; `"$Q" doctor` then shows `"pid":null`.
 - **Proof.** `panel-open.ax.json` and `panel-open.png` in the run folder show the four accounts, and `"$Q" qota status` lists the same four accounts with the same percentages and reset times.
 
 ## Gotchas
 
-- The panel closes when the operator clicks anywhere else, as it does for any user. A step that prints `no element matches` after the panel was open means it closed; open it again in the same chain as the step.
+- The panel closes when the owner clicks anywhere else, as it does for any user. A step that prints `no element matches` after the panel was open means it closed; open it again in the same chain as the step.
 - `face`, `states` and `new-account` count from the launch time, so reset times differ run to run. Assert the shape (`percent used`, `Resets in`), not the clock.
 - `Refresh Now` in a fixture changes nothing on screen. The fixture store counts the request and has no poller behind it.
 - The panel shot is a window capture, so its glass is a flat grey. See Evidence in `../SKILL.md` for a picture with glass.
 - A card's More button and the footer's More button both carry the label `More`. Select them by id.
+- Finder, Spotlight and the Dock start no second process when the app already runs. They send the running app a reopen event, and this lab sends none, so that entry point is not verified here. `qfv reopen` proves the second-copy path only.
 - The ⌃⌥Q shortcut would need a synthetic key press. This lab posts none, so that entry point is not verified here.

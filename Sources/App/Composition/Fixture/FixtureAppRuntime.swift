@@ -10,16 +10,16 @@ import UIFixtures
 ///
 /// A debug build launched with `QOTAFOLIO_UI_SCENARIO=<name>` builds this instead of the
 /// production runtime. It holds no grant, reaches no network and reads no Keychain, so a Mac
-/// with no account can show the panel on `face`, `states`, `mixed`, `device-code`, `recovery`
-/// or `empty`. The rest of the environment is the photographer's:
+/// with no account can show the panel on any scenario `FixtureUIScenarios.named` knows: `face`,
+/// `states`, `new-account`, `mixed`, `device-code`, `recovery`, `empty` or `first-run`. The rest
+/// of the environment sets what the lab shows and what it writes:
 ///
 /// - `QOTAFOLIO_UI_APPEARANCE=dark` — the app's own windows wear `.darkAqua` (it is set as the
 ///   person's own choice, so the Settings picker shows it too) and a dark backdrop is put behind
 ///   them (the Sonoma wallpaper's dark representation, with the real strip drawn on it at the real
 ///   bar's geometry). `light` puts the light backdrop up. Unset, the real desktop shows.
 /// - `QOTAFOLIO_UI_STRIP=session|week` — which quantity the menu-bar batteries are drawn to. Set
-///   as the person's own choice, in this launch's throwaway defaults, so the Settings picker
-///   shows it.
+///   as the person's own choice, in the lab's own defaults, so the Settings picker shows it.
 /// - `QOTAFOLIO_UI_BACKDROP=0` — the appearance without the backdrop, over the real desktop and
 ///   the real menu bar. This is how the one thing the choice must not do is checked: the panel
 ///   goes dark and the batteries stay with the bar they sit in.
@@ -54,6 +54,10 @@ import UIFixtures
 /// - `QOTAFOLIO_UI_OPEN_SETTINGS=<general|accounts|alerts|privacy|updates|about>` — opens the
 ///   Settings window on that tab and prints `QF_SETTINGS_REGION`, with the window's number, for a
 ///   photograph.
+/// - `QOTAFOLIO_UI_PUBLISH_FILES=1` — the scenario's catalog, snapshots and recommendation are
+///   written into this build's group container through the real codecs, so `qota` has files to
+///   read. The process prints `QF_PUBLISHED` with the folder, or `QF_PUBLISH_FAILED` with the
+///   error.
 ///
 /// The system is never switched: no appearance change, no accessibility setting, no wallpaper.
 @MainActor

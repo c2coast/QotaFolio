@@ -1,6 +1,6 @@
 ---
 name: verify-qotafolio
-description: Drive the real QotaFolio macOS menu-bar app and its `qota` command the way a user does, over invented fixture accounts, and capture proof (accessibility snapshots, PNGs, qota transcripts). Use before calling any QotaFolio change done, to check what the panel, the menu-bar batteries, Settings, the add-account flow or `qota` actually show, or whenever someone asks "does it work" about this app.
+description: Drive the real QotaFolio macOS menu-bar app and its `qota` command the way a user does, over invented fixture accounts, and capture proof (accessibility snapshots, PNGs, qota transcripts). Use when a change alters what a person sees or does in the app, which is the panel, the menu-bar batteries, Settings, the add-account flow or `qota`, or when someone asks "does it work" about this app.
 ---
 
 # Verify QotaFolio
@@ -16,9 +16,9 @@ Q="$(git rev-parse --show-toplevel)/.claude/skills/verify-qotafolio/bin/qfv"
 
 Read [features/README.md](features/README.md) next. It indexes the user-facing features and holds one recipe per feature.
 
-## What shows on the operator's screen
+## What shows on the owner's screen
 
-The lab runs on the operator's own Mac, beside his work. Ask him before you run `qfv launch`.
+The lab runs on the owner's own Mac, beside his work. Ask him before you run `qfv launch`.
 
 - From `qfv launch` until `qfv clean`, the lab's item sits in his menu bar beside the installed app's.
 - While it runs, the lab holds the panel shortcut ⌃⌥Q, the same keys the installed app uses. Its log shows `QF_HOTKEY register … status=0`.
@@ -28,10 +28,11 @@ The lab runs on the operator's own Mac, beside his work. Ask him before you run 
 
 ## How the lab keeps lanes apart
 
-- **One lane, one app identity.** `qfv` builds with `QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.verify`. `AppIdentity` (`Sources/QotaFolioModel/Identity/AppIdentity.swift`) derives every name the app owns from that one identifier: its App Group, its preferences domain, its Keychain service and its support folder. The installed app is `net.c2coast.QotaFolio`. A developer's own Debug build is `net.c2coast.QotaFolio.dev`. Neither is touched.
+- **One lane, one app identity.** `qfv` builds with `QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.verify`. `AppIdentity` (`Sources/QotaFolioModel/Identity/AppIdentity.swift`) derives every name the app owns from that identifier and the signing team: its App Group, its preferences domain, its Keychain service and its support folder. The installed app is `net.c2coast.QotaFolio`. A developer's own Debug build is `net.c2coast.QotaFolio.dev`. Neither is touched.
 - **The lease is per identity.** It is a locked file in the lane's support folder, `~/Library/Application Support/net.c2coast.QotaFolio.dev.<lane>/single-instance.lock` (`app/lease/`). So the lab runs beside the installed app. A second start of the same lane does not run: it rings the first instance, which shows its panel, and exits. `qfv launch` refuses when the lane already runs.
 - **Fixtures, not accounts.** `qfv launch <scenario>` sets `QOTAFOLIO_UI_SCENARIO`. The Debug build then builds `FixtureAppRuntime` (`Sources/App/Composition/Fixture/FixtureAppRuntime.swift`) instead of the production runtime: the real status item, panel, strip and Settings over invented accounts, with no Keychain and no network. It keeps its settings in one domain, `net.c2coast.QotaFolio.dev.<lane>.fixture`, which it empties when it starts and when it quits, and it never carries the settings of version 1.0.0. An unknown scenario name falls through to the production runtime, so `qfv launch` accepts only names it reads from `Sources/UIFixtures/FixtureUIScenarios.swift`.
-- **Parallel lanes.** Set `QFV_LANE=<lower-case letters and digits>` on every `qfv` call to get a second identity, build folder and evidence stream. Each lane needs its own build (about 30 s cold).
+- **A lane belongs to the Mac, not to the checkout.** The identity comes from `QFV_LANE` alone, and the recorded pid lives under each checkout's `.build/`. So two worktrees on the default lane are one app to macOS. In the second worktree, `qfv launch` fails: its app rings the first instance and exits. And `qfv clean` in one worktree removes the lease under the other.
+- **Parallel lanes.** Give each worktree its own lane: set `QFV_LANE=<lower-case letters and digits>` on every `qfv` call. A lane has its own identity, build folder and evidence stream, and needs its own build (about 30 s cold).
 
 ## Launch
 
@@ -43,7 +44,8 @@ The lab runs on the operator's own Mac, beside his work. Ask him before you run 
 - Scenarios: `face` (four accounts with a week of history, times anchored to now), `states` (stale, waiting, needs sign-in, setup issue), `new-account`, `mixed` (five accounts, fixed date), `device-code`, `recovery`, `empty`, `first-run`.
 - Extra `QOTAFOLIO_UI_*=value` arguments pass straight to the app, for example `"$Q" launch face QOTAFOLIO_UI_STRIP=week`. The header of `FixtureAppRuntime.swift` documents every one.
 - `qfv launch` always adds `QOTAFOLIO_UI_PUBLISH_FILES=1`, so the scenario is written into the lane's App Group through the app's own codecs and `qota` has something to read.
-- **Ready means usable.** `launch` returns only after the status item exists in the accessibility tree with its spoken sentence, and after the app has printed `QF_PUBLISHED`. It fails with the log path if the app exits or the item does not appear within 20 s.
+- **Ready means usable.** `launch` waits until the status item exists in the accessibility tree with its spoken sentence. It fails with the log path if the app exits or the item does not appear within 20 s.
+- Then `launch` waits at most 4 s for the app to print `QF_PUBLISHED` or `QF_PUBLISH_FAILED`. Its JSON says `"published":true` when the scenario's files are in the lane's App Group. With `"published":false`, read `qfv log` before you run `qfv qota`.
 - `build` prints `{"ok":…,"exit":…,"source":"<stamp>"}`. The stamp is a hash of every file the build reads, committed or not: each path that `.ci.toml` gives the `swift` stack. On failure, read the axbuild report it names, per the `axiom-build` skill.
 
 ## Doctor
@@ -56,7 +58,7 @@ Read-only. Run it first, and again whenever anything looks off. `"ok":true` with
 
 - `built`, `buildSource` against `currentSource`: a mismatch means the app under test is not the code in front of you. Run `qfv build`.
 - `pid`, `scenario`, `statusItem` (the strip's spoken sentence), `panelOpen`: whether the lane's own instance is up and answering.
-- `permissions`: `accessibility` and `screenRecording` for the terminal app that runs `qfv` (macOS grants both to the app, not to the shell). Without Accessibility, `qfv ax`, `snap` and `shot` cannot read or press anything. Without Screen Recording, `shot` captures only the wallpaper. `doctor` reads both without asking for them. When one is missing, report it to the operator as a finding: which permission, for which terminal app, and what it unlocks. Never click through a permission dialog.
+- `permissions`: `accessibility` and `screenRecording` for the terminal app that runs `qfv` (macOS grants both to the app, not to the shell). Without Accessibility, `qfv ax`, `snap` and `shot` cannot read or press anything. Without Screen Recording, `shot` captures only the wallpaper. `doctor` reads both without asking for them. When one is missing, report it to the owner as a finding: which permission, for which terminal app, and what it unlocks. Never click through a permission dialog.
 - `releasedAppPid`: the installed app, observed and never touched.
 - `otherDebugInstances`: other QotaFolio builds on screen. They do not affect window shots or the tree, only `--frame` shots that cover the same pixels.
 
@@ -72,14 +74,15 @@ The drive is the accessibility API, aimed at the lane's pid. `qfv ax press` perf
 "$Q" ax press 'role=AXRadioButton&label=Accounts'   # a Settings tab
 "$Q" ax press 'role=AXCheckBox&label=Show account&nth=2'   # the second match
 "$Q" ax set   id=qotafolio.auth.nameField "Lab account"    # write a field's value
-"$Q" reopen                                    # start the app again, as Finder or Spotlight would
+"$Q" reopen                                    # a second process by path; it rings the running one and exits
 ```
 
+- `qfv reopen` starts a second process of the lane's build, as a second copy of the app does. The second process rings the running one through the lease and exits. Finder, the Dock and Spotlight start no second process: they send the running app a reopen event, which this lab does not drive.
 - Selectors: `id=` exact AXIdentifier, `role=` exact AXRole, `label=` case-insensitive substring of title, label, value or help, `nth=` the k-th match in tree order. Join terms with `&` and quote the whole selector.
 - Account ids in fixtures are fixed: `face` and `states` use `00000000-0000-4000-8000-00000000000N`, `mixed` uses `00000000-0000-0000-0000-00000000000N`, where N is the card's place in the scenario.
-- **The panel is transient.** It closes when the operator clicks anywhere else, exactly as it does for a user. Chain the press that opens it and the steps that use it in one shell command with `&&`. If a step reports "no element matches", reopen the panel and repeat the chain.
+- **The panel is transient.** It closes when the owner clicks anywhere else, exactly as it does for a user. Chain the press that opens it and the steps that use it in one shell command with `&&`. If a step reports "no element matches", reopen the panel and repeat the chain.
 - A menu opened with AXPress (the footer's More, a card's More) stays open until one of its items is pressed or the panel closes.
-- Settings is an ordinary window. It opens beside the operator's windows without taking keyboard focus from them.
+- Settings is an ordinary window. It opens beside the owner's windows without taking keyboard focus from them.
 - The lab's own stdout carries `QF_` lines: `QF_PUBLISHED <dir>`, `QF_HOTKEY …`, `QF_PANEL_RESIZE …`. Read them with `"$Q" log`.
 
 ## Evidence
@@ -101,7 +104,7 @@ Proof standards:
 - Capture the action and its result: a snapshot or shot before the press and after it, not only the final screen.
 - Prove side effects on a second surface. A reorder in the panel shows in the strip's spoken order. A published scenario shows in `qota`.
 - The accessibility snapshot is the primary proof: it is text, it is exact, and it holds what VoiceOver reads. The PNG is for what a sighted user sees.
-- A window shot (`shot` without `--frame`) shows only the lab's window, so nothing private from the operator's screen gets in. It draws the panel's Liquid Glass as a flat grey sheet, because the glass samples the screen behind the window. Content and layout are exact; the glass is not. For a picture of the glass, use `--frame` on the panel, or the lab's own photographer knobs (`QOTAFOLIO_UI_APPEARANCE=light|dark` puts a wallpaper backdrop over the whole screen for the run). A `--frame` shot captures every pixel in that rectangle, including other windows.
+- A window shot (`shot` without `--frame`) shows only the lab's window, so nothing private from the owner's screen gets in. It draws the panel's Liquid Glass as a flat grey sheet, because the glass samples the screen behind the window. Content and layout are exact; the glass is not. For a picture of the glass, use `--frame` on the panel, or the lab's own photographer knobs (`QOTAFOLIO_UI_APPEARANCE=light|dark` puts a wallpaper backdrop over the whole screen for the run). A `--frame` shot captures every pixel in that rectangle, including other windows.
 - The status item has no window of its own on macOS 27: the system draws menu extras. Shoot it with `--frame`.
 - A fixture proves the app's own surfaces and logic over invented data. It does not prove anything about the provider's network responses or the Keychain. Those are outside this lab.
 
@@ -111,7 +114,7 @@ Proof standards:
 "$Q" clean
 ```
 
-`clean` quits the lane's instance through its own Quit. Then it removes what the run left on this Mac: the published files in the lane's App Group, the lane's support folder with its lease, and the fixture's settings domain. It unregisters the lane's build from LaunchServices and deletes the lane's run state. It prints `left`, the places that are still there, which is empty when `ok` is `true`. It also prints the evidence folder, which stays, and the installed app's pid, which is still running.
+`clean` stops the lane's instance as `qfv stop` does: the user's Quit first, and a signal only when Quit cannot be reached. Then it removes what the run left on this Mac: the published files in the lane's App Group, the lane's support folder with its lease, and the fixture's settings domain. It unregisters the lane's build from LaunchServices and deletes the lane's run state. It prints `left`, the places that are still there, which is empty when `ok` is `true`. It also prints the evidence folder, which stays, and the installed app's pid, which is still running.
 
 - `qfv stop` only ends the instance. It tries the user's Quit first (cancelling an open add flow first). When Quit cannot be reached, it sends SIGTERM, then SIGKILL, to the recorded pid and to nothing else. `stoppedBy` says which.
 - A Quit runs the app's own termination, which empties the fixture's settings domain. A signal skips that, so the settings stay until the next launch empties them or `qfv clean` removes them.
@@ -123,7 +126,3 @@ Proof standards:
 - `bin/qfv` (bash, executable): every subcommand above. `"$Q" help` lists them with their arguments.
 - `bin/qfv-ax.swift` (Swift, executable): the accessibility reader and presser. `qfv` compiles it into `.build/verify/tools/qfv-ax` when the source is newer, and passes the lane's pid. Call it through `qfv ax …`. Run directly it takes the pid first: `.build/verify/tools/qfv-ax find <pid> id=qotafolio.panel`.
 - The build log and report: `.build/verify/<lane>/build.json` (axbuild's JSON) and the run folder it names.
-
-## Not in the repo yet
-
-Two surfaces of the planned product do not exist here today: the Claude Code plugin that shows usage, and the Agent Dashboard (a web page in a floating window over iTerm2). Do not look for them. Each joins `features/` when it lands.

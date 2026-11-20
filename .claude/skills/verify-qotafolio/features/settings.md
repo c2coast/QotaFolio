@@ -39,6 +39,6 @@ Preconditions:
 - `settings-hide-account` fails through this harness. AXPress on the second `Show account` switch reports success, but the switch stays on (value `1`, and the window shot shows it on), and the strip still speaks every account. The `Open QotaFolio at login` switch on General is the same control style and does flip under AXPress, so the harness can drive switches; what stops this row is not yet determined. Check it with VoiceOver and with a pointer before calling it a product defect.
 - The `Show account`, `Up` and `Down` controls carry no per-account identifier. Select them with `label=` and `nth=` in list order, which is the account order.
 - macOS 27 exposes the tab bar as `AXToolbar` › `AXTabGroup` › `AXRadioButton`. Older code that looks for an `AXRadioGroup` of tabs finds nothing.
-- Settings is an ordinary window. It can sit behind the operator's windows; a window shot still captures it whole.
-- Do not press `Remove My Data…` (`qotafolio.settings.uninstall`), the shortcut recorder or the Terminal row's `Copy`. The first is out of scope for a fixture, the second listens for keys, the third replaces the operator's clipboard.
-- Choices live in the launch's throwaway defaults and vanish at Quit.
+- Settings is an ordinary window. It can sit behind the owner's windows; a window shot still captures it whole.
+- Do not press `Remove My Data…` (`qotafolio.settings.uninstall`), the shortcut recorder or the Terminal row's `Copy`. The first is out of scope for a fixture, the second listens for keys, the third replaces the owner's clipboard.
+- Choices live in the lab's own settings domain, one for each lane. The lab empties it when it starts and when it quits.
