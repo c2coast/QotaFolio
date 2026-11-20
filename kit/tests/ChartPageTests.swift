@@ -22,7 +22,7 @@ struct ChartPageTests {
             let at = "\(want.account) \(Record.minute(poll.reading.at))"
             #expect(poll.reading.at.timeIntervalSince1970 == wanted.t, "\(at)")
             let picture = try #require(forecast.picture(at: poll.reading.at))
-            let sentences = picture.sentences(in: Record.calendar)
+            let sentences = picture.sentences(in: TimeWords(calendar: Record.calendar))
             #expect(sentences.forecast == wanted.forecast, "\(at)")
             #expect(sentences.record == wanted.record, "\(at)")
             #expect(Week(picture) == wanted.week, "\(at)")
@@ -41,7 +41,7 @@ struct ChartPageTests {
         var times = 0
         for forecast in [Record.a, Record.b] {
             for poll in forecast.polls {
-                let sentences = try #require(forecast.picture(at: poll.reading.at)).sentences(in: Record.calendar)
+                let sentences = try #require(forecast.picture(at: poll.reading.at)).sentences(in: TimeWords(calendar: Record.calendar))
                 for sentence in [sentences.forecast, sentences.record].compactMap(\.self) {
                     for range in sentence.ranges(of: /\d\d:\d\d/) {
                         times += 1

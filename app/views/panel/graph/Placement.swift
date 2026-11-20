@@ -137,3 +137,25 @@ struct Ticks {
         strokes.removeAll { $0.lines.isEmpty }
     }
 }
+
+/// The calendar's walk that the axis needs, beside the words that say each time.
+extension TimeWords {
+    /// Two times fall on the same day of the calendar.
+    func sameDay(_ a: Date, _ b: Date) -> Bool { calendar.isDate(a, inSameDayAs: b) }
+
+    /// Every midnight after `from` and before `to`.
+    func midnights(_ from: Date, _ to: Date) -> [Date] {
+        var out: [Date] = []
+        var t = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: from))!
+        while t < to {
+            out.append(t)
+            t = calendar.date(byAdding: .day, value: 1, to: t)!
+        }
+        return out
+    }
+
+    /// The whole hour at or before the time.
+    func hourStart(_ t: Date) -> Date { calendar.dateInterval(of: .hour, for: t)!.start }
+
+    func hourOfDay(_ t: Date) -> Int { calendar.component(.hour, from: t) }
+}

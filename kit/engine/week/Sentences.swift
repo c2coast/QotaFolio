@@ -9,16 +9,16 @@ public struct Sentences: Hashable, Sendable {
 }
 
 extension WeekPicture {
-    /// The sentences, word for word as the chart page says them. Every time carries its day, in the
-    /// calendar's time zone.
-    public func sentences(in calendar: Calendar) -> Sentences {
-        let words = Words(calendar: calendar, picture: self)
-        return Sentences(forecast: words.forecast(), record: words.record())
+    /// The sentences, word for word as the chart page says them on a 24-hour clock. Every time
+    /// carries its day, said as the words say a time.
+    public func sentences(in words: TimeWords) -> Sentences {
+        let said = Said(time: words, picture: self)
+        return Sentences(forecast: said.forecast(), record: said.record())
     }
 }
 
-private struct Words {
-    let calendar: Calendar
+private struct Said {
+    let time: TimeWords
     let picture: WeekPicture
 
     /// The model's name, such as "Fable".
@@ -37,7 +37,7 @@ private struct Words {
         case .modelSpent(let week):
             switch week {
             case .runsOut(let at, _, let speed):
-                return "\(name) is spent until \(back). \(pace(speed)), other models reach the week’s limit around \(quarterDay(at))."
+                return "\(name) is spent until \(back). \(pace(speed)), other models reach the week’s limit around \(time.quarterDay(at))."
             case .lasts(let landing, _, let speed):
                 return "\(name) is spent until \(back). \(pace(speed)), the week lasts to then with \(left(landing))."
             case .spent, .silent:
@@ -46,15 +46,15 @@ private struct Words {
         case .silent:
             return "Too early to say — the range is wider than a number would be honest about."
         case .runsOut(let first, let at, let speed, _) where first == .week:
-            let before = countdown(Int(reset - quarter(at.timeIntervalSince1970)))
-            return "\(pace(speed)), the week reaches its limit around \(quarterDay(at)), \(before) before it resets."
+            let before = countdown(Int(reset - TimeWords.quarterHour(at).timeIntervalSince1970))
+            return "\(pace(speed)), the week reaches its limit around \(time.quarterDay(at)), \(before) before it resets."
         case .runsOut(_, let at, let speed, let week):
             let then = switch week {
-            case .runsOut(let weekAt, _, _): "and the week around \(quarterDay(weekAt))"
+            case .runsOut(let weekAt, _, _): "and the week around \(time.quarterDay(weekAt))"
             case .lasts(let landing, _, _): "while the week lasts to \(back) with \(left(landing))"
             case .spent, .silent, nil: "and the week is too close to call"
             }
-            return "\(pace(speed)), \(name) reaches its limit around \(quarterDay(at)), \(then)."
+            return "\(pace(speed)), \(name) reaches its limit around \(time.quarterDay(at)), \(then)."
         case .lasts(let landing, let modelLanding, let speed):
             let model = modelLanding.map { ", and \(name) with about \(max(0, 100 - whole($0)))%" } ?? ""
             return "\(pace(speed)), the week lasts to its reset \(back) with \(left(landing))\(model)."
@@ -106,28 +106,14 @@ private struct Words {
     func left(_ landing: Double) -> String { "about \(max(0, 100 - whole(landing)))% left" }
 
     /// "Wed 19:15": the day and the time to the minute, as the page's `dc`.
-    func day(_ seconds: Double) -> String {
-        let parts = calendar.dateComponents([.weekday, .hour, .minute], from: Date(timeIntervalSince1970: seconds.rounded(.down)))
-        return "\(weekdays[parts.weekday! - 1]) \(twoDigits(parts.hour!)):\(twoDigits(parts.minute!))"
-    }
-
-    /// A forecast time to the quarter hour, as the page's `dq`. Its median error is about three
-    /// hours, so a minute would be decoration.
-    func quarterDay(_ at: Date) -> String { day(quarter(at.timeIntervalSince1970)) }
+    func day(_ seconds: Double) -> String { time.day(Date(timeIntervalSince1970: seconds)) }
 }
-
-private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
-private func twoDigits(_ n: Int) -> String { n < 10 ? "0\(n)" : "\(n)" }
 
 /// JavaScript's `Math.round`: the nearest whole number, and at a half the one above, also below zero.
 private func jsRound(_ x: Double) -> Double {
     let down = x.rounded(.down)
     return x - down >= 0.5 ? down + 1 : down
 }
-
-/// An instant to the nearest quarter hour, in seconds since 1970.
-private func quarter(_ seconds: Double) -> Double { jsRound(seconds / 900) * 900 }
 
 /// The whole percent a reading shows, as the page's `whole`.
 private func whole(_ percent: Double) -> Int { Int((percent + 1e-9).rounded(.down)) }

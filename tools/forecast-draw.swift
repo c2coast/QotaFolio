@@ -22,13 +22,14 @@ extension ForecastTool {
         if out != nil && pictures.count > 1 { fail("--out names one file. Choose the account with --account.\n") }
         let calendar = calendar(.current)
         let stem = moment.label == nil ? text.replacingOccurrences(of: " ", with: "-").replacingOccurrences(of: ":", with: "") : text
+        let words = TimeWords(calendar: calendar, twelveHour: look.twelveHour)
         for picture in pictures {
-            let sentences = picture.sentences(in: calendar)
+            let sentences = picture.sentences(in: words)
             let name = stem + (pictures.count > 1 ? "-\(picture.account.rawValue)" : "") + (look.appearance.dark ? "-dark" : "-light")
             let file = out.map { URL(fileURLWithPath: $0) }
                 ?? FileManager.default.temporaryDirectory.appending(path: "forecast").appending(path: "\(name).png")
             try MainActor.assumeIsolated {
-                try write(picture, words: TimeWords(calendar: calendar, twelveHour: look.twelveHour), look.appearance, to: file)
+                try write(picture, words: words, look.appearance, to: file)
             }
             print(sentences.forecast)
             if let record = sentences.record { print(record) }

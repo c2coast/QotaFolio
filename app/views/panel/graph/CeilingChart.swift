@@ -95,7 +95,7 @@ public struct WeekGraph: View {
     }
 
     public var body: some View {
-        let sentences = picture.sentences(in: words.calendar)
+        let sentences = picture.sentences(in: words)
         VStack(alignment: .leading, spacing: 10) {
             Text("Points used this week · to \(words.day(picture.resets.instant))")
                 .font(.system(size: 11, weight: .medium))
