@@ -12,6 +12,7 @@ extension ForecastTool {
     struct Look {
         var appearance = Appearance(dark: false)
         var twelveHour = false
+        var width = CeilingChart.size.width
     }
 
     /// Draws each account's week at the moment, prints its sentences and the file's path.
@@ -29,7 +30,7 @@ extension ForecastTool {
             let file = out.map { URL(fileURLWithPath: $0) }
                 ?? FileManager.default.temporaryDirectory.appending(path: "forecast").appending(path: "\(name).png")
             try MainActor.assumeIsolated {
-                try write(picture, words: words, look.appearance, to: file)
+                try write(picture, words: words, look.appearance, width: look.width, to: file)
             }
             print(sentences.forecast)
             if let record = sentences.record { print(record) }
@@ -37,11 +38,11 @@ extension ForecastTool {
         }
     }
 
-    @MainActor static func write(_ picture: WeekPicture, words: TimeWords, _ appearance: Appearance, to file: URL) throws {
+    @MainActor static func write(_ picture: WeekPicture, words: TimeWords, _ appearance: Appearance, width: Double, to file: URL) throws {
         let palette = Palette(appearance)
         let edge = palette.plateEdge
         let plate = RoundedRectangle(cornerRadius: 12, style: .continuous)
-        let card = WeekGraph(picture: picture, words: words, palette: palette)
+        let card = WeekGraph(picture: picture, words: words, palette: palette, width: width)
             .padding(12)
             .background(plate.fill(Color(palette.plate)))
             .overlay(plate.strokeBorder(LinearGradient(colors: [Color(edge.top), Color(edge.bottom)], startPoint: .top, endPoint: .bottom), lineWidth: 1))

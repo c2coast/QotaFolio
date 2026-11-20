@@ -5,7 +5,7 @@ import SwiftUI
 /// strokes it. It holds no state, and nothing moves.
 public struct CeilingChart: View {
     /// The chart's size in the panel: the plot, 360 by 128 points, and the axis's words under it.
-    public static let size = CGSize(width: 360, height: 128 + Ceiling.axisBand)
+    public nonisolated static let size = CGSize(width: 360, height: 128 + Ceiling.axisBand)
 
     let picture: WeekPicture
     let words: TimeWords
@@ -65,11 +65,14 @@ public struct WeekGraph: View {
     let picture: WeekPicture
     let words: TimeWords
     let palette: Palette
+    let width: Double
 
-    public init(picture: WeekPicture, words: TimeWords, palette: Palette) {
+    /// The width is the chart's, and the words under it wrap to it. The panel's is 360 points.
+    public init(picture: WeekPicture, words: TimeWords, palette: Palette, width: Double = CeilingChart.size.width) {
         self.picture = picture
         self.words = words
         self.palette = palette
+        self.width = width
     }
 
     public var body: some View {
@@ -79,14 +82,14 @@ public struct WeekGraph: View {
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(Color(palette.secondaryInk))
             CeilingChart(picture: picture, words: words, palette: palette)
-                .frame(width: CeilingChart.size.width, height: CeilingChart.size.height)
+                .frame(width: width, height: CeilingChart.size.height)
             Text("\(Text(sentences.forecast).foregroundStyle(Color(palette.colour(.ink))))\(Text(sentences.record.map { " " + $0 } ?? "").foregroundStyle(Color(palette.secondaryInk)))")
                 .font(.system(size: 12))
                 .monospacedDigit()
                 .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(width: CeilingChart.size.width, alignment: .leading)
+        .frame(width: width, alignment: .leading)
     }
 }
 

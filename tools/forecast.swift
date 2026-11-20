@@ -14,7 +14,7 @@ enum ForecastTool {
     static let usage = """
         usage: tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm>] [--account <id>] [usage-history.json]
                tools/forecast --draw <moment name | yyyy-MM-dd HH:mm> [--dark] [--increased-contrast] [--reduce-transparency]
-                              [--12-hour] [--out <file.png>] [--account <id>] [usage-history.json]
+                              [--12-hour] [--width <points>] [--out <file.png>] [--account <id>] [usage-history.json]
 
         """
 
@@ -33,6 +33,9 @@ enum ForecastTool {
             case "--increased-contrast": look.appearance.increasedContrast = true
             case "--reduce-transparency": look.appearance.reduceTransparency = true
             case "--12-hour": look.twelveHour = true
+            case "--width" where !arguments.isEmpty:
+                guard let width = Double(arguments.removeFirst()), width >= 120 else { fail("--width takes the chart's width in points, 120 or more\n" + usage) }
+                look.width = width
             case "--account" where !arguments.isEmpty: only = arguments.removeFirst()
             case _ where !argument.hasPrefix("--"): path = argument
             default: fail(usage)
