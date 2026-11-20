@@ -51,6 +51,15 @@ export const walls = [
     ],
   },
   {
+    folder: "app/main/tests/",
+    imports: ["Foundation", "QotaFolioModel", "Testing"],
+    importFix: "The tests of the app's identity read its names through QotaFolioModel, and need nothing else.",
+    calls: [
+      { call: "AppIdentity.current", pattern: /\bAppIdentity\.current\b/g, fix: "A test names the identity it reads, the release's or a development build's, never the running one." },
+      { call: "homeDirectory", pattern: /\bhomeDirectory\w*|\bNSHomeDirectory\b/g, fix: "A test hands the identity a home folder of its own, never the real one." },
+    ],
+  },
+  {
     folder: "app/recorder/legacy/",
     imports: ["Foundation", "Kit"],
     importFix: "The reader of 1.0.0's history turns the file's bytes into kit's values, and needs nothing else.",

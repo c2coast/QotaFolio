@@ -48,8 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         do {
-            let leaseFile = URL.homeDirectory.appending(path: AppIdentity.current.singleInstanceLeaseRelativeToData)
-            switch try SingleInstanceLease.acquire(at: leaseFile) {
+            switch try SingleInstanceLease.acquire(at: AppIdentity.current.leaseFile(home: .homeDirectory)) {
             case .held(let lease):
                 self.lease = lease
                 lease.observeDoorbell { [weak self] in

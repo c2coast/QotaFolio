@@ -19,8 +19,8 @@ settings:
     CODE_SIGN_STYLE: Automatic
     # The one identifier everything else is derived from. The app IS this string; the `qota`
     # tool is `.qota` and the `QotaFolioKit` framework is `.Kit`, and `AppIdentity` derives the
-    # container, the App Group, the Keychain service, the defaults domain and the lease from the
-    # app's. A private build sets it on the xcodebuild line
+    # support folder, the App Group, the Keychain service, the defaults domain and the lease from
+    # the app's. A private build sets it on the xcodebuild line
     # (`QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.mine`) and gets its own everything.
     #
     # It is not `PRODUCT_BUNDLE_IDENTIFIER` on purpose: a setting given on the command line
@@ -38,7 +38,7 @@ settings:
   configs:
     Debug:
       # A development build is a different app to macOS, and that is the whole point. One
-      # identifier here gives a Debug build its own container, its own defaults, its own
+      # identifier here gives a Debug build its own support folder, its own defaults, its own
       # Keychain service and its own App Group -- and makes it impossible for a developer's
       # build to read, write or delete the installed app's data. Its tool and its framework
       # follow, because they derive from the same string.
@@ -515,12 +515,15 @@ targets:
         GENERATE_INFOPLIST_FILE: "YES"
 
   # The tests of the app's shell, with no host application. They compile the shell's folders from source,
-  # as the app does.
+  # as the app does, and pin the names the identity derives.
   AppTests:
     type: bundle.unit-test
     platform: macOS
     sources:
       - app/lease
+      - app/main/tests
+    dependencies:
+      - { package: QotaFolioCore, product: QotaFolioModel }
     settings:
       base:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
