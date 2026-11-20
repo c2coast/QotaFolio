@@ -60,6 +60,25 @@ export const walls = [
     ],
   },
   {
+    folder: "app/settings/legacy/",
+    imports: ["Foundation"],
+    importFix: "The carry reads one file and writes one domain it is handed, with Foundation alone.",
+    calls: [
+      ...pure("The carry").filter(({ call }) => call !== "FileManager"),
+      { call: "UserDefaults.standard", pattern: /\bUserDefaults\.standard\b|\.standard\b/g, fix: "The carry writes the defaults it is handed. The app hands it UserDefaults.standard." },
+      { call: "homeDirectory", pattern: /\bhomeDirectory\w*|\bNSHomeDirectory\b/g, fix: "The carry takes the file it reads. The app derives it from its identity." },
+    ],
+  },
+  {
+    folder: "app/settings/legacy/tests/",
+    imports: ["Foundation", "Testing"],
+    importFix: "The carry's tests write a file in a temporary folder and read the domain back, and need nothing else.",
+    calls: [
+      { call: "UserDefaults", pattern: /\bUserDefaults\b/g, fix: "A test of the carry never opens a real defaults domain. Run the carry on dictionaries." },
+      { call: "homeDirectory", pattern: /\bhomeDirectory\w*|\bNSHomeDirectory\b/g, fix: "A test of the carry works in a temporary folder, never in the home folder." },
+    ],
+  },
+  {
     folder: "app/recorder/legacy/",
     imports: ["Foundation", "Kit"],
     importFix: "The reader of 1.0.0's history turns the file's bytes into kit's values, and needs nothing else.",

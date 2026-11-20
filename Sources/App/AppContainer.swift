@@ -1,4 +1,5 @@
 import AppKit
+import OSLog
 import QotaFolioCore
 import QotaFolioKit
 
@@ -28,7 +29,22 @@ final class AppContainer {
             return AppContainer(runtime: fixture)
         }
         #endif
+        carryLegacySettings(identity: .current)
         return AppContainer(runtime: try await ProductionAppRuntime.make())
+    }
+
+    /// Carries version 1.0.0's settings into the home domain before anything reads a setting or Sparkle
+    /// starts. A carry that cannot read the old file writes nothing, and the next launch tries again.
+    private static func carryLegacySettings(identity: AppIdentity) {
+        let log = Logger(subsystem: identity.bundleID, category: "settings")
+        let file = identity.legacyPreferencesFile(home: .homeDirectory)
+        do {
+            if let keys = try LegacySettings.carry(from: file, into: .standard, domain: identity.preferencesDomain) {
+                log.notice("The settings of 1.0.0 are carried: the home domain holds \(keys, privacy: .public) keys.")
+            }
+        } catch {
+            log.error("The settings of 1.0.0 could not be read, and nothing was carried: \(String(describing: error), privacy: .public)")
+        }
     }
 
     var ordinaryTerminationIsAllowed: Bool {
