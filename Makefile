@@ -4,9 +4,9 @@
 check:
 	@node --test --test-reporter=./checks/reporter.mjs checks/*.test.mjs
 
-# The Swift tests: the app scheme's test action, which runs KitTests with no host application, so
-# nothing opens on screen. Unsigned, into .build/, which git ignores. It prints each test's line;
-# the whole log is .build/test.log.
+# The Swift tests: the app scheme's test action, which runs KitTests and GraphTests with no host
+# application, so nothing opens on screen. Unsigned, into .build/, which git ignores. It prints each
+# test's line; the whole log is .build/test.log.
 test:
 	@xcodegen generate --no-env --quiet --spec project.yml --project . --project-root .
 	@mkdir -p .build; xcodebuild test -project QotaFolio.xcodeproj -scheme QotaFolio \
