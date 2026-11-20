@@ -4,7 +4,7 @@
 check:
 	@node --test --test-reporter=./checks/reporter.mjs checks/*.test.mjs
 
-# The Swift tests: the app scheme's test action, which runs KitTests and GraphTests with no host
+# The Swift tests: the app scheme's test action, which runs KitTests, GraphTests and AppTests with no host
 # application, so nothing opens on screen. Unsigned, into .build/, which git ignores. It prints each
 # test's line; the whole log is .build/test.log.
 test:
