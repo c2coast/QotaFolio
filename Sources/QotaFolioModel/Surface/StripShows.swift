@@ -9,8 +9,7 @@ import Foundation
 /// theirs to choose.
 ///
 /// The choice is a drawing choice and nothing else. The words say both figures in both modes:
-/// the tooltip, what VoiceOver reads, the Control's title and the panel's cards are unchanged by
-/// it. So the strip is never the whole answer on its own, in either mode.
+/// the tooltip, what VoiceOver reads and the panel's cards are unchanged by it. So the strip is never the whole answer on its own, in either mode.
 public nonisolated enum StripShows: String, CaseIterable, Sendable {
     /// This five-hour session's own remaining share. The default, because a battery is read to
     /// know whether to start something.
@@ -28,9 +27,7 @@ public nonisolated enum StripShows: String, CaseIterable, Sendable {
 /// the same glance. Apple's battery language then applies to whatever is drawn: the palette
 /// takes it red at a fifth or less, and nothing at all is the residual hairline.
 ///
-/// This lives in the model rather than in the renderer because two processes draw from it: the
-/// app's own strip, and the Control in the widget extension, which links this target and not the
-/// app's. One rule, one file, both pictures.
+/// It lives in the model, beside the level it is drawn from.
 public nonisolated struct StripFigure: Hashable, Sendable {
     /// The share still held of the quantity that was asked for, 0…100. The battery's length, and
     /// the number its colour is chosen from.

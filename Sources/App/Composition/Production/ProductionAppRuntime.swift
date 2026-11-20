@@ -33,7 +33,6 @@ final class ProductionAppRuntime: AppRuntime {
     private let privacy: ScreenPrivacy
     private let alertPreferences: AlertPreferences
     private let alerts: AlertDeliverer
-    private let surfaceRelay: SurfaceRelay
     private let settingsRoute: ProductionSettingsRoute
     private let statusMenu: ProductionStatusMenuController
     private let statusSurface: AppKitStatusItemSurface
@@ -62,23 +61,6 @@ final class ProductionAppRuntime: AppRuntime {
             clock: monotonic,
             browser: browser
         )
-
-        // Before anything opens a file. A user updating from a build that kept its files
-        // inside its own sandbox container has accounts and a week of samples sitting where
-        // this build no longer looks; this is the launch that moves them. It is a no-op on
-        // every launch after the first, and on a fresh install it is a no-op for ever.
-        let migration = SharedContainerMigration.runIfNeeded()
-        if migration.ran {
-            log.emit(
-                DiagEvent(
-                    provider: nil,
-                    operation: .containerMigrate,
-                    outcome: migration.failed ? .permanent : .ok,
-                    sizeBucket: migration.adopted.count,
-                    machineErrorCode: migration.refused.isEmpty ? nil : "refused"
-                )
-            )
-        }
 
         let catalogStore = FileCatalogStore(url: try FileCatalogStore.defaultURL())
         let catalog = AccountCatalog(store: catalogStore, log: log)
@@ -178,24 +160,12 @@ final class ProductionAppRuntime: AppRuntime {
         // batteries follow the bar they sit in, and `AppearancePreferences` says why.
         let appearancePreferences = AppearancePreferences()
         // Which quantity the menu-bar batteries are drawn to: what this session lets you spend,
-        // or what the week still holds. The strip and the Control both follow it.
+        // or what the week still holds.
         let stripPreferences = StripPreferences()
         let alerts = AlertDeliverer(
             store: store,
             preferences: alertPreferences,
             center: UserNotificationAlertCenter()
-        )
-
-        // The Control and the widget follow the app through this: the blanket and the hidden
-        // set mirrored into the group defaults, and a reload when — and only when — what a
-        // surface renders has changed.
-        let surfaceRelay = SurfaceRelay(
-            catalog: catalog,
-            store: store,
-            visibility: visibility,
-            privacy: privacy,
-            stripShows: stripPreferences,
-            drainCatalog: { [weak catalog] in await catalog?.drainPendingCommits() }
         )
 
         let settingsRoute = ProductionSettingsRoute()
@@ -236,14 +206,6 @@ final class ProductionAppRuntime: AppRuntime {
         )
         statusItem.panel = panelController
 
-        // Spotlight's and the Control's road into the running app: `OpenQotaFolioIntent`
-        // performs in this process, and this is how it reaches the panel. The status item is
-        // captured weakly — an intent that arrives during termination finds nothing and shows
-        // nothing, which is the right answer for an app on its way out.
-        QotaFolioIntentRuntime.install(revealPanel: { [weak statusItem] in
-            statusItem?.showPanel()
-        })
-        IntentServices.install(store: store, catalog: catalog, privacy: privacy, stripShows: stripPreferences)
         // The keyboard's own click on the batteries, from any app.
         panelShortcut.activate { [weak statusItem] in
             statusItem?.togglePanel()
@@ -318,7 +280,6 @@ final class ProductionAppRuntime: AppRuntime {
             privacy: privacy,
             alertPreferences: alertPreferences,
             alerts: alerts,
-            surfaceRelay: surfaceRelay,
             settingsRoute: settingsRoute,
             statusMenu: statusMenu,
             statusSurface: statusSurface,
@@ -352,7 +313,6 @@ final class ProductionAppRuntime: AppRuntime {
         privacy: ScreenPrivacy,
         alertPreferences: AlertPreferences,
         alerts: AlertDeliverer,
-        surfaceRelay: SurfaceRelay,
         settingsRoute: ProductionSettingsRoute,
         statusMenu: ProductionStatusMenuController,
         statusSurface: AppKitStatusItemSurface,
@@ -383,7 +343,6 @@ final class ProductionAppRuntime: AppRuntime {
         self.privacy = privacy
         self.alertPreferences = alertPreferences
         self.alerts = alerts
-        self.surfaceRelay = surfaceRelay
         self.settingsRoute = settingsRoute
         self.statusMenu = statusMenu
         self.statusSurface = statusSurface
@@ -408,11 +367,9 @@ final class ProductionAppRuntime: AppRuntime {
         updaterSource.start()
         store.start()
         // The blanket watches for a shared screen from here on; the deliverer watches the
-        // assessment and asks the system for permission only when an alert is first due; the
-        // relay keeps the Control and the widget in step with all of it.
+        // assessment and asks the system for permission only when an alert is first due.
         privacy.start()
         alerts.start()
-        surfaceRelay.start()
     }
 
     /// Puts the panel in front of a user who asked for an app that is already running.
@@ -453,7 +410,6 @@ final class ProductionAppRuntime: AppRuntime {
         guard started else { return }
         started = false
         privacy.stop()
-        surfaceRelay.stop()
 
         let writers = Task { @MainActor [self] in
             await accountLifecycle.beginOrdinaryShutdown()

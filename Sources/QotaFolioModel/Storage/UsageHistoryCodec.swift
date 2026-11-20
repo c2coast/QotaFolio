@@ -14,7 +14,7 @@ public nonisolated enum UsageHistoryFile: String, Sendable, CaseIterable {
     case traces
 
     /// Alongside `catalog.json` in the App Group container, so a removal takes it without
-    /// naming it and the widget reads it without asking the app.
+    /// naming it and `qota` reads it without asking the app.
     public var leafName: String {
         switch self {
         case .snapshots: "usage-snapshots.json"

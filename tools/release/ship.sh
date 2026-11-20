@@ -146,26 +146,31 @@ verify() {
     for object in \
         "$APP" \
         "$APP/Contents/Frameworks/Sparkle.framework" \
-        "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc" \
         "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate" \
         "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app" \
         "$APP/Contents/Frameworks/QotaFolioKit.framework" \
         "$APP/Contents/Frameworks/QotaFolioCoreXcode.framework" \
-        "$APP/Contents/PlugIns/QotaFolioWidgets.appex" \
         "$APP/Contents/MacOS/qota"; do
         codesign -dvv "$object" 2>&1 | grep "Authority=$expect" >/dev/null \
             || fail "$(basename "$object") is not signed by $expect"
     done
     local group
     group="$TEAM.group.$(plist_value "$APP/Contents/Info.plist" CFBundleIdentifier)"
-    codesign -d --entitlements - "$APP" 2>/dev/null | grep -F "$group" >/dev/null \
+    local entitlements
+    entitlements="$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)"
+    grep -F "$group" <<<"$entitlements" >/dev/null \
         || fail "the App Group entitlement $group did not survive the export"
-    codesign -d --entitlements - "$APP" 2>/dev/null | grep "get-task-allow" >/dev/null \
+    grep "get-task-allow" <<<"$entitlements" >/dev/null \
         && fail "a debug entitlement is in the shipped app"
+    grep "com.apple.security.app-sandbox" <<<"$entitlements" >/dev/null \
+        && fail "the shipped app is sandboxed, and QotaFolio runs outside the sandbox"
+    grep "com.apple.security.temporary-exception" <<<"$entitlements" >/dev/null \
+        && fail "the shipped app asks for a sandbox exception"
     [ -e "$APP/Contents/embedded.provisionprofile" ] && fail "a provisioning profile is embedded and none belongs"
-    [ -d "$APP/Contents/Resources/Metadata.appintents" ] || fail "the App Intents metadata is missing"
-    find "$APP/Contents/Frameworks/Sparkle.framework" -name "Downloader.xpc" | grep . >/dev/null \
-        && fail "the pruned Sparkle downloader is back"
+    [ -e "$APP/Contents/PlugIns" ] && fail "the app carries a PlugIns folder, and it has no extension"
+    [ -e "$APP/Contents/Resources/Metadata.appintents" ] && fail "the app carries App Intents metadata, and it has no intent"
+    find "$APP/Contents/Frameworks/Sparkle.framework" -name "*.xpc" | grep . >/dev/null \
+        && fail "Sparkle carries an XPC service, and the app outside the sandbox needs none"
     local v b
     v=$(plist_value "$APP/Contents/Info.plist" CFBundleShortVersionString)
     b=$(plist_value "$APP/Contents/Info.plist" CFBundleVersion)
@@ -174,7 +179,7 @@ verify() {
     if [ "$METHOD" = "developer-id" ]; then
         codesign -dvv "$APP" 2>&1 | grep "Timestamp=" >/dev/null || fail "no secure timestamp on the app"
     fi
-    say "verified: $expect, entitlements intact, versions agree"
+    say "verified: $expect, no sandbox, entitlements intact, versions agree"
 }
 
 # --- notarize: submits the app to Apple, staples its ticket, and hears Gatekeeper's ruling.

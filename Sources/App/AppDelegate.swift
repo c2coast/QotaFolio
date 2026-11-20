@@ -48,13 +48,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         do {
-            switch try SingleInstanceLease.acquire() {
-            case .acquired(let lease):
+            switch try SingleInstanceLease.acquire(at: AppIdentity.current.leaseFile(home: .homeDirectory)) {
+            case .held(let lease):
+                guard !Self.anotherCopyIsRunning() else {
+                    presentLaunchFailure(
+                        "Another copy of QotaFolio is running. Quit the other copy, then open QotaFolio again."
+                    )
+                    requestApplicationTermination()
+                    return
+                }
                 self.lease = lease
                 lease.observeDoorbell { [weak self] in
                     self?.revealRunningInstance()
                 }
-            case .alreadyRunning(let doorbell):
+            case .taken(let doorbell):
                 // The user asked for QotaFolio and QotaFolio is already here. This process has
                 // no window and no Dock icon of its own, so standing down in silence leaves
                 // the user unable to tell the app is running. Ring the instance that can show
@@ -80,6 +87,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // AppKit still does its ordinary pass over any windows the app does have — the Settings
         // window is deminiaturized and ordered front, which is what a reopen means for it.
         return true
+    }
+
+    /// True when another process runs with this identifier but outside this lease, as version 1.0.0 does: its
+    /// lease is in its sandbox container. Two copies would refresh one rotating sign-in, and one would lose it.
+    private static func anotherCopyIsRunning() -> Bool {
+        let me = ProcessInfo.processInfo.processIdentifier
+        return NSRunningApplication.runningApplications(withBundleIdentifier: AppIdentity.current.bundleID)
+            .contains { $0.processIdentifier != me }
     }
 
     private func revealRunningInstance() {

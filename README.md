@@ -12,7 +12,11 @@ Click, and a panel drops from the batteries: your accounts as cards, in your ord
 |---|---|
 | ![The panel over a light desktop](docs/images/panel-light.png) | ![The panel over a dark desktop](docs/images/panel-dark.png) |
 
-**Everywhere you look:** a Control for the menu bar or Control Center, a desktop widget with a ring per account, Spotlight ("check my quota" answers in place), and `qota status` in Terminal — every surface reading the same numbers from the same place. Alerts inform and never instruct. When your screen is shared, the batteries lose their colour and the panel hides your account names.
+**In Terminal too:** `qota status` prints the numbers the panel shows, read from the same place.
+
+**Alerts** inform and never instruct.
+
+**When your screen is shared,** the batteries lose their colour and the panel hides your account names.
 
 ## Install
 
@@ -48,14 +52,14 @@ xcodebuild -project QotaFolio.xcodeproj -scheme QotaFolio -configuration Debug \
   -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build
 ```
 
-To *run* what you built you need an Apple Developer team, because the app, its widget and its `qota` command read one shared container whose name carries the team's identifier. Give yours on the same line and let it sign:
+To *run* what you built, sign it with your own Apple Developer team. The app and its `qota` command share one folder in `~/Library/Group Containers/`, and the folder's name carries the team's identifier. macOS guards that folder against programs that another team signed. The app runs outside the App Sandbox, so it finds the folder by its path when macOS does not hand it over. Give your team on the same line and let it sign:
 
 ```bash
 xcodebuild -project QotaFolio.xcodeproj -scheme QotaFolio -configuration Debug \
   -destination 'platform=macOS' DEVELOPMENT_TEAM=YOURTEAMID build
 ```
 
-A Debug build is a different app to macOS on purpose — its own container, its own Keychain service, its own App Group — so a development build can never read or damage an installed QotaFolio's data. It also carries the fixture lab: launch it with `QOTAFOLIO_UI_SCENARIO=mixed` and the real app runs over invented accounts, holding no grant and reaching no network, which is how every picture on this page was taken. The header of [`FixtureAppRuntime.swift`](Sources/App/Composition/Fixture/FixtureAppRuntime.swift) lists the scenarios and every `QOTAFOLIO_UI_*` knob beside them.
+A Debug build is a different app to macOS on purpose — its own preferences, its own Keychain service, its own App Group — so a development build never reads or writes an installed QotaFolio's data. The app runs outside the App Sandbox, so these names are all that keep the two apart. A Debug build also carries the fixture lab: launch it with `QOTAFOLIO_UI_SCENARIO=mixed` and the real app runs over invented accounts, holding no grant and reaching no network, which is how every picture on this page was taken. The header of [`FixtureAppRuntime.swift`](Sources/App/Composition/Fixture/FixtureAppRuntime.swift) lists the scenarios and every `QOTAFOLIO_UI_*` knob beside them.
 
 The release lane is one script, [`tools/release/ship.sh`](tools/release/ship.sh); [`docs/release`](docs/release/README.md) explains what it does and why.
 

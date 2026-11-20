@@ -1,0 +1,307 @@
+#!/bin/bash
+# qfv — build, launch, drive, photograph and stop a QotaFolio Debug build over fixture accounts.
+#
+# One lane is one bundle identifier, net.c2coast.QotaFolio.dev.<lane>. AppIdentity derives every
+# name the app owns from it and the signing team: its group, its preferences domain, its Keychain
+# service and the support folder that holds its single-instance lease. So the installed app (net.c2coast.QotaFolio) and a
+# developer's own `.dev` build are never touched.
+# Every subcommand prints JSON on stdout. Run `qfv help` for the list.
+set -euo pipefail
+
+SKILL_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(git -C "$SKILL_BIN" rev-parse --show-toplevel)"
+LANE="${QFV_LANE:-verify}"
+case "$LANE" in *[!a-z0-9]*|"") echo '{"ok":false,"error":"QFV_LANE must be lower-case letters and digits"}'; exit 64;; esac
+BUNDLE_ID="net.c2coast.QotaFolio.dev.$LANE"
+STATE="$ROOT/.build/verify/$LANE"
+DERIVED="$STATE/DerivedData"
+APP="$DERIVED/Build/Products/Debug/QotaFolio.app"
+RUN="$STATE/run"
+TOOLS="$ROOT/.build/verify/tools"
+AX="$TOOLS/qfv-ax"
+EVIDENCE_ROOT="$ROOT/.artifacts/verify"
+# What a run leaves on this Mac, all named by the lane's identity: the files it publishes for qota, the
+# support folder that holds its lease, and the preferences the fixture empties when it starts and quits.
+GROUP_FILES="$HOME/Library/Group Containers/NCCKY76LD4.group.$BUNDLE_ID/Library/Application Support/QotaFolio"
+SUPPORT="$HOME/Library/Application Support/$BUNDLE_ID"
+FIXTURE_DOMAIN="$BUNDLE_ID.fixture"
+FIXTURE_PREFERENCES="$HOME/Library/Preferences/$FIXTURE_DOMAIN.plist"
+SCENARIO_SOURCE="$ROOT/Sources/UIFixtures/FixtureUIScenarios.swift"
+
+json_str() {  # a JSON string literal
+  local s=${1//\\/\\\\}; s=${s//\"/\\\"}; s=${s//$'\n'/\\n}; s=${s//$'\t'/\\t}; printf '"%s"' "$s"
+}
+die() { REPORTED=1; printf '{"ok":false,"error":%s}\n' "$(json_str "$1")"; exit "${2:-1}"; }
+# Any other non-zero exit still answers in JSON, naming the line that stopped it.
+REPORTED=0; FAILED_LINE=0
+trap 'FAILED_LINE=$LINENO' ERR
+trap 'rc=$?; if [ $rc -ne 0 ] && [ "$REPORTED" = 0 ]; then printf "{\"ok\":false,\"error\":\"qfv stopped at line %s of %s (exit %s)\"}\n" "$FAILED_LINE" "${BASH_SOURCE[0]}" "$rc"; fi' EXIT
+field() { plutil -extract "$1" raw -o - - 2>/dev/null || true; }  # read one JSON field from stdin
+
+pid_alive() { [ -n "${1:-}" ] && kill -0 "$1" 2>/dev/null; }
+our_pid() {  # the lane's running instance, or nothing
+  [ -f "$RUN/pid" ] || return 0
+  local pid; pid=$(cat "$RUN/pid")
+  if pid_alive "$pid" && ps -o command= -p "$pid" | grep -q "^$APP/Contents/MacOS/QotaFolio"; then echo "$pid"; fi
+}
+require_pid() {  # sets PID; dies in this shell, so its message reaches stdout
+  PID=$(our_pid); [ -n "$PID" ] || die "no $LANE instance is running; run qfv launch <scenario>" 3
+}
+run_dir() { [ -f "$RUN/evidence" ] && cat "$RUN/evidence" || readlink "$EVIDENCE_ROOT/latest" 2>/dev/null || true; }
+note() {  # one manifest line per artifact
+  local dir; dir=$(run_dir); [ -n "$dir" ] || return 0
+  printf '{"t":%s,"cmd":%s,"file":%s}\n' "$(json_str "$(date -u +%FT%TZ)")" "$(json_str "$1")" "$(json_str "$2")" >>"$dir/manifest.jsonl"
+}
+scenarios() { sed -n 's/^ *case "\([a-z-]*\)":.*/\1/p' "$SCENARIO_SOURCE" | tr '\n' ' ' | sed 's/ $//'; }
+released_pid() { pgrep -f "^/Applications/QotaFolio.app/Contents/MacOS/QotaFolio" | head -1 || true; }
+compile_ax() {
+  mkdir -p "$TOOLS"
+  if [ ! -x "$AX" ] || [ "$SKILL_BIN/qfv-ax.swift" -nt "$AX" ]; then
+    swiftc -O "$SKILL_BIN/qfv-ax.swift" -o "$AX" >"$TOOLS/qfv-ax.compile.log" 2>&1 || die "qfv-ax did not compile; see $TOOLS/qfv-ax.compile.log"
+  fi
+}
+source_stamp() {  # a hash of every file the build reads, as it is on disk, committed or not
+  # The build reads what the landing check builds: each path .ci.toml gives the swift stack.
+  local paths; paths=$(sed -n 's/^"\([^"]*\)" *= *\[.*"swift".*/\1/p' "$ROOT/.ci.toml")
+  (cd "$ROOT" && git ls-files -z --cached --others --exclude-standard -- $paths | xargs -0 shasum 2>/dev/null || true) \
+    | shasum | cut -c1-12
+}
+
+cmd_build() {
+  mkdir -p "$STATE"
+  compile_ax
+  (cd "$ROOT" && xcodegen generate --no-env --spec project.yml --project . --project-root . >"$STATE/xcodegen.log" 2>&1) \
+    || die "xcodegen failed; see $STATE/xcodegen.log"
+  local axbuild started rc
+  axbuild=$(command -v axbuild || echo "$HOME/.claude/axiom-local/plugins/axiom/bin/axbuild")
+  [ -x "$axbuild" ] || die "axbuild not found; the axiom-build skill says where it lives"
+  started=$(date +%s)
+  set +e
+  (cd "$ROOT" && "$axbuild" xcodebuild -project QotaFolio.xcodeproj -scheme QotaFolio -configuration Debug \
+    -destination 'platform=macOS' -derivedDataPath "$DERIVED" "QOTAFOLIO_BUNDLE_ID=$BUNDLE_ID" build \
+    >"$STATE/build.json" 2>"$STATE/build.stderr")
+  rc=$?
+  set -e
+  local stamp; stamp=$(source_stamp)
+  [ $rc -eq 0 ] && echo "$stamp" >"$STATE/build.stamp"
+  printf '{"ok":%s,"exit":%d,"seconds":%d,"lane":%s,"bundleId":%s,"app":%s,"source":%s,"report":%s}\n' \
+    "$([ $rc -eq 0 ] && echo true || echo false)" "$rc" "$(( $(date +%s) - started ))" "$(json_str "$LANE")" \
+    "$(json_str "$BUNDLE_ID")" "$(json_str "$APP")" "$(json_str "$stamp")" "$(json_str "$STATE/build.json")"
+  REPORTED=1   # the line above is the answer, failed build or not
+  return $rc
+}
+
+cmd_launch() {
+  local scenario="${1:-}"; [ -n "$scenario" ] || die "usage: qfv launch <scenario> [QOTAFOLIO_UI_X=value ...]; scenarios: $(scenarios)" 64
+  shift
+  # An unknown name falls through to the production runtime (Keychain, network), so it is refused here.
+  case " $(scenarios) " in *" $scenario "*) ;; *) die "no fixture scenario '$scenario'; scenarios: $(scenarios)" 64;; esac
+  [ -x "$APP/Contents/MacOS/QotaFolio" ] || die "no $LANE build at $APP; run qfv build" 3
+  [ -n "$(our_pid)" ] && die "a $LANE instance is already running (pid $(our_pid)); run qfv stop first" 3
+  local extra
+  for extra in "$@"; do case "$extra" in QOTAFOLIO_UI_*=*) ;; *) die "extra arguments must be QOTAFOLIO_UI_NAME=value, got '$extra'" 64;; esac; done
+  compile_ax
+  local id dir
+  id="$(date +%Y%m%d-%H%M%S)-$LANE-$scenario"
+  dir="$EVIDENCE_ROOT/$id"
+  mkdir -p "$RUN" "$dir"
+  ln -sfn "$dir" "$EVIDENCE_ROOT/latest"
+  echo "$dir" >"$RUN/evidence"
+  : >"$RUN/app.log"
+  # The app's own stdout carries the lab's QF_ lines. It is started from this shell, by path,
+  # so the pid below is the app itself and nothing else is ever signalled.
+  env QOTAFOLIO_UI_SCENARIO="$scenario" QOTAFOLIO_UI_PUBLISH_FILES=1 "$@" \
+    nohup "$APP/Contents/MacOS/QotaFolio" >"$RUN/app.log" 2>&1 </dev/null &
+  local pid=$!
+  echo "$pid" >"$RUN/pid"
+  printf '%s\n' "QOTAFOLIO_UI_SCENARIO=$scenario" "QOTAFOLIO_UI_PUBLISH_FILES=1" "$@" >"$dir/launch.env"
+  note "launch $scenario $*" "launch.env"
+  local ready
+  ready=$("$AX" wait "$pid" 'id=qotafolio.statusItem' 20) || {
+    pid_alive "$pid" || die "the app exited during launch; see $RUN/app.log"
+    die "the status item did not appear within 20 s; see $RUN/app.log"
+  }
+  # The files for qota: wait at most 4 s for the app to say it wrote them, or that it could not.
+  local i=0 published=false
+  until grep -q '^QF_PUBLISHED\|^QF_PUBLISH_FAILED' "$RUN/app.log" || [ $i -ge 40 ]; do sleep 0.1; i=$((i+1)); done
+  if grep -q '^QF_PUBLISHED' "$RUN/app.log"; then published=true; fi
+  printf '{"ok":true,"pid":%d,"lane":%s,"scenario":%s,"evidence":%s,"log":%s,"statusItem":%s,"published":%s}\n' \
+    "$pid" "$(json_str "$LANE")" "$(json_str "$scenario")" "$(json_str "$dir")" "$(json_str "$RUN/app.log")" \
+    "$(json_str "$(echo "$ready" | field element.label)")" "$published"
+}
+
+cmd_doctor() {
+  local pid built stamp now_stamp perm released others issues=""
+  pid=$(our_pid)
+  built=false; [ -x "$APP/Contents/MacOS/QotaFolio" ] && built=true
+  stamp=$(cat "$STATE/build.stamp" 2>/dev/null || echo none)
+  now_stamp=$(source_stamp)
+  compile_ax
+  perm=$("$AX" perm)
+  released=$(released_pid)
+  others=$(pgrep -fl 'QotaFolio.app/Contents/MacOS/QotaFolio$' | grep -v "^${pid:-x} " | grep -v '/Applications/QotaFolio.app' | awk '{print $1}' | tr '\n' ' ' | sed 's/ $//' || true)
+  [ "$built" = true ] || issues="$issues no build: run qfv build;"
+  [ "$stamp" = "$now_stamp" ] || issues="$issues build is from $stamp, source is $now_stamp: run qfv build;"
+  [ "$(echo "$perm" | field accessibility)" = true ] || issues="$issues no Accessibility for this terminal: qfv ax cannot read or press;"
+  [ "$(echo "$perm" | field screenRecording)" = true ] || issues="$issues no Screen Recording for this terminal: qfv shot captures only the wallpaper;"
+  local status_label="" panel=false
+  if [ -n "$pid" ]; then
+    status_label=$("$AX" find "$pid" 'id=qotafolio.statusItem' | field element.label || true)
+    [ -n "$status_label" ] || issues="$issues instance $pid shows no status item;"
+    "$AX" find "$pid" 'id=qotafolio.panel' >/dev/null 2>&1 && panel=true
+  fi
+  printf '{"ok":%s,"lane":%s,"bundleId":%s,"built":%s,"buildSource":%s,"currentSource":%s,"pid":%s,"scenario":%s,"statusItem":%s,"panelOpen":%s,"evidence":%s,"permissions":{"accessibility":%s,"screenRecording":%s},"releasedAppPid":%s,"otherDebugInstances":%s,"issues":%s}\n' \
+    "$([ -z "$issues" ] && echo true || echo false)" "$(json_str "$LANE")" "$(json_str "$BUNDLE_ID")" "$built" \
+    "$(json_str "$stamp")" "$(json_str "$now_stamp")" "${pid:-null}" \
+    "$(json_str "$(sed -n 's/^QOTAFOLIO_UI_SCENARIO=//p' "$(run_dir)/launch.env" 2>/dev/null)")" \
+    "$(json_str "$status_label")" "$panel" "$(json_str "$(run_dir)")" \
+    "$(echo "$perm" | field accessibility)" "$(echo "$perm" | field screenRecording)" \
+    "${released:-null}" "$(json_str "$others")" "$(json_str "${issues# }")"
+}
+
+cmd_ax() {
+  local sub="${1:-}"; [ -n "$sub" ] || die "usage: qfv ax tree|find|wait|press|set|window|windows [selector] [arg]" 64
+  shift
+  compile_ax
+  require_pid
+  "$AX" "$sub" "$PID" "$@"
+}
+
+cmd_snap() {  # the accessibility tree, as evidence
+  local name="${1:-}"; [ -n "$name" ] || die "usage: qfv snap <name>" 64
+  local dir pid file; dir=$(run_dir); require_pid; pid=$PID; file="$dir/$name.ax.json"
+  compile_ax
+  "$AX" tree "$pid" >"$file"
+  note "snap $name" "$name.ax.json"
+  printf '{"ok":true,"file":%s}\n' "$(json_str "$file")"
+}
+
+cmd_shot() {  # a PNG of the window that holds an element, or of the element's own frame
+  local name="${1:-}" selector="${2:-}" mode="${3:-}"
+  [ -n "$name" ] && [ -n "$selector" ] || die "usage: qfv shot <name> <selector> [--frame]" 64
+  local dir pid file found; dir=$(run_dir); require_pid; pid=$PID; file="$dir/$name.png"
+  compile_ax
+  if [ "$mode" = "--frame" ]; then
+    found=$("$AX" find "$pid" "$selector") || die "no element matches $selector"
+    local x y w h
+    x=$(echo "$found" | field element.frame.x); y=$(echo "$found" | field element.frame.y)
+    w=$(echo "$found" | field element.frame.w); h=$(echo "$found" | field element.frame.h)
+    screencapture -x -R"$x,$y,$w,$h" "$file"
+  else
+    found=$("$AX" window "$pid" "$selector") || die "no on-screen window of $pid holds $selector"
+    screencapture -x -o -l"$(echo "$found" | field window.number)" "$file"
+  fi
+  note "shot $name $selector $mode" "$name.png"
+  printf '{"ok":true,"file":%s,"mode":%s}\n' "$(json_str "$file")" "$(json_str "${mode:-window}")"
+}
+
+cmd_qota() {  # the lane's own qota, over the lane's own files; stdout, stderr and exit kept
+  local q="$APP/Contents/MacOS/qota"; [ -x "$q" ] || die "no $LANE build; run qfv build" 3
+  local dir n file rc; dir=$(run_dir); [ -n "$dir" ] || die "no run yet; run qfv launch <scenario>" 3
+  n=$(find "$dir" -maxdepth 1 -name 'qota-*.txt' | wc -l | tr -d ' '); n=$((n + 1)); file="$dir/qota-$n.txt"
+  set +e; "$q" "$@" >"$file.out" 2>"$file.err"; rc=$?; set -e
+  { echo "\$ qota $*"; echo "--- stdout"; cat "$file.out"; echo "--- stderr"; cat "$file.err"; echo "--- exit $rc"; } >"$file"
+  cat "$file.out"; rm -f "$file.out" "$file.err"
+  note "qota $*" "qota-$n.txt"
+  REPORTED=1   # qota's own exit code is the answer
+  return $rc
+}
+
+cmd_log() { [ -f "$RUN/app.log" ] && cat "$RUN/app.log" || die "no log; nothing was launched in lane $LANE" 3; }
+
+cmd_quit() {  # the user's own Quit: open the panel if it is closed, footer More, Quit QotaFolio
+  local pid; require_pid; pid=$PID
+  compile_ax
+  # An add flow replaces the footer; the user's way out of it is its Cancel.
+  "$AX" press "$pid" 'id=qotafolio.auth.cancel' >/dev/null 2>&1 && sleep 0.5
+  "$AX" find "$pid" 'id=qotafolio.footer.more' >/dev/null 2>&1 || {
+    "$AX" press "$pid" 'id=qotafolio.statusItem' >/dev/null
+    "$AX" wait "$pid" 'id=qotafolio.footer.more' 5 >/dev/null || die "the panel opened without its footer; use qfv stop"
+  }
+  "$AX" find "$pid" 'id=qotafolio.footer.quit' >/dev/null 2>&1 || {   # the More menu may already be open
+    "$AX" press "$pid" 'id=qotafolio.footer.more' >/dev/null
+    "$AX" wait "$pid" 'id=qotafolio.footer.quit' 5 >/dev/null || die "the More menu has no Quit item; use qfv stop"
+  }
+  # The app may end before AXPress returns, which AX reports as an error; the exit below is the check.
+  "$AX" press "$pid" 'id=qotafolio.footer.quit' >/dev/null 2>&1 || true
+  local i=0; while pid_alive "$pid" && [ $i -lt 50 ]; do sleep 0.1; i=$((i+1)); done
+  pid_alive "$pid" && die "pid $pid did not exit within 5 s of Quit; use qfv stop"
+  printf '{"ok":true,"pid":%d,"exitedAfterMs":%d}\n' "$pid" $((i * 100))
+}
+
+cmd_reopen() {  # a second process by path, which rings the running one through the lease and exits
+  local pid; require_pid; pid=$PID   # with no instance running, a bare start would build the production runtime
+  set +e; "$APP/Contents/MacOS/QotaFolio" >"$RUN/reopen.log" 2>&1 </dev/null; local rc=$?; set -e
+  printf '{"ok":%s,"secondProcessExit":%d,"runningPid":%d,"stillRunning":%s}\n' \
+    "$([ $rc -eq 0 ] && echo true || echo false)" "$rc" "$pid" "$(pid_alive "$pid" && echo true || echo false)"
+}
+
+cmd_stop() {  # the lane's instance, ended: the user's Quit first, the pid's signal only if Quit cannot
+  local pid how=none; pid=$(our_pid)
+  if [ -n "$pid" ]; then
+    if (cmd_quit) >/dev/null 2>&1; then how=quit; else
+      kill -TERM "$pid" 2>/dev/null || true; how=sigterm
+      local i=0; while pid_alive "$pid" && [ $i -lt 30 ]; do sleep 0.1; i=$((i+1)); done
+      pid_alive "$pid" && { kill -KILL "$pid" 2>/dev/null || true; how=sigkill; }
+    fi
+  fi
+  local dir; dir=$(run_dir)
+  [ -n "$dir" ] && [ -f "$RUN/app.log" ] && cp "$RUN/app.log" "$dir/app.log"
+  rm -f "$RUN/pid"
+  printf '{"ok":true,"pid":%s,"stoppedBy":%s,"log":%s}\n' "${pid:-null}" "$(json_str "$how")" "$(json_str "${dir:+$dir/app.log}")"
+}
+
+cmd_clean() {  # stop, then remove what the run left on this Mac; the evidence stays
+  local stopped; stopped=$(cmd_stop)
+  rm -rf "$GROUP_FILES" "$SUPPORT"
+  defaults delete "$FIXTURE_DOMAIN" >/dev/null 2>&1 || true
+  rm -f "$FIXTURE_PREFERENCES"   # macOS can keep an empty file for a domain it has emptied
+  [ -d "$APP" ] && { /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$APP" 2>/dev/null || true; }
+  local dir; dir=$(run_dir)
+  rm -rf "$RUN"
+  local released place left=""; released=$(released_pid)
+  for place in "$GROUP_FILES" "$SUPPORT" "$FIXTURE_PREFERENCES"; do if [ -e "$place" ]; then left="$left${left:+,}$(json_str "$place")"; fi; done
+  printf '{"ok":%s,"stop":%s,"left":[%s],"evidence":%s,"releasedAppPid":%s}\n' \
+    "$([ -z "$left" ] && echo true || echo false)" "$stopped" "$left" "$(json_str "$dir")" "${released:-null}"
+}
+
+cmd_help() {
+  cat <<EOF
+qfv — QotaFolio verification lane "$LANE" ($BUNDLE_ID). Every command prints JSON.
+  qfv build                               xcodegen + Debug build of the lane, about 30 s cold
+  qfv launch <scenario> [QOTAFOLIO_UI_X=v ...]   start over fixtures; scenarios: $(scenarios)
+  qfv doctor                              is this lane worth driving? read-only
+  qfv ax tree [depth]                     the accessibility tree of the lane's instance
+  qfv ax find|wait|press|window <sel>     one element; wait takes [seconds]; press is AXPress
+  qfv ax set <sel> <text>                 set a text field's value
+  qfv ax windows                          the instance's windows, with numbers and frames
+  qfv snap <name>                         save the tree as <evidence>/<name>.ax.json
+  qfv shot <name> <sel> [--frame]         save <evidence>/<name>.png: the element's window, or its frame
+  qfv qota [args]                         run the lane's own qota; output kept as evidence
+  qfv log                                 the instance's stdout: QF_ lines from the lab
+  qfv reopen                              start a second process; it rings the running one and exits
+  qfv quit                                the user's Quit, through the panel's More menu
+  qfv stop                                quit, or signal the recorded pid if Quit cannot
+  qfv clean                               stop, remove what the lane left on this Mac; keep evidence
+Selectors: id=<AXIdentifier>, role=<AXRole>, label=<substring>, nth=<k>, joined by &.
+Evidence: $EVIDENCE_ROOT/<run>/ ; latest run: $EVIDENCE_ROOT/latest
+EOF
+}
+
+sub="${1:-help}"; shift || true
+case "$sub" in
+  build) cmd_build "$@" ;;
+  launch) cmd_launch "$@" ;;
+  doctor) cmd_doctor "$@" ;;
+  ax) cmd_ax "$@" ;;
+  snap) cmd_snap "$@" ;;
+  shot) cmd_shot "$@" ;;
+  qota) cmd_qota "$@" ;;
+  log) cmd_log "$@" ;;
+  quit) cmd_quit "$@" ;;
+  reopen) cmd_reopen "$@" ;;
+  stop) cmd_stop "$@" ;;
+  clean) cmd_clean "$@" ;;
+  help|-h|--help) cmd_help ;;
+  *) die "unknown subcommand '$sub'; run qfv help" 64 ;;
+esac

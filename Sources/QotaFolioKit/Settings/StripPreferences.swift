@@ -7,8 +7,8 @@ import QotaFolioCore
 /// spend, or what the week still holds. Persisted in the app's own defaults domain, beside the
 /// appearance choice and the account visibility.
 ///
-/// The batteries and the Control follow it; the words do not. In either mode the tooltip, what
-/// VoiceOver reads, the Control's title and the panel's cards say both figures, so a battery
+/// The batteries follow it; the words do not. In either mode the tooltip, what VoiceOver reads
+/// and the panel's cards say both figures, so a battery
 /// drawn to the week and an account that is spent for the next 47 minutes never read as a
 /// disagreement — the picture answers one question and the words answer both.
 @MainActor @Observable public final class StripPreferences {
