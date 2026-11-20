@@ -24,7 +24,7 @@ public struct WeekPicture: Sendable {
     public let unrecorded: DateInterval?
     /// The falls of this week up to now, in time order.
     public let falls: [Fall]
-    /// Every stretch of more than two hours between two points, in time order.
+    /// Every stretch of more than `gapSeconds` between two points, in time order.
     public let gaps: [Gap]
     /// Every stretch with the week at 100 percent, from a point at 100 to the next point, or to
     /// now. Stretches that touch are one.
@@ -91,6 +91,9 @@ public struct WeekPicture: Sendable {
         /// a week, where the reading falls at every banked reset.
         public var work: Double { used + givenBack }
     }
+
+    /// Polls further apart than this, two hours, leave a gap in the record.
+    public static let gapSeconds: TimeInterval = 2 * 3600
 
     /// A stretch of more than two hours with no poll. When a fall ended on its last poll, the fall
     /// happened somewhere inside it.

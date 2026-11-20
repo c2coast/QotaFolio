@@ -1,8 +1,5 @@
 import Foundation
 
-/// Polls further apart than this leave a gap in the record.
-let gapSeconds = 2 * secondsPerHour
-
 extension Forecast {
     /// The account's week at the poll in force at the moment, as the graph draws it. None before
     /// the first poll.
@@ -28,7 +25,7 @@ extension Forecast {
 
         let falls = self.falls.filter { $0.after.at > start && $0.after.at <= now }
         let gaps = zip(points, points.dropFirst())
-            .filter { before, after in after.at.timeIntervalSince(before.at) > gapSeconds }
+            .filter { before, after in after.at.timeIntervalSince(before.at) > WeekPicture.gapSeconds }
             .map { before, after in WeekPicture.Gap(before: before, after: after, fall: falls.first { $0.after.at == after.at }) }
 
         var atLimit: [DateInterval] = []

@@ -133,7 +133,7 @@ public struct Ceiling: Sendable {
             var lines = [[CGPoint(x: 0, y: y(value(picture.points[0])))]]
             var ramps: [[CGPoint]] = []
             for (a, b) in zip(picture.points, picture.points.dropFirst()) where value(b) != value(a) {
-                if b.at.timeIntervalSince(a.at) > gapSeconds {
+                if b.at.timeIntervalSince(a.at) > WeekPicture.gapSeconds {
                     lines[lines.count - 1].append(at(a.at, value(a)))
                     lines.append([at(b.at, value(b))])
                     ramps.append([at(a.at, value(a)), at(b.at, value(b))])
@@ -154,7 +154,7 @@ public struct Ceiling: Sendable {
             var solid: [[CGPoint]] = [], dotted: [[CGPoint]] = []
             for (a, b) in zip(picture.points, picture.points.dropFirst()) {
                 let p = at(a.at, value(a)), q = at(b.at, value(b))
-                if b.at.timeIntervalSince(a.at) > gapSeconds { dotted.append([p, q]) }
+                if b.at.timeIntervalSince(a.at) > WeekPicture.gapSeconds { dotted.append([p, q]) }
                 else if let end = solid.last?.last, end == p { solid[solid.count - 1].append(q) }
                 else { solid.append([p, q]) }
             }
@@ -165,43 +165,46 @@ public struct Ceiling: Sendable {
         if let model { record(model, modelWork, 1.5, modelTone, picture.spent ? 0.45 : 1) }
         record(.week, { $0.week.work }, 2, weekTone, 1)
 
-        // The forecast, on until it meets its ceiling. Nothing runs on the model once the week is
-        // spent, so when the week runs out first the model's line stops there, with no label.
+        // The forecast, on until it meets its ceiling. The account's forecast names the limit that
+        // runs out first. Nothing runs on the model once the week is spent, so when the week runs
+        // out first the model's line stops there, with no label.
+        let first: (kind: Limit.Kind, at: Date)? = switch picture.forecast {
+        case .runsOut(let kind, let at, _, _): (kind, at)
+        case .modelSpent(week: .runsOut(let at, _, _)): (.week, at)
+        default: nil
+        }
         let weekVerdict = picture.verdicts[.week], modelVerdict = model.flatMap { picture.verdicts[$0] }
-        let weekOut = weekVerdict?.runsOutAt
-        let modelOut = picture.modelSpent ? nil : modelVerdict?.runsOutAt
-        let first: Limit.Kind? = if let weekOut, modelOut.map({ weekOut <= $0 }) ?? true { .week } else if modelOut != nil { model } else { nil }
         let red = Tone.level(.nearlyGone)
         var dots: [Dot] = []
         var ends: [(point: CGPoint, name: String, said: String, strong: Bool, kind: Limit.Kind)] = []
         let nowWeek = now.week.work, nowModel = modelWork(now)
         // What a forecast's end says: the time it runs out, or what it leaves at the reset.
         func said(_ path: (out: Date?, rate: Double, landing: Double)) -> String {
-            path.out.map(words.quarterDay) ?? "~\(left(path.landing))% left"
+            path.out.map(words.quarterDay) ?? "~\(Whole.left(path.landing))% left"
         }
         if !picture.spent {
             if let model, !picture.modelSpent, let path = modelVerdict?.path {
-                if first == .week, let weekOut {
-                    let end = at(weekOut, nowModel + path.rate / 2 * weekOut.timeIntervalSince(now.at) / hour)
+                if let first, first.kind == .week {
+                    let end = at(first.at, nowModel + path.rate / 2 * first.at.timeIntervalSince(now.at) / hour)
                     stroke(.forecast(model), [[at(now.at, nowModel), end]], 1.25, .chartInk, dash: [3, 3], round: true)
                 } else {
                     let end = path.out ?? reset
                     let value = path.out != nil ? modelCeiling(now) : nowModel + (path.landing - (now.model?.used ?? 0)) / 2
-                    let tone = first == model ? red : .chartInk
+                    let tone = first?.kind == model ? red : .chartInk
                     let point = at(end, value)
                     stroke(.forecast(model), [[at(now.at, nowModel), point]], 1.25, tone, dash: [3, 3], round: true)
                     dots.append(Dot(center: point, radius: 2.5, tone: tone, ring: false))
-                    ends.append((point, name, said(path), first == model, model))
+                    ends.append((point, name, said(path), first?.kind == model, model))
                 }
             }
             if let path = weekVerdict?.path {
                 let end = path.out ?? reset
                 let value = path.out != nil ? weekCeiling(now) : nowWeek + (path.landing - now.week.used)
-                let tone = first == .week ? red : .chartInk
+                let tone = first?.kind == .week ? red : .chartInk
                 let point = at(end, value)
                 stroke(.forecast(.week), [[at(now.at, nowWeek), point]], 1.5, tone, dash: [3, 3], round: true)
                 dots.append(Dot(center: point, radius: 3, tone: tone, ring: false))
-                ends.append((point, "Weekly", said(path), first == .week, .week))
+                ends.append((point, "Weekly", said(path), first?.kind == .week, .week))
             }
         }
         if model != nil { dots.append(Dot(center: at(now.at, nowModel), radius: 2.5, tone: modelTone, ring: false)) }
@@ -238,7 +241,7 @@ public struct Ceiling: Sendable {
             guard let q = picture.points.first(where: { $0.at == fall.after.at }) else { continue }
             let back = fall.givenBack[.week] ?? 0
             let xs = x(q.at), yNew = y(weekCeiling(q)), yOld = y(weekCeiling(q) - back), ym = (yNew + yOld) / 2 + 3.5
-            placer.put("↺ \(fall.hours > 2 ? "≥" : "+")\(Int(jsRound(back)))", .reset, .regular, .chartInk, [
+            placer.put("↺ \(fall.hours > 2 ? "≥" : "+")\(Whole.points(back))", .reset, .regular, .chartInk, [
                 Placer.Spot(xs - 3, ym, .end), Placer.Spot(xs + 3, ym, .start), Placer.Spot(xs - 3, yNew - 4, .end),
                 Placer.Spot(xs + 3, yNew - 4, .start), Placer.Spot(xs + 3, yOld + 11, .start),
             ])
@@ -258,17 +261,6 @@ public struct Ceiling: Sendable {
         self.ticks = ticks.labels
     }
 }
-
-/// How much of a limit a landing leaves, in whole percent, as the page's `whole` reads it.
-private func left(_ landing: Double) -> Int { max(0, 100 - Int((landing + 1e-9).rounded(.down))) }
-
-/// JavaScript's `Math.round`: the nearest whole number, and at a half the one above.
-func jsRound(_ x: Double) -> Double {
-    let down = x.rounded(.down)
-    return x - down >= 0.5 ? down + 1 : down
-}
-
-let gapSeconds = 2 * hour
 
 /// What colour a mark takes, by its role. The palette gives each its colour in each appearance.
 public enum Tone: Hashable, Sendable {
@@ -292,11 +284,6 @@ public enum Level: Hashable, Sendable {
 public enum Weight: Hashable, Sendable { case regular, medium, semibold }
 
 extension Verdict {
-    /// The time the limit runs out, when the verdict says it does.
-    var runsOutAt: Date? {
-        if case .runsOut(let at, _, _) = self { at } else { nil }
-    }
-
     /// Where the forecast's line goes: to the time it runs out, or to the reset with its landing.
     var path: (out: Date?, rate: Double, landing: Double)? {
         switch self {

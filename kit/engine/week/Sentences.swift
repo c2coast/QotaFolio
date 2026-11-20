@@ -30,7 +30,7 @@ private struct Said {
         let back = day(reset)
         switch picture.forecast {
         case .spent:
-            let held = picture.now.model.map { " \(name) reads \(whole($0.used))% and waits on the week." } ?? ""
+            let held = picture.now.model.map { " \(name) reads \(Whole.percent($0.used))% and waits on the week." } ?? ""
             return "Spent. Back \(back).\(held)"
         case .notStarted:
             return "No use yet this week. It resets \(back)."
@@ -56,7 +56,7 @@ private struct Said {
             }
             return "\(pace(speed)), \(name) reaches its limit around \(time.quarterDay(at)), \(then)."
         case .lasts(let landing, let modelLanding, let speed):
-            let model = modelLanding.map { ", and \(name) with about \(max(0, 100 - whole($0)))%" } ?? ""
+            let model = modelLanding.map { ", and \(name) with about \(Whole.left($0))%" } ?? ""
             return "\(pace(speed)), the week lasts to its reset \(back) with \(left(landing))\(model)."
         }
     }
@@ -69,7 +69,7 @@ private struct Said {
         }
         for fall in picture.falls {
             let before = fall.before.at.timeIntervalSince1970, after = fall.after.at.timeIntervalSince1970
-            let unwatched = after - before > gapSeconds
+            let unwatched = after - before > WeekPicture.gapSeconds
             let what = "gave back \(points(fall.givenBack[.week] ?? 0))\(unwatched ? " or more" : "")"
             let kind = fall.kind == .full ? "A full banked reset" : picture.model == nil ? "A banked reset" : "A \(name) banked reset"
             add(after, unwatched
@@ -91,7 +91,7 @@ private struct Said {
         }
         if let lead = picture.unrecorded {
             let to = lead.end.timeIntervalSince1970
-            add(to - 1, "Nothing was recorded before \(day(to)), when the week already read \(whole(picture.points[0].week.used))%.")
+            add(to - 1, "Nothing was recorded before \(day(to)), when the week already read \(Whole.percent(picture.points[0].week.used))%.")
         }
         if picture.spent, let stretch = picture.atLimit.last {
             return "At the limit since \(day(stretch.start.timeIntervalSince1970))."
@@ -103,24 +103,15 @@ private struct Said {
         speed == .weekPace ? "At this week’s pace" : "At the last three hours’ pace"
     }
 
-    func left(_ landing: Double) -> String { "about \(max(0, 100 - whole(landing)))% left" }
+    func left(_ landing: Double) -> String { "about \(Whole.left(landing))% left" }
 
     /// "Wed 19:15": the day and the time to the minute, as the page's `dc`.
     func day(_ seconds: Double) -> String { time.day(Date(timeIntervalSince1970: seconds)) }
 }
 
-/// JavaScript's `Math.round`: the nearest whole number, and at a half the one above, also below zero.
-private func jsRound(_ x: Double) -> Double {
-    let down = x.rounded(.down)
-    return x - down >= 0.5 ? down + 1 : down
-}
-
-/// The whole percent a reading shows, as the page's `whole`.
-private func whole(_ percent: Double) -> Int { Int((percent + 1e-9).rounded(.down)) }
-
 /// "12 points", "1 point", as the page's `pts`.
 private func points(_ n: Double) -> String {
-    let k = Int(jsRound(n))
+    let k = Whole.points(n)
     return "\(k) \(k == 1 ? "point" : "points")"
 }
 
