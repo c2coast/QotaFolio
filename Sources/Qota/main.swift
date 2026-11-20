@@ -3,8 +3,8 @@ import QotaFolioModel
 
 // `qota` — QotaFolio's terminal command.
 //
-// Reads the files the app writes into its App Group container, by path, from outside the
-// sandbox, and prints every account's current usage. No daemon, no socket, no network, never a
+// Reads the files the app writes into its App Group container, by path, and prints the current
+// usage of every account the person has not hidden. No daemon, no socket, no network, never a
 // token. It ships inside the app at Contents/MacOS/qota and takes its identity from that app,
 // so a development build's `qota` reads the development build's files and nobody else's.
 
@@ -87,7 +87,10 @@ nonisolated func run(arguments: [String]) -> Never {
     case .unreadable:
         fail("qota: QotaFolio's files at \(container.directoryURL.path) cannot be read by this build.", .unreadable)
     case .reading(let value):
-        reading = value
+        // The panel leaves out the accounts the person hid in Settings, and so does this command. The app keeps
+        // the list in its preferences domain, which this process reads by the domain's name.
+        let hidden = UserDefaults(suiteName: identity.preferencesDomain).map(HiddenAccounts.ids(in:)) ?? []
+        reading = value.hiding(hidden)
     }
 
     var recommendation: RecommendationDocument?

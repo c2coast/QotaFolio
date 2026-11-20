@@ -12,10 +12,11 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
 | `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
-| `app/` | The app's code in the new tree. The app compiles `app/lease/` and `app/settings/legacy/`, and signs with the entitlements file in `app/main/`. Tools and tests link the other folders. |
+| `app/` | The app's code in the new tree. The app compiles `app/lease/`, `app/settings/legacy/` and `app/settings/hidden/`, and signs with the entitlements file in `app/main/`. `qota` compiles `app/settings/hidden/` too. Tools and tests link the other folders. |
 | `app/main/` | The app's entitlements file, and in `tests/` the `AppTests` that pin the names `AppIdentity` derives. |
 | `app/lease/` | The lease. `tests/` holds its tests, in `AppTests`. |
 | `app/settings/legacy/` | The carry. `tests/` holds its tests, in `AppTests`. |
+| `app/settings/hidden/` | The hidden accounts: the key under which the app keeps the list in its preferences domain, and the filter that leaves them out of `qota status`. `tests/` holds its tests, in `AppTests`. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
 | `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in every look, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
 | `Assets/` | The app icon. |

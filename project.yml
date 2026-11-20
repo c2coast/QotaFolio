@@ -85,13 +85,16 @@ targets:
       base:
         SKIP_INSTALL: "YES"
 
-  # `qota`: the terminal command. Reads the three group files by path, links the Model target
-  # statically, and ships inside the app at Contents/MacOS/qota. No daemon, no socket, no
-  # network, never a token.
+  # `qota`: the terminal command. Reads the three group files by path and the hidden accounts
+  # from the app's preferences domain, links the Model target statically, and ships inside the
+  # app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
   qota:
     type: tool
     platform: macOS
-    sources: [Sources/Qota]
+    sources:
+      - Sources/Qota
+      - path: app/settings/hidden
+        excludes: ["tests/**"]
     dependencies:
       - { package: QotaFolioCore, product: QotaFolioModel }
     settings:
@@ -110,6 +113,8 @@ targets:
       - path: app/lease
         excludes: ["tests/**"]
       - path: app/settings/legacy
+        excludes: ["tests/**"]
+      - path: app/settings/hidden
         excludes: ["tests/**"]
       - Assets/Assets.xcassets
       # The macOS 26 layered icon (Icon Composer format), authored by hand from
@@ -524,6 +529,7 @@ targets:
     sources:
       - app/lease
       - app/settings/legacy
+      - app/settings/hidden
       - app/main/tests
     dependencies:
       - { package: QotaFolioCore, product: QotaFolioModel }

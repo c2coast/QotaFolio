@@ -79,6 +79,23 @@ export const walls = [
     ],
   },
   {
+    folder: "app/settings/hidden/",
+    imports: ["Foundation", "QotaFolioModel"],
+    importFix: "The hidden accounts are a key, a list of ids and a filter, which the app and qota both compile. They need Foundation and QotaFolioModel alone.",
+    calls: [
+      ...pure("The list of hidden accounts"),
+      { call: "a defaults domain", pattern: /\bUserDefaults\s*\(|\bUserDefaults\.standard\b|\.standard\b/g, fix: "The list reads and writes the defaults it is handed. The app hands it its own, and qota opens the app's domain by name." },
+    ],
+  },
+  {
+    folder: "app/settings/hidden/tests/",
+    imports: ["Foundation", "QotaFolioModel", "Testing"],
+    importFix: "The tests of the hidden accounts run the list and the filter on values, and need nothing else.",
+    calls: [
+      { call: "UserDefaults", pattern: /\bUserDefaults\b/g, fix: "A test of the hidden accounts never opens a real defaults domain. Run the list and the filter on values." },
+    ],
+  },
+  {
     folder: "app/recorder/legacy/",
     imports: ["Foundation", "Kit"],
     importFix: "The reader of 1.0.0's history turns the file's bytes into kit's values, and needs nothing else.",
