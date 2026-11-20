@@ -15,6 +15,9 @@ public struct Ceiling: Sendable {
 
     /// The plot's size. Its top left is the chart's top left.
     public let plot: CGSize
+    /// The value at the plot's top, in points of the week: a little over the highest ceiling. A
+    /// height in the plot is `(plot.height - y) / plot.height * top` points.
+    public let top: Double
     public let axis: TimeAxis
     /// The unwatched stretches that hid something, and the unrecorded lead-in.
     public let bands: [CGRect]
@@ -246,6 +249,7 @@ public struct Ceiling: Sendable {
         }
 
         plot = CGSize(width: w, height: h)
+        self.top = top
         self.axis = axis
         self.bands = bands
         self.strokes = strokes

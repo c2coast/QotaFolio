@@ -60,7 +60,8 @@ public struct CeilingChart: View {
 }
 
 /// The graph's part of the card: the caption over the chart, the chart, and the two sentences
-/// under it. The card's plate and the rows above the graph are the panel's.
+/// under it. The card's plate and the rows above the graph are the panel's. To VoiceOver it is one
+/// element, which `SpokenGraph` says.
 public struct WeekGraph: View {
     let picture: WeekPicture
     let words: TimeWords
@@ -90,6 +91,14 @@ public struct WeekGraph: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(width: width, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spoken.name)
+        .accessibilityValue(spoken.value)
+        .accessibilityChartDescriptor(spoken)
+    }
+
+    var spoken: SpokenGraph {
+        SpokenGraph(picture: picture, words: words, size: CGSize(width: width, height: CeilingChart.size.height))
     }
 }
 
