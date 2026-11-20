@@ -3,15 +3,23 @@ import Kit
 
 /// The rule that places the words inside the plot: each tries its places in order and takes the
 /// first that lies inside the plot, touches no word and no dot placed before it, and covers no line
-/// of the record. A word with a shorter form tries that in each place next. A word with no such
-/// place is left out, never drawn over another and never over the record.
+/// of the record. A forecast's word tries first only the places that read as its own dot's, clear
+/// of the marks of now, and takes any free place when none does. A word with a shorter form tries
+/// that in each place next. A word with no such place is left out, never drawn over another and
+/// never over the record.
 struct Placer {
     let width: Double
     let height: Double
     private var taken: [CGRect] = []
     /// Each piece of the record's lines, with how far its stroke reaches either side of it.
     private var record: [(a: CGPoint, b: CGPoint, reach: Double)] = []
+    private var nows: [CGPoint] = []
     private(set) var placed: [Ceiling.Label] = []
+
+    /// A forecast's word lies within this many points of its own dot.
+    static let byOwnDot = 20.0
+    /// And it is nearer its own dot than either mark of now by this many points.
+    static let ownDotMargin = 4.0
 
     init(width: Double, height: Double) {
         self.width = width
@@ -38,6 +46,12 @@ struct Placer {
         taken.append(CGRect(x: center.x - radius, y: center.y - radius, width: 2 * radius, height: 2 * radius))
     }
 
+    /// A mark of now: a dot, which a forecast's word also keeps clear of.
+    mutating func now(_ center: CGPoint, _ radius: Double) {
+        dot(center, radius)
+        nows.append(center)
+    }
+
     /// The record's lines, stroked this wide. No word covers them.
     mutating func record(_ lines: [[CGPoint]], width: Double) {
         for line in lines {
@@ -45,8 +59,11 @@ struct Placer {
         }
     }
 
+    /// Places a word in the first of its spots that is free, and says whether it found one. Given
+    /// its dot, a forecast's word takes only a spot that reads as that dot's.
+    @discardableResult
     mutating func put(_ text: String, or short: String? = nil, _ kind: Ceiling.Label.Kind, _ weight: Weight, _ tone: Tone,
-                      _ spots: [Spot]) {
+                      _ spots: [Spot], by dot: CGPoint? = nil) -> Bool {
         for text in [text] + (short.map { [$0] } ?? []) {
             let wide = ChartType.width(text, weight)
             for spot in spots {
@@ -54,11 +71,22 @@ struct Placer {
                 let box = CGRect(x: x0 - 1, y: spot.y - 9, width: wide + 2, height: 11)
                 guard box.minX >= 0, box.maxX <= width, box.minY >= 0, box.maxY <= height,
                       !taken.contains(where: { overlap($0, box) }),
-                      !record.contains(where: { crosses($0.a, $0.b, box.insetBy(dx: -$0.reach, dy: -$0.reach)) }) else { continue }
+                      !record.contains(where: { crosses($0.a, $0.b, box.insetBy(dx: -$0.reach, dy: -$0.reach)) }),
+                      dot.map({ reads(box, as: $0) }) ?? true else { continue }
                 taken.append(box)
                 placed.append(Ceiling.Label(kind: kind, text: text, weight: weight, tone: tone, box: box))
-                return
+                return true
             }
+        }
+        return false
+    }
+
+    /// A word reads as its dot's when it lies by the dot, and each mark of now is further from it
+    /// than the dot, by the margin. A mark that sits on the dot is the same place, and does not count.
+    private func reads(_ box: CGRect, as dot: CGPoint) -> Bool {
+        let margin = Self.ownDotMargin
+        return distance(box, dot) <= Self.byOwnDot && nows.allSatisfy { now in
+            hypot(now.x - dot.x, now.y - dot.y) < margin || distance(box, now) >= distance(box, dot) + margin
         }
     }
 }
@@ -84,6 +112,11 @@ func crosses(_ a: CGPoint, _ b: CGPoint, _ box: CGRect) -> Bool {
         }
     }
     return enter < leave
+}
+
+/// How far a point lies from a box: zero inside it.
+func distance(_ box: CGRect, _ p: CGPoint) -> Double {
+    hypot(max(box.minX - p.x, 0, p.x - box.maxX), max(box.minY - p.y, 0, p.y - box.maxY))
 }
 
 /// The places around a point at the end of a forecast, in the order they are tried.

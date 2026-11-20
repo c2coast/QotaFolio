@@ -96,6 +96,37 @@ struct LabelTests {
         }
     }
 
+    /// A forecast's label names the dot where its line ends. Where a place by that dot is free, the
+    /// label sits nearer the dot than the ring of now and the model's dot of now, so it does not read
+    /// as their name. A mark of now that sits on the dot, when the limit runs out within minutes, is
+    /// the same place.
+    @Test("A forecast's label sits by its own dot, clear of the marks of now", arguments: Week.all, [false, true])
+    func byOwnDot(_ week: Week, twelveHour: Bool) {
+        func distance(_ box: CGRect, _ p: CGPoint) -> Double {
+            hypot(max(box.minX - p.x, 0, p.x - box.maxX), max(box.minY - p.y, 0, p.y - box.maxY))
+        }
+        for width in Week.widths {
+            let ceiling = week.ceiling(width: width, twelveHour: twelveHour)
+            let at = "\(week.name) at \(Int(width)) points\(twelveHour ? ", 12-hour" : "")"
+            guard !Self.noPlaceByTheDot.contains(at), let ring = ceiling.dots.first(where: \.ring) else { continue }
+            let nows = ceiling.dots.filter { $0.center.x == ring.center.x }.map(\.center)
+            for label in ceiling.labels {
+                guard case .forecast(let kind) = label.kind,
+                      let end = ceiling.strokes.first(where: { $0.part == .forecast(kind) })?.lines.last?.last else { continue }
+                for now in nows where hypot(now.x - end.x, now.y - end.y) >= 4 {
+                    #expect(distance(label.box, now) > distance(label.box, end),
+                            "\(at): \(label.text) at \(label.box) is nearer the mark of now at \(now) than its dot at \(end)")
+                }
+            }
+        }
+    }
+
+    /// The one week, worked by hand, where no place by a forecast's dot is free, so its label takes
+    /// the first free place and is kept. Fable's red dot is 70 points from the plot's right edge,
+    /// and "Wed 11:00 PM" needs 75.5 to its right. Every place to its left or below lies nearer the
+    /// ring of now.
+    static let noPlaceByTheDot: Set = ["record-starts-mid-week at 280 points, 12-hour"]
+
     /// A forecast's label that says when its limit runs out, "Weekly · Wed 7:15 PM" or the time
     /// alone, and the sentence under the graph say the same time in the same words, on either clock.
     @Test("The forecast's label and its sentence say the time the same way", arguments: Week.all, [false, true])

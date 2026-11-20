@@ -215,16 +215,22 @@ public struct Ceiling: Sendable {
 
         // The words, each in the first of its places that touches nothing placed before it. A word
         // with no free place is left out: the sentence under the graph says everything it says.
-        placer.dot(at(now.at, nowWeek), 6)
-        if model != nil { placer.dot(at(now.at, nowModel), 4) }
+        placer.now(at(now.at, nowWeek), 6)
+        if model != nil { placer.now(at(now.at, nowModel), 4) }
         let ordered = ends.filter(\.strong) + ends.filter { !$0.strong }
         for end in ordered { placer.dot(end.point, 4) }
         for end in ordered {
             // "Weekly · Wed 19:15", or the time alone where the name leaves it no room: the dot
             // sits on the limit's named ceiling.
             let text = end.said.hasPrefix("~") ? "\(end.name) \(end.said)" : "\(end.name) · \(end.said)"
-            placer.put(text, or: end.said, .forecast(end.kind), end.strong ? .semibold : .medium, end.strong ? .ink : .chartInk,
-                       around(end.point))
+            let (weight, tone): (Weight, Tone) = end.strong ? (.semibold, .ink) : (.medium, .chartInk)
+            // Near the plot's right edge, the time alone may sit flush with the edge, just under its dot.
+            if placer.put(text, or: end.said, .forecast(end.kind), weight, tone, around(end.point), by: end.point)
+                || placer.put(end.said, .forecast(end.kind), weight, tone, [Placer.Spot(w - 1, end.point.y + 13, .end)], by: end.point) {
+                continue
+            }
+            // Where no place reads as the dot's, the word takes the first free place, so it is kept.
+            placer.put(text, or: end.said, .forecast(end.kind), weight, tone, around(end.point))
         }
         for (kind, value, text) in [(Limit.Kind.week, weekCeiling, "Weekly limit")] + (model.map { [($0, modelCeiling, "\(name) limit")] } ?? []) {
             let yr = y(value(now)), y0 = y(value(picture.points[0]))
