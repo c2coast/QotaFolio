@@ -3,6 +3,7 @@
 # tree, which no rule reads. A new top-level folder adds its prefix in the pull request that brings it.
 [paths]
 "Sources/" = ["swift"]
+"kit/" = ["swift", "node"]
 "Assets/" = ["swift"]
 "project.yml" = ["swift"]
 "Package.swift" = ["swift", "node"]

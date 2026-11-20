@@ -12,4 +12,10 @@ export const walls = [
       { call: "URLSession", pattern: /\bURLSession\w*/g, fix: "kit is pure. The app asks servers and hands kit the answer." },
     ],
   },
+  {
+    folder: "kit/tests/",
+    imports: ["Foundation", "Kit", "Testing"],
+    importFix: "kit's tests use Kit and Swift Testing. A test of the app's code goes beside that code.",
+    calls: [],
+  },
 ];

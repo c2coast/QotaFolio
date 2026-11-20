@@ -506,6 +506,35 @@ targets:
           stamp_tmp.replace(stamp_path)
           PYTHON
 
+  # The new tree's pure Swift: the values and the Engine. Foundation only, no clock, no files. The
+  # app does not link it yet. A library ships nonisolated API and lets its caller choose where it runs.
+  Kit:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: kit
+        excludes: ["tests/**"]
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        SKIP_INSTALL: "YES"
+
+  # Kit's tests, with no host application: they run in the test runner, so nothing appears on
+  # screen. The fixtures are read from the source tree, not copied in.
+  KitTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: kit/tests
+        excludes: ["fixtures/**"]
+    dependencies:
+      - { target: Kit }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        GENERATE_INFOPLIST_FILE: "YES"
+
 schemes:
   QotaFolio:
     build: { targets: { QotaFolio: all } }
+    test: { targets: [KitTests] }
