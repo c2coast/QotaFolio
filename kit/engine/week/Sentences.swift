@@ -1,0 +1,148 @@
+import Foundation
+
+/// The two sentences under the graph: what the forecast says, and the record's one sentence.
+public struct Sentences: Hashable, Sendable {
+    /// What the forecast says. When the week is spent, it also says what the model's week reads.
+    public let forecast: String
+    /// The latest thing the graph shows that a number alone would not. None when there is nothing.
+    public let record: String?
+}
+
+extension WeekPicture {
+    /// The sentences, word for word as the chart page says them. Every time carries its day, in the
+    /// calendar's time zone.
+    public func sentences(in calendar: Calendar) -> Sentences {
+        let words = Words(calendar: calendar, picture: self)
+        return Sentences(forecast: words.forecast(), record: words.record())
+    }
+}
+
+private struct Words {
+    let calendar: Calendar
+    let picture: WeekPicture
+
+    /// The model's name, such as "Fable".
+    var name: String { picture.model?.model ?? "" }
+
+    var reset: Double { picture.resets.instant.timeIntervalSince1970 }
+
+    func forecast() -> String {
+        let back = day(reset)
+        switch picture.forecast {
+        case .spent:
+            let held = picture.now.model.map { " \(name) reads \(whole($0.used))% and waits on the week." } ?? ""
+            return "Spent. Back \(back).\(held)"
+        case .notStarted:
+            return "No use yet this week. It resets \(back)."
+        case .modelSpent(let week):
+            switch week {
+            case .runsOut(let at, _, let speed):
+                return "\(name) is spent until \(back). \(pace(speed)), other models reach the week’s limit around \(quarterDay(at))."
+            case .lasts(let landing, _, let speed):
+                return "\(name) is spent until \(back). \(pace(speed)), the week lasts to then with \(left(landing))."
+            case .spent, .silent:
+                return "\(name) is spent until \(back). The week is too close to call."
+            }
+        case .silent:
+            return "Too early to say — the range is wider than a number would be honest about."
+        case .runsOut(let first, let at, let speed, _) where first == .week:
+            let before = countdown(Int(reset - quarter(at.timeIntervalSince1970)))
+            return "\(pace(speed)), the week reaches its limit around \(quarterDay(at)), \(before) before it resets."
+        case .runsOut(_, let at, let speed, let week):
+            let then = switch week {
+            case .runsOut(let weekAt, _, _): "and the week around \(quarterDay(weekAt))"
+            case .lasts(let landing, _, _): "while the week lasts to \(back) with \(left(landing))"
+            case .spent, .silent, nil: "and the week is too close to call"
+            }
+            return "\(pace(speed)), \(name) reaches its limit around \(quarterDay(at)), \(then)."
+        case .lasts(let landing, let modelLanding, let speed):
+            let model = modelLanding.map { ", and \(name) with about \(max(0, 100 - whole($0)))%" } ?? ""
+            return "\(pace(speed)), the week lasts to its reset \(back) with \(left(landing))\(model)."
+        }
+    }
+
+    /// The latest of the record's events; at a spent week, how long it has been at the limit.
+    func record() -> String? {
+        var latest: (at: Double, said: String)?
+        func add(_ at: Double, _ said: String) {
+            if latest.map({ at >= $0.at }) ?? true { latest = (at, said) }
+        }
+        for fall in picture.falls {
+            let before = fall.before.at.timeIntervalSince1970, after = fall.after.at.timeIntervalSince1970
+            let unwatched = after - before > gapSeconds
+            let what = "gave back \(points(fall.givenBack[.week] ?? 0))\(unwatched ? " or more" : "")"
+            let kind = fall.kind == .full ? "A full banked reset" : picture.model == nil ? "A banked reset" : "A \(name) banked reset"
+            add(after, unwatched
+                ? "\(kind) fell between \(day(before)) and \(day(after)), while nobody watched; it \(what)."
+                : "\(kind) at \(day(after)) \(what).")
+        }
+        for gap in picture.gaps where gap.fall == nil {
+            let rose = gap.after.week.work - gap.before.week.work
+            if rose < 1 { continue }
+            let to = gap.after.at.timeIntervalSince1970
+            add(to, "Not watched from \(day(gap.before.at.timeIntervalSince1970)) to \(day(to)); the week rose \(points(rose)) in that time.")
+        }
+        let now = picture.now.at
+        for stretch in picture.atLimit where stretch.duration > secondsPerHour {
+            let from = stretch.start.timeIntervalSince1970
+            add(from + 1, stretch.end >= now
+                ? "At the limit since \(day(from))."
+                : "At the limit from \(day(from)) to \(day(stretch.end.timeIntervalSince1970)).")
+        }
+        if let lead = picture.unrecorded {
+            let to = lead.end.timeIntervalSince1970
+            add(to - 1, "Nothing was recorded before \(day(to)), when the week already read \(whole(picture.points[0].week.used))%.")
+        }
+        if picture.spent, let stretch = picture.atLimit.last {
+            return "At the limit since \(day(stretch.start.timeIntervalSince1970))."
+        }
+        return latest?.said
+    }
+
+    func pace(_ speed: Verdict.Speed) -> String {
+        speed == .weekPace ? "At this week’s pace" : "At the last three hours’ pace"
+    }
+
+    func left(_ landing: Double) -> String { "about \(max(0, 100 - whole(landing)))% left" }
+
+    /// "Wed 19:15": the day and the time to the minute, as the page's `dc`.
+    func day(_ seconds: Double) -> String {
+        let parts = calendar.dateComponents([.weekday, .hour, .minute], from: Date(timeIntervalSince1970: seconds.rounded(.down)))
+        return "\(weekdays[parts.weekday! - 1]) \(twoDigits(parts.hour!)):\(twoDigits(parts.minute!))"
+    }
+
+    /// A forecast time to the quarter hour, as the page's `dq`. Its median error is about three
+    /// hours, so a minute would be decoration.
+    func quarterDay(_ at: Date) -> String { day(quarter(at.timeIntervalSince1970)) }
+}
+
+private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+private func twoDigits(_ n: Int) -> String { n < 10 ? "0\(n)" : "\(n)" }
+
+/// JavaScript's `Math.round`: the nearest whole number, and at a half the one above, also below zero.
+private func jsRound(_ x: Double) -> Double {
+    let down = x.rounded(.down)
+    return x - down >= 0.5 ? down + 1 : down
+}
+
+/// An instant to the nearest quarter hour, in seconds since 1970.
+private func quarter(_ seconds: Double) -> Double { jsRound(seconds / 900) * 900 }
+
+/// The whole percent a reading shows, as the page's `whole`.
+private func whole(_ percent: Double) -> Int { Int((percent + 1e-9).rounded(.down)) }
+
+/// "12 points", "1 point", as the page's `pts`.
+private func points(_ n: Double) -> String {
+    let k = Int(jsRound(n))
+    return "\(k) \(k == 1 ? "point" : "points")"
+}
+
+/// "3d 16h", "1h 45m", "15m", "<1m": the time left, as the page's `countdown`.
+private func countdown(_ seconds: Int) -> String {
+    if seconds < 60 { return "<1m" }
+    let d = seconds / 86400, h = seconds % 86400 / 3600, m = seconds % 3600 / 60
+    if d > 0 { return "\(d)d \(h)h" }
+    if h > 0 { return "\(h)h \(m)m" }
+    return "\(m)m"
+}
