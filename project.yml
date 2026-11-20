@@ -520,13 +520,15 @@ targets:
         SKIP_INSTALL: "YES"
 
   # Kit's tests, with no host application: they run in the test runner, so nothing appears on
-  # screen. The fixtures are read from the source tree, not copied in.
+  # screen. The reader of version 1.0.0's history is compiled in, because the tests read the
+  # recorded week through it. The fixtures are read from the source tree, not copied in.
   KitTests:
     type: bundle.unit-test
     platform: macOS
     sources:
       - path: kit/tests
         excludes: ["fixtures/**"]
+      - app/recorder/legacy
     dependencies:
       - { target: Kit }
     settings:

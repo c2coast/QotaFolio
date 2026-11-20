@@ -4,6 +4,7 @@
 [paths]
 "Sources/" = ["swift"]
 "kit/" = ["swift", "node"]
+"app/" = ["swift", "node"]
 "Assets/" = ["swift"]
 "project.yml" = ["swift"]
 "Package.swift" = ["swift", "node"]
