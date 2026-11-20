@@ -8,12 +8,12 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 |---|---|
 | `Sources/` | The code of version 1.0.0: the app, its widget, the `qota` command and their libraries. |
 | `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it, and the app does not. |
-| `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`. |
+| `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`, `Whole`. |
 | `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
 | `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
-| `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in four forms, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
+| `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in every look, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
 | `Assets/` | The app icon. |
 | `project.yml` | The XcodeGen spec. XcodeGen writes `QotaFolio.xcodeproj` from it, and git ignores that project. |
 | `Package.swift` | The Swift package of `QotaFolioModel` and `QotaFolioCore`, whose code is in `Sources/`. |
@@ -27,30 +27,30 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - **The old tree** is `Sources/`. No rule reads it. Put new code in the new tree.
 - **The new tree** is every folder except `Sources/`.
 - **A rule** is a test in `checks/` that reads the source of the new tree.
-- **A wall** is a rule about one folder. It names the modules a Swift file in that folder may import and the calls it may not make. `checks/walls.mjs` holds the walls.
+- **A wall** is a rule about one folder: the modules its Swift files may import and the calls they may not make. `checks/walls.mjs` holds the walls.
 - **A breach** is one place that breaks a rule. It prints as `file:line` and then the fix.
 - **A fixture** is data in a `fixtures/` folder. **A recording** is data in a `recordings/` folder.
 - **A hostless test** puts nothing on screen and does not use the login Keychain.
 - **The landing check** is the `check` of `c2coast/ci`. It runs once for each pull request, on a fresh clone, when the pull request lands.
 - **A reading** is what one poll of an account said: each limit, how much of it is used, and when it resets.
-- **A limit** is the week, a model's week such as Fable's, a session, or any other length a provider sends. Its kind is which limit it is.
-- **The Engine** makes a forecast from one account's readings. A forecast holds a verdict for the week and for the model's week at every poll: spent, silent with its reason, runs out at a time, or lasts with a landing. A limit of any other length has no verdict.
+- **A limit** is the week, a model's week such as Fable's, a session, or any other length a provider sends.
+- **The Engine** makes a forecast from one account's readings: a verdict for the week and for the model's week at every poll. A limit of any other length has no verdict.
 - **A fall** is a banked reset inside one week: points given back between two polls. One Fable point is half a weekly point.
-- **The frozen record** is `kit/tests/fixtures/usage-history.json`: nine days of the owner's two accounts, A and B, in version 1.0.0's file. Every time is moved by a whole number of weeks, which changes no verdict.
-- **The prototype's answer** is `kit/tests/fixtures/prototype.json`: the pace prototype's verdicts and scores on the frozen record. Nothing in this repository writes it.
-- **Work** is a meter's reading plus the points falls gave back this week. The Engine calls it the cumulative. It never falls inside a week.
-- **The account's forecast** says which limit the account meets first, and when: spent, the model's week spent, not started, silent, a limit runs out first, or the week lasts. On a tie it names the week.
-- **The week picture** is one account's week at one poll, as the graph draws it: the week's bounds, its points with their work, the falls, the gaps, the stretches at the limit, the verdicts and the account's forecast. It holds no drawing.
-- **The sentences** are the two lines under the graph: what the forecast says, and what the record shows. They are the chart page's words, and every time in them carries its day.
-- **The time words** are `TimeWords` in `kit/model/`: how the product says a time, "Wed 21:00" on a 24-hour clock and "Wed 9:00 PM" on a 12-hour one. The sentences and the graph both say a time through them, so the two never disagree.
-- **The chart page** is the web prototype whose graph the owner picked. **The chart page's answer** is `kit/tests/fixtures/chart-page.json`: the page's own code run on the frozen record, with its week, its forecast and its sentences at every poll. Nothing in this repository writes it.
-- **The graph** is the Ceiling graph of one week picture: the work done as a line that never falls, under a ceiling that steps up at each banked reset, and the forecast running on to its ceiling. **The geometry** is the value `Ceiling`: everything the graph draws, in the chart's own points. The view only strokes it, and the tests read it.
-- **A fold** is a stretch of the time axis in which nothing could happen, drawn as a narrow strip of fixed width: 34 points for a long stretch at the limit, 56 for the days after the forecast runs out or after the week was spent. `TimeAxis` holds the rule.
-- **A label** is a word inside the plot. Each tries its places in order and takes the first free one; a forecast's label then tries its time alone. A label with no free place is left out, never drawn over another, because the sentences carry everything a label says. Two are always kept: the time the first limit runs out, and the week's limit. Every line stops short of a label, so a label on a line reads whole. `ChartType` measures a label and the canvas draws the same line of type.
-- **The contrast** is measured from the colours as drawn, on the plate and on the band, in every look: the ceiling's line reaches 3 to 1, and every word 4.5 to 1. `ContrastTests` holds it.
-- **A worst week** is a week the record does not hold, made up from readings in `app/views/panel/graph/tests/WorstWeeks.swift` and run through the Engine: a clock change, crowded banked resets, ceilings that meet, a long model name, a week's first poll. It is not a fixture. The labels' rule is tested on every worst week and every named moment, on both clocks, at 280, 360 and 520 points.
-- **What the graph says aloud** is `SpokenGraph`: the graph's part of the card is one element, named by the caption's words, whose value is the forecast's sentence, followed by the record's. It offers VoiceOver's audio graph each limit's use, limit and forecast, on a time axis that says a clock time at each place.
-- **A named moment** is a time of the frozen record with a name, such as `after-banked-reset`. `kit/tests/fixtures/moments.json` holds the chart page's twelve.
+- **Work** is a meter's reading plus the points falls gave back this week. It never falls inside a week.
+- **The account's forecast** is `AccountForecast`: which limit the account meets first, and when.
+- **The week picture** is `WeekPicture`: one account's week at one poll, as the graph draws it.
+- **The sentences** are the two lines under the graph: what the forecast says, and what the record shows.
+- **The time words** are `TimeWords`, and **whole numbers** are `Whole`. The sentences and the graph say every time and every number through them, so the two never disagree.
+- **The frozen record** is `kit/tests/fixtures/usage-history.json`: nine days of the owner's two accounts in version 1.0.0's file, with every time moved by a whole number of weeks.
+- **A named moment** is a time of the frozen record with a name, such as `after-banked-reset`. `kit/tests/fixtures/moments.json` holds them.
+- **The chart page** is the web prototype whose graph the owner picked, and **the prototype** is the pace prototype. Their answers on the frozen record are `chart-page.json` and `prototype.json` in `kit/tests/fixtures/`. Nothing in this repository writes them.
+- **The graph** is the Ceiling graph of one week picture: the work done, as a line under a ceiling that steps up at each banked reset. **The geometry** is `Ceiling`: everything the graph draws, in the chart's own points. The view only strokes it.
+- **A fold** is a stretch of the time axis in which nothing could happen, drawn as a narrow strip. `TimeAxis` holds the rule and its widths.
+- **A label** is a word inside the plot, placed by `Placement.swift`. A label with no free place is left out, never drawn over another label or the record, because the sentences say everything a label says. `LabelTests` checks the rule in every named moment and worst week, on both clocks, at the widths it names. It holds that two labels are kept in every week it knows: the time the first limit runs out, and the week's limit.
+- **A look** is light or dark, with Increase Contrast or without, and with Reduce Transparency or without.
+- **The contrast** is measured in every look, on the plate and on the band: 3 to 1 for the ceiling, 4.5 to 1 for every word. `ContrastTests` holds it.
+- **A worst week** is a made-up week the record does not hold, run through the Engine. The header of `app/views/panel/graph/tests/WorstWeeks.swift` lists them.
+- **What the graph says aloud** is `SpokenGraph`: one VoiceOver element with the two sentences, and an audio graph of the week and the model's week.
 
 ## The rules today
 
