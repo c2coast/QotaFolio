@@ -24,7 +24,7 @@ struct PageMomentsTests {
          "At the last three hours’ pace, Fable reaches its limit around Fri 21:30, and the week around Fri 23:30.",
          nil),
         ("last-reading",
-         "Spent. Back Wed 20:59. Fable reads 99% and waits on the week.",
+         "Spent. Back Wed 21:00. Fable reads 99% and waits on the week.",
          "At the limit since Thu 19:27."),
         ("longest-gap",
          "At this week’s pace, the week reaches its limit around Mon 20:30, 3d 16h before it resets.",
@@ -42,7 +42,7 @@ struct PageMomentsTests {
          "At the last three hours’ pace, Fable reaches its limit around Wed 23:00, and the week around Wed 23:45.",
          "Nothing was recorded before Wed 14:16, when the week already read 1%."),
         ("new-week-at-zero",
-         "No use yet this week. It resets Wed 20:59.",
+         "No use yet this week. It resets Wed 21:00.",
          nil),
     ]
 

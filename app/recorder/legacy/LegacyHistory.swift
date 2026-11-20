@@ -6,9 +6,9 @@ import Kit
 /// A pure function of the file's bytes: the caller reads the file. Version 1.0.0 keeps each limit's
 /// samples and the reset time of the occurrence now open, and not the reset in force at each
 /// sample. So that reset is rebuilt here, as the forecast's method rebuilds it. A week's reset is
-/// moved back a whole week at a time until the sample falls inside its week, and a moved reset is
-/// rounded to the minute. Occurrences of any other period do not run back to back, so a sample
-/// before the open one has no reset.
+/// moved back a whole week at a time from its minute until the sample falls inside its week.
+/// Occurrences of any other period do not run back to back, so a sample before the open one has no
+/// reset.
 public enum LegacyHistory {
     public struct Unreadable: Error, CustomStringConvertible {
         public let description: String
@@ -47,7 +47,7 @@ public enum LegacyHistory {
     }
 }
 
-private let secondsPerWeek = 7 * 86400
+private let week: TimeInterval = 7 * 86400
 
 private struct File: Decodable {
     let schemaVersion: Int
@@ -87,12 +87,10 @@ private struct Window: Decodable {
 
     func reset(inForceAt t: Int) -> ResetTime? {
         guard let current = currentResetsAt else { return nil }
-        guard case .weekly = period else {
-            return t >= currentOpenedAt ? ResetTime(Date(timeIntervalSince1970: TimeInterval(current))) : nil
-        }
-        var r = current
-        while r - secondsPerWeek > t { r -= secondsPerWeek }
-        let instant = r == current ? r : Int((Double(r) / 60).rounded(.toNearestOrEven)) * 60
-        return ResetTime(Date(timeIntervalSince1970: TimeInterval(instant)))
+        let open = ResetTime(Date(timeIntervalSince1970: TimeInterval(current)))
+        guard case .weekly = period else { return t >= currentOpenedAt ? open : nil }
+        var r = open.instant
+        while r.timeIntervalSince1970 - week > TimeInterval(t) { r -= week }
+        return ResetTime(r)
     }
 }

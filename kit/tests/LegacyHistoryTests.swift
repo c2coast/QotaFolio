@@ -13,15 +13,21 @@ struct LegacyHistoryTests {
         #expect(Record.accounts.joined().allSatisfy { $0.limits.map(\.kind) == [.week, Record.fable] })
     }
 
-    /// Version 1.0.0 kept only the reset of the week now open: for A, Wed 26 Nov 20:59:59. A poll
-    /// two weeks earlier is placed by moving that reset back a week at a time and rounding to the
-    /// minute: Wed 12 Nov 21:00:00. The open week keeps its reset as sent.
-    @Test("A sample's reset is the open week's, moved back whole weeks")
+    /// Version 1.0.0 kept only the reset of the week now open. For A the file holds it as the
+    /// provider sent it, Wed 26 Nov 20:59:59, and it reads as the minute, 21:00. A poll two weeks
+    /// earlier is placed by moving that minute back a week at a time: Wed 12 Nov 21:00.
+    @Test("A sample's reset is the open week's minute, moved back whole weeks")
     func resetsMovedBack() throws {
+        let data = try Data(contentsOf: Record.fixtures.appending(path: "usage-history.json"))
+        let file = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let accounts = try #require(file["accounts"] as? [[String: Any]])
+        let windows = try #require(accounts.first?["windows"] as? [[String: Any]])
+        #expect(windows.first?["currentResetsAt"] as? Int == Int(Record.moment(26, 20, 59, 59).timeIntervalSince1970))
+
         let first = try #require(Record.accounts[0].first?.limit(.week)?.resets)
         let last = try #require(Record.accounts[0].last?.limit(.week)?.resets)
         #expect(first.instant == Record.moment(12, 21, 0))
-        #expect(last.instant == Record.moment(26, 20, 59, 59))
+        #expect(last.instant == Record.moment(26, 21, 0))
     }
 
     @Test("A reading over 100 percent is refused where it enters")

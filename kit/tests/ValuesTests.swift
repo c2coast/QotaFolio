@@ -14,24 +14,24 @@ struct ValuesTests {
         #expect(Percent(basisPoints: 6700)?.value == 67)
     }
 
-    /// Version 1.0.0's file named account A's week reset a second before its Fable week's, as the
-    /// provider sent them: the frozen record holds 1764190799 beside 1764190800.
-    @Test("Reset times one second apart are one time")
-    func resetTimesOneSecondApart() throws {
-        let last = try #require(Record.accounts[0].last)
-        let week = try #require(last.limit(.week)?.resets)
-        let fable = try #require(last.limit(Record.fable)?.resets)
-        #expect(week.instant.timeIntervalSince1970 == 1_764_190_799)
-        #expect(fable.instant.timeIntervalSince1970 == 1_764_190_800)
+    /// The provider sent account A's week reset a second before its Fable week's: 1764190799 beside
+    /// 1764190800. A reset time is the nearest minute, so both are 21:00 and they are equal.
+    @Test("A reset time is the nearest minute to the one sent")
+    func resetTimeOnTheMinute() {
+        let week = ResetTime(Date(timeIntervalSince1970: 1_764_190_799))
+        let fable = ResetTime(Date(timeIntervalSince1970: 1_764_190_800))
+        #expect(week.instant.timeIntervalSince1970 == 1_764_190_800)
         #expect(week == fable)
         #expect(Set([week, fable]).count == 1)
+        #expect(ResetTime(Date(timeIntervalSince1970: 1_764_190_829)) == fable)
+        #expect(ResetTime(Date(timeIntervalSince1970: 1_764_190_831)).instant.timeIntervalSince1970 == 1_764_190_860)
         #expect(ResetTime(Date(timeIntervalSince1970: 1_764_190_800)) != ResetTime(Date(timeIntervalSince1970: 1_764_190_920)))
     }
 
     /// The case where it matters: A's full banked reset on Tue 18 Nov at 20:13. If the poll after
-    /// it named the week's reset a second later than the poll before it, an Engine that compared
-    /// seconds would take the fall for the week's own reset: it would find no fall there, and give
-    /// back nothing.
+    /// it named the week's reset a second later than the poll before it, and a reset time kept the
+    /// second, the Engine would take the fall for the week's own reset: it would find no fall there,
+    /// and give back nothing.
     @Test("A reset named a second later does not end the week")
     func jitterKeepsTheWeek() throws {
         let readings = Record.accounts[0]
