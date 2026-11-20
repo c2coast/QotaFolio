@@ -21,4 +21,6 @@ DerivedData/
 __pycache__/
 *.py[cod]
 
-.claude/
+# The sessions' own tooling stays on each Mac, except the skills, which the repository carries.
+/.claude/*
+!/.claude/skills/
