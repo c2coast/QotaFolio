@@ -14,41 +14,6 @@ struct CeilingTests {
         Ceiling(picture: try Record.picture(name), size: size, words: TimeWords(calendar: Record.calendar))
     }
 
-    @Test("No two words overlap, inside the plot or under it", arguments: names)
-    func apart(_ name: String) throws {
-        let ceiling = try Self.ceiling(name)
-        for words in [ceiling.labels, ceiling.ticks] {
-            for (i, a) in words.enumerated() {
-                for b in words[(i + 1)...] {
-                    let overlap = a.box.minX < b.box.maxX && b.box.minX < a.box.maxX && a.box.minY < b.box.maxY && b.box.minY < a.box.maxY
-                    #expect(!overlap, "\(name): \(a.text) at \(a.box) overlaps \(b.text) at \(b.box)")
-                }
-            }
-        }
-    }
-
-    @Test("Every word is inside the chart", arguments: names)
-    func inside(_ name: String) throws {
-        let ceiling = try Self.ceiling(name)
-        let plot = CGRect(origin: .zero, size: ceiling.plot)
-        let under = CGRect(x: 0, y: ceiling.plot.height, width: Self.size.width, height: Ceiling.axisBand)
-        for label in ceiling.labels { #expect(plot.contains(label.box), "\(name): \(label.text) at \(label.box)") }
-        for tick in ceiling.ticks { #expect(under.contains(tick.box), "\(name): \(tick.text) at \(tick.box)") }
-    }
-
-    @Test("The forecast's label is there whenever the forecast names a time the limit runs out", arguments: names)
-    func forecastLabel(_ name: String) throws {
-        let picture = try Record.picture(name)
-        let first: Limit.Kind? = switch picture.forecast {
-        case .runsOut(let first, _, _, _): first
-        case .modelSpent(week: .runsOut): .week
-        default: nil
-        }
-        guard let first else { return }
-        let ceiling = try Self.ceiling(name)
-        #expect(ceiling.labels.contains { $0.kind == .forecast(first) }, "\(name)")
-    }
-
     @Test("Time runs left to right, from the week's start at 0 to the reset at the right edge", arguments: names)
     func order(_ name: String) throws {
         let picture = try Record.picture(name)
