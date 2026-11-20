@@ -199,10 +199,14 @@ final class FixtureAppRuntime: AppRuntime {
         let visibility = FixtureAccountVisibilityController(hiddenAccountIDs: hidden)
         let scheduler = AppCandidacyScheduler()
 
-        // Preferences of this launch's own, thrown away at quit: nothing a photograph sets
-        // survives into the next one.
-        let defaultsDomain = "net.c2coast.QotaFolio.fixture.\(ProcessInfo.processInfo.processIdentifier)"
-        let defaults = UserDefaults(suiteName: defaultsDomain) ?? .standard
+        // Preferences of the lab's own, emptied when it starts and when it quits: nothing a
+        // photograph sets survives into the next one. One domain per identity is enough, because
+        // the lease lets one copy run, so a lab that was killed leaves one domain for the next
+        // launch to empty, not a file per launch.
+        let defaultsDomain = AppIdentity.current.preferencesDomain + ".fixture"
+        guard let defaults = UserDefaults(suiteName: defaultsDomain) else {
+            preconditionFailure("UserDefaults refuses only the app's own domain and the global one, and \(defaultsDomain) is neither.")
+        }
         defaults.removePersistentDomain(forName: defaultsDomain)
         let probe: any ScreenWatcherProbing = options.realProbe
             ? SkyLightScreenWatcherProbe()
