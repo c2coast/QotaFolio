@@ -53,15 +53,9 @@ final class ProductionSparkleUpdateDelegate: NSObject, SPUUpdaterDelegate {
     //
     // Everything from here to the `#endif` exists only in a Debug build. Not the delegate
     // method, not the function it calls, not even the name of the environment variable: a
-    // Release binary does not contain the string `QOTAFOLIO_DEBUG_FEED_URL` anywhere, and
-    // the release lane's `release-feed-url` gate proves that by reading the archived binary
-    // rather than by reading this comment.
+    // Release binary does not contain the string `QOTAFOLIO_DEBUG_FEED_URL` anywhere.
 
     /// The environment variable a development build reads its appcast feed from.
-    ///
-    /// `tools/release/qotafolio_release.py` reads this literal out of this file so that the
-    /// gate and the code cannot drift apart. Renaming it here is safe; changing the shape of
-    /// this line fails the gate loudly rather than leaving it proving nothing.
     nonisolated static let developmentFeedURLVariable = "QOTAFOLIO_DEBUG_FEED_URL"
 
     /// A feed served from this Mac, or nothing.
