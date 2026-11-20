@@ -55,11 +55,11 @@ compile_ax() {
     swiftc -O "$SKILL_BIN/qfv-ax.swift" -o "$AX" >"$TOOLS/qfv-ax.compile.log" 2>&1 || die "qfv-ax did not compile; see $TOOLS/qfv-ax.compile.log"
   fi
 }
-source_stamp() {  # what the build was made from: HEAD plus any uncommitted change to the app
-  local head dirty
-  head=$(git -C "$ROOT" rev-parse --short HEAD)
-  dirty=$(git -C "$ROOT" status --porcelain -- Sources project.yml Package.swift Package.resolved Assets | shasum | cut -c1-12)
-  echo "$head-$dirty"
+source_stamp() {  # a hash of every file the build reads, as it is on disk, committed or not
+  # The build reads what the landing check builds: each path .ci.toml gives the swift stack.
+  local paths; paths=$(sed -n 's/^"\([^"]*\)" *= *\[.*"swift".*/\1/p' "$ROOT/.ci.toml")
+  (cd "$ROOT" && git ls-files -z --cached --others --exclude-standard -- $paths | xargs -0 shasum 2>/dev/null || true) \
+    | shasum | cut -c1-12
 }
 
 cmd_build() {
