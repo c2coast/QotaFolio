@@ -18,8 +18,8 @@ settings:
     DEVELOPMENT_TEAM: NCCKY76LD4
     CODE_SIGN_STYLE: Automatic
     # The one identifier everything else is derived from. The app IS this string; the widget
-    # extension is `.Widgets`, the `qota` tool is `.qota`, the Kit framework is `.Kit`, and
-    # `AppIdentity` derives the container, the App Group, the Keychain service, the defaults
+    # extension is `.Widgets`, the `qota` tool is `.qota`, the `QotaFolioKit` framework is `.Kit`,
+    # and `AppIdentity` derives the container, the App Group, the Keychain service, the defaults
     # domain and the lease from the app's. A private build sets it on the xcodebuild line
     # (`QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.mine`) and gets its own everything.
     #
