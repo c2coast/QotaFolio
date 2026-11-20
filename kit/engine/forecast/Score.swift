@@ -44,7 +44,8 @@ extension Forecast {
     }
 }
 
-/// How often the forecast for one limit was right, scored poll by poll as the prototype scored it.
+/// How often the forecast for one limit, or the account's forecast, was right, scored poll by poll
+/// as the prototype scored it.
 public struct Score: Hashable, Sendable {
     /// Polls where the verdict spoke, and where it stayed silent. Spent polls count in neither.
     public let spoken: Int
@@ -57,29 +58,44 @@ public struct Score: Hashable, Sendable {
     /// For each poll that said "runs out" and did run out: how far off the time was, in hours.
     public let timingErrors: [Double]
 
+    /// Run-outs said and seen that named the limit that ran out first. For one limit it is every
+    /// timed run-out; for the account it is the account's first limit.
+    public let named: Int
+
+    /// The score of one limit.
     public init(of forecasts: [Forecast], limit kind: Limit.Kind, recordEnd: Date) {
-        var spoken = 0, silent = 0, judged = 0, right = 0, flips = 0
+        self.init(calls: forecasts.map { forecast in
+            zip(forecast.polls, forecast.outcomes(of: kind, recordEnd: recordEnd)).compactMap { poll, outcome in
+                guard let verdict = poll.verdicts[kind], verdict != .spent, outcome != .spent else { return nil }
+                return Call(week: poll.resets, said: verdict.claim(kind), happened: outcome.claim(kind))
+            }
+        })
+    }
+
+    /// The score of the calls, one array for each account, in time order.
+    init(calls accounts: [[Call]]) {
+        var spoken = 0, silent = 0, judged = 0, right = 0, named = 0, flips = 0
         var errors: [Double] = []
-        for forecast in forecasts {
+        for calls in accounts {
             var previous: Bool?, week: ResetTime?
-            for (poll, outcome) in zip(forecast.polls, forecast.outcomes(of: kind, recordEnd: recordEnd)) {
-                guard let verdict = poll.verdicts[kind], verdict != .spent, outcome != .spent else { continue }
-                if poll.resets != week {
+            for call in calls {
+                if call.week != week {
                     previous = nil
-                    week = poll.resets
+                    week = call.week
                 }
-                guard let said = verdict.saysRunsOut else {
+                guard let said = call.said else {
                     silent += 1
                     continue
                 }
                 spoken += 1
-                if let previous, previous != said { flips += 1 }
-                previous = said
-                guard let happened = outcome.ranOutKnown else { continue }
+                if let previous, previous != said.runsOut { flips += 1 }
+                previous = said.runsOut
+                guard let happened = call.happened else { continue }
                 judged += 1
-                if said == happened { right += 1 }
-                if case .runsOut(let at, _, _) = verdict, case .ranOut(let then, _) = outcome {
+                if said.runsOut == happened.runsOut { right += 1 }
+                if case .runsOut(let at, let limit) = said, case .runsOut(let then, let first) = happened {
                     errors.append(abs((at.timeIntervalSince1970 - then.timeIntervalSince1970) / secondsPerHour))
+                    if limit == first { named += 1 }
                 }
             }
         }
@@ -87,6 +103,7 @@ public struct Score: Hashable, Sendable {
         self.silent = silent
         self.judged = judged
         self.right = right
+        self.named = named
         self.flips = flips
         timingErrors = errors
     }
@@ -102,23 +119,44 @@ public struct Score: Hashable, Sendable {
     }
 }
 
+/// One poll the score counts: what the forecast said and what then happened. A poll that was
+/// spent, by the forecast or by what happened, is not a call.
+struct Call {
+    /// The week the poll belongs to. Flips are counted inside one week.
+    let week: ResetTime
+    /// None when the forecast was silent.
+    let said: Claim?
+    /// None when what happened is not known yet.
+    let happened: Claim?
+}
+
+/// That a limit runs out, and when; or that it lasts, which for the account means the week does.
+enum Claim {
+    case runsOut(at: Date, limit: Limit.Kind)
+    case lasts
+
+    var runsOut: Bool {
+        if case .runsOut = self { true } else { false }
+    }
+}
+
 private extension Verdict {
-    /// Whether a verdict that speaks says the limit runs out. None for one that does not speak.
-    var saysRunsOut: Bool? {
+    /// What a verdict that speaks claims. None for one that does not speak.
+    func claim(_ kind: Limit.Kind) -> Claim? {
         switch self {
-        case .runsOut: true
-        case .lasts: false
+        case .runsOut(let at, _, _): .runsOut(at: at, limit: kind)
+        case .lasts: .lasts
         case .spent, .silent: nil
         }
     }
 }
 
 private extension Outcome {
-    /// Whether the limit ran out, when that is known.
-    var ranOutKnown: Bool? {
+    /// What happened, when it is known.
+    func claim(_ kind: Limit.Kind) -> Claim? {
         switch self {
-        case .ranOut: true
-        case .lasted: false
+        case .ranOut(let at, _): .runsOut(at: at, limit: kind)
+        case .lasted: .lasts
         case .spent, .unknown: nil
         }
     }
