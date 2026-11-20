@@ -537,7 +537,7 @@ targets:
         GENERATE_INFOPLIST_FILE: "YES"
 
   # The Ceiling graph: its geometry, its colours and the view that draws them. The app does not
-  # take it yet.
+  # take it yet; tools/forecast --draw does.
   Graph:
     type: library.static
     platform: macOS
@@ -568,7 +568,26 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         GENERATE_INFOPLIST_FILE: "YES"
 
+  # tools/forecast. The app scheme builds it, so a change that breaks the tool fails the build.
+  # The script tools/forecast builds it through the scheme of the same name.
+  forecast:
+    type: tool
+    platform: macOS
+    sources:
+      - tools/forecast.swift
+      - tools/forecast-draw.swift
+      - app/recorder/legacy
+    dependencies:
+      - { target: Kit }
+      - { target: Graph }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        SKIP_INSTALL: "YES"
+
 schemes:
   QotaFolio:
-    build: { targets: { QotaFolio: all } }
+    build: { targets: { QotaFolio: all, forecast: all } }
     test: { targets: [KitTests, GraphTests] }
+  forecast:
+    build: { targets: { forecast: all } }

@@ -9,7 +9,7 @@
 "project.yml" = ["swift"]
 "Package.swift" = ["swift", "node"]
 "checks/" = ["node"]
-"tools/" = ["node"]
+"tools/" = ["swift", "node"]
 "Makefile" = []
 "docs/" = []
 "LICENSE" = []

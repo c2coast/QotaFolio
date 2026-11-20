@@ -7,20 +7,32 @@ import Kit
 /// record first; a path the person gives replaces it.
 ///
 /// `--at` prints one moment: a name from `moments.json` beside the history file, or a day and a
-/// time, "2025-11-18 23:45", in the Mac's time zone. `--account` keeps one account.
+/// time, "2025-11-18 23:45", in the Mac's time zone. `--account` keeps one account. `--draw` takes
+/// a moment the same way and writes the graph at it to a PNG; `tools/forecast-draw.swift` has it.
 @main
 enum ForecastTool {
-    static let usage = "usage: tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm>] [--account <id>] [usage-history.json]\n"
+    static let usage = """
+        usage: tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm>] [--account <id>] [usage-history.json]
+               tools/forecast --draw <moment name | yyyy-MM-dd HH:mm> [--dark] [--increased-contrast] [--reduce-transparency]
+                              [--12-hour] [--out <file.png>] [--account <id>] [usage-history.json]
+
+        """
 
     static func main() throws {
         var arguments = Array(CommandLine.arguments.dropFirst())
         var path = arguments.removeFirst()
-        var json = false, at: String?, only: String?
+        var json = false, at: String?, only: String?, draw: String?, out: String?, look = Look()
         while !arguments.isEmpty {
             let argument = arguments.removeFirst()
             switch argument {
             case "--json": json = true
             case "--at" where !arguments.isEmpty: at = arguments.removeFirst()
+            case "--draw" where !arguments.isEmpty: draw = arguments.removeFirst()
+            case "--out" where !arguments.isEmpty: out = arguments.removeFirst()
+            case "--dark": look.appearance.dark = true
+            case "--increased-contrast": look.appearance.increasedContrast = true
+            case "--reduce-transparency": look.appearance.reduceTransparency = true
+            case "--12-hour": look.twelveHour = true
             case "--account" where !arguments.isEmpty: only = arguments.removeFirst()
             case _ where !argument.hasPrefix("--"): path = argument
             default: fail(usage)
@@ -33,6 +45,12 @@ enum ForecastTool {
         let kinds = [Limit.Kind.week] + Set(all.flatMap { $0.polls.flatMap(\.verdicts.keys) })
             .filter { $0 != .week }.sorted { ($0.model ?? "") < ($1.model ?? "") }
 
+        if let draw {
+            guard let moment = moment(draw, beside: history) else { fail("no moment \(draw) beside \(path), and not a day and a time\n" + usage) }
+            let account = only ?? moment.account
+            try Self.draw(moment, named: draw, all.filter { account == nil || $0.polls.first?.reading.account.rawValue == account }, look: look, out: out)
+            return
+        }
         if let at {
             guard let moment = moment(at, beside: history) else { fail("no moment \(at) beside \(path), and not a day and a time\n" + usage) }
             let account = only ?? moment.account
