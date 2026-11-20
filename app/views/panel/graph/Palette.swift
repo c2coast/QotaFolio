@@ -4,8 +4,11 @@ import Foundation
 ///
 /// Every neutral is a weight of black on a light plate and of white on a dark one, so it leans
 /// with whatever is under the plate. The numbers are the app's: `PanelTone` for the chart's
-/// neutrals and the plate, `LevelPalette` for the three levels. The band and the two inks of the
-/// words are the chart page's. A later phase writes this value from one file of design values.
+/// neutrals, the plate and the band, which is the app's recess, and `LevelPalette` for the three
+/// levels. Two are the graph's own, each the least weight that meets its contrast in every form,
+/// on the plate and on the band: the ceiling, a line that carries the picture's meaning, at 3 to
+/// 1, and the secondary words at 4.5 to 1. A later phase writes this value from one file of
+/// design values.
 public struct Palette: Hashable, Sendable {
     public let appearance: Appearance
 
@@ -15,7 +18,7 @@ public struct Palette: Hashable, Sendable {
     public struct RGBA: Hashable, Sendable {
         public let red, green, blue, alpha: Double
 
-        init(_ red: Double, _ green: Double, _ blue: Double, _ alpha: Double = 1) {
+        public init(_ red: Double, _ green: Double, _ blue: Double, _ alpha: Double = 1) {
             (self.red, self.green, self.blue, self.alpha) = (red, green, blue, alpha)
         }
 
@@ -29,13 +32,14 @@ public struct Palette: Hashable, Sendable {
         case .level(let level): self.level(level)
         case .ink: weight(light: 0.85, lightIncreased: 0.95, dark: 0.85, darkIncreased: 0.95)
         case .chartInk: weight(light: 0.62, lightIncreased: 0.82, dark: 0.72, darkIncreased: 0.90)
+        case .ceiling: weight(light: 0.48, lightIncreased: 0.62, dark: 0.46, darkIncreased: 0.62)
         case .rule: weight(light: 0.30, lightIncreased: 0.45, dark: 0.32, darkIncreased: 0.48)
         case .grid: weight(light: 0.14, lightIncreased: 0.26, dark: 0.14, darkIncreased: 0.28)
         }
     }
 
     /// The words that come second: the record's sentence and the caption over the chart.
-    public var secondaryInk: RGBA { weight(light: 0.50, lightIncreased: 0.70, dark: 0.55, darkIncreased: 0.75) }
+    public var secondaryInk: RGBA { weight(light: 0.60, lightIncreased: 0.70, dark: 0.62, darkIncreased: 0.80) }
 
     /// What shows through the hole of the week's dot: the plate's own lean, lighter on a light
     /// plate and darker on a dark one.
@@ -44,8 +48,9 @@ public struct Palette: Hashable, Sendable {
                         : RGBA(1, 1, 1, appearance.increasedContrast ? 0.92 : 0.86)
     }
 
-    /// The faint band over a stretch nobody watched.
-    public var band: RGBA { weight(light: 0.045, lightIncreased: 0.09, dark: 0.05, darkIncreased: 0.10) }
+    /// The faint band over a stretch nobody watched: the app's recess, the track under a bar, which
+    /// is a weight of black in both appearances, so white words on it keep their contrast.
+    public var band: RGBA { RGBA(0, 0, 0, pick(0.08, 0.16, 0.16, 0.28)) }
 
     /// The card's plate: white at a weight on glass, or a weight of ink with Reduce Transparency.
     public var plate: RGBA {

@@ -139,8 +139,8 @@ public struct Ceiling: Sendable {
                 }
             }
             lines[lines.count - 1].append(CGPoint(x: w, y: y(value(now))))
-            stroke(.ceiling(kind), lines, 1, .rule)
-            stroke(.ceiling(kind), ramps, 1, .rule, dash: [1, 3])
+            stroke(.ceiling(kind), lines, 1, .ceiling)
+            stroke(.ceiling(kind), ramps, 1, .ceiling, dash: [1, 3])
         }
         if let model { ceiling(model, modelCeiling) }
         ceiling(.week, weekCeiling)
@@ -170,7 +170,7 @@ public struct Ceiling: Sendable {
         let first: Limit.Kind? = if let weekOut, modelOut.map({ weekOut <= $0 }) ?? true { .week } else if modelOut != nil { model } else { nil }
         let red = Tone.level(.nearlyGone)
         var dots: [Dot] = []
-        var ends: [(point: CGPoint, text: String, strong: Bool, tone: Tone, kind: Limit.Kind)] = []
+        var ends: [(point: CGPoint, text: String, strong: Bool, kind: Limit.Kind)] = []
         let nowWeek = now.week.work, nowModel = modelWork(now)
         if !picture.spent {
             if let model, !picture.modelSpent, let path = modelVerdict?.path {
@@ -185,7 +185,7 @@ public struct Ceiling: Sendable {
                     stroke(.forecast(model), [[at(now.at, nowModel), point]], 1.25, tone, dash: [3, 3], round: true)
                     dots.append(Dot(center: point, radius: 2.5, tone: tone, ring: false))
                     ends.append((point, path.out.map { "\(name) · \(words.quarterDay($0))" } ?? "\(name) ~\(left(path.landing))% left",
-                                 first == model, tone, model))
+                                 first == model, model))
                 }
             }
             if let path = weekVerdict?.path {
@@ -196,7 +196,7 @@ public struct Ceiling: Sendable {
                 stroke(.forecast(.week), [[at(now.at, nowWeek), point]], 1.5, tone, dash: [3, 3], round: true)
                 dots.append(Dot(center: point, radius: 3, tone: tone, ring: false))
                 ends.append((point, path.out.map { "Weekly · \(words.quarterDay($0))" } ?? "Weekly ~\(left(path.landing))% left",
-                             first == .week, tone, .week))
+                             first == .week, .week))
             }
         }
         if model != nil { dots.append(Dot(center: at(now.at, nowModel), radius: 2.5, tone: modelTone, ring: false)) }
@@ -210,7 +210,7 @@ public struct Ceiling: Sendable {
         let ordered = ends.filter(\.strong) + ends.filter { !$0.strong }
         for end in ordered { placer.dot(end.point, 4) }
         for end in ordered {
-            placer.put(end.text, .forecast(end.kind), end.strong ? .semibold : .medium, end.tone, around(end.point))
+            placer.put(end.text, .forecast(end.kind), end.strong ? .semibold : .medium, end.strong ? .ink : .chartInk, around(end.point))
         }
         for (kind, value, text) in [(Limit.Kind.week, weekCeiling, "Weekly limit")] + (model.map { [($0, modelCeiling, "\(name) limit")] } ?? []) {
             let yr = y(value(now)), y0 = y(value(picture.points[0]))
@@ -259,6 +259,8 @@ public enum Tone: Hashable, Sendable {
     /// How much of the limit is left: green, amber or red.
     case level(Level)
     case ink, chartInk, rule, grid
+    /// A limit's ceiling: the subject of the picture, so stronger than a rule.
+    case ceiling
 }
 
 /// How much of a limit is left, in three steps: more than half, more than a fifth, or less.
