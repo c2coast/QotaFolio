@@ -66,10 +66,10 @@ func around(_ p: CGPoint) -> [Placer.Spot] {
 
 /// The axis under the plot: the grid lines, the days or the hours, and the marks of each fold.
 ///
-/// When a day is wide, each day's name sits in the middle of what shows of it. When it is narrow,
-/// the hours are named every 3, 6 or 12 hours, whichever leaves 40 points between them, and a
-/// piece after a fold names its day first. A word that would come within 6 points of another is
-/// left out.
+/// When 12 hours take 40 points or more, the hours are named every 3, 6 or 12 hours, the first that
+/// leaves 40 points between them, and a piece after a fold names its day first. Otherwise each
+/// day's name sits in the middle of what shows of it. A word that would come within 6 points of
+/// another is left out.
 struct Ticks {
     private(set) var strokes: [Ceiling.Stroke] = []
     private(set) var labels: [Ceiling.Label] = []
@@ -89,17 +89,7 @@ struct Ticks {
                                         box: CGRect(x: a, y: h + 4, width: wide, height: 11)))
         }
 
-        if axis.secondsPerPoint * 50 >= 20 * hour {
-            for piece in axis.open {
-                let mids = words.midnights(piece.from, piece.to)
-                grid += mids.map { line(axis.x($0)) }
-                let edges = [piece.from] + mids + [piece.to]
-                for (a, b) in zip(edges, edges.dropFirst()) where axis.x(b) - axis.x(a) >= 20 {
-                    put((axis.x(a) + axis.x(b)) / 2, words.weekday(a + 60), current: now >= a && now < b)
-                }
-            }
-        } else {
-            let step = [3, 6, 12].first { Double($0) * hour / axis.secondsPerPoint >= 40 } ?? 24
+        if let step = [3, 6, 12].first(where: { Double($0) * hour / axis.secondsPerPoint >= 40 }) {
             for piece in axis.open {
                 if piece.from > picture.start {
                     put(piece.x0 + 3, words.weekday(piece.from + 1), current: words.sameDay(piece.from + 1, now), .start)
@@ -112,6 +102,15 @@ struct Ticks {
                     let midnight = hourOfDay == 0
                     if midnight { grid.append(line(axis.x(t))) } else { dotted.append(line(axis.x(t))) }
                     put(axis.x(t), midnight ? words.weekday(t) : words.hour(t), current: midnight && words.sameDay(t, now))
+                }
+            }
+        } else {
+            for piece in axis.open {
+                let mids = words.midnights(piece.from, piece.to)
+                grid += mids.map { line(axis.x($0)) }
+                let edges = [piece.from] + mids + [piece.to]
+                for (a, b) in zip(edges, edges.dropFirst()) where axis.x(b) - axis.x(a) >= 20 {
+                    put((axis.x(a) + axis.x(b)) / 2, words.weekday(a + 60), current: now >= a && now < b)
                 }
             }
         }
