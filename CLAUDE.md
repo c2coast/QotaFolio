@@ -8,15 +8,16 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 |---|---|
 | `Sources/` | The code of version 1.0.0: the app, its widget, the `qota` command and their libraries. |
 | `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. The app does not link it yet. |
-| `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`. |
+| `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`. |
 | `kit/engine/forecast/` | The Engine: the forecast for each limit at every poll, the falls, and the score against what then happened. |
-| `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record and the prototype's answer on it. |
+| `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
+| `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
 | `Assets/` | The app icon. |
 | `project.yml` | The XcodeGen spec. XcodeGen writes `QotaFolio.xcodeproj` from it, and git ignores that project. |
 | `Package.swift` | The Swift package of `QotaFolioModel` and `QotaFolioCore`, whose code is in `Sources/`. |
 | `checks/` | The rules of the codebase, as node test files. |
-| `tools/` | Scripts. `tools/forecast` prints the forecast on a recorded history. `tools/release/ship.sh` is the release lane. `tools/make-battery-symbols.py` writes the battery symbols in `Sources/`. |
+| `tools/` | Scripts. `tools/forecast` prints the forecast and its sentences on a recorded history. `tools/release/ship.sh` is the release lane. `tools/make-battery-symbols.py` writes the battery symbols in `Sources/`. |
 | `docs/` | The release documents and the pictures in `README.md`. |
 | `.ci.toml` | The stacks of the landing check that read each path. |
 
@@ -36,6 +37,12 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - **A fall** is a banked reset inside one week: points given back between two polls. One Fable point is half a weekly point.
 - **The frozen record** is `kit/tests/fixtures/usage-history.json`: nine days of the owner's two accounts, A and B, in version 1.0.0's file. Every time is moved by a whole number of weeks, which changes no verdict.
 - **The prototype's answer** is `kit/tests/fixtures/prototype.json`: the pace prototype's verdicts and scores on the frozen record. Nothing in this repository writes it.
+- **Work** is a meter's reading plus the points falls gave back this week. The Engine calls it the cumulative. It never falls inside a week.
+- **The account's forecast** says which limit the account meets first, and when: spent, the model's week spent, not started, silent, a limit runs out first, or the week lasts. On a tie it names the week.
+- **The week picture** is one account's week at one poll, as the graph draws it: the week's bounds, its points with their work, the falls, the gaps, the stretches at the limit, the verdicts and the account's forecast. It holds no drawing.
+- **The sentences** are the two lines under the graph: what the forecast says, and what the record shows. They are the chart page's words, and every time in them carries its day.
+- **The chart page** is the web prototype whose graph the owner picked. **The chart page's answer** is `kit/tests/fixtures/chart-page.json`: the page's own code run on the frozen record, with its week, its forecast and its sentences at every poll. Nothing in this repository writes it.
+- **A named moment** is a time of the frozen record with a name, such as `after-banked-reset`. `kit/tests/fixtures/moments.json` holds the chart page's twelve.
 
 ## The rules today
 
@@ -48,7 +55,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 
 1. Run `make check`. It runs every rule in about a second. It prints each breach, then a last line that starts with `check: pass` or `check: fail`.
 2. If you changed Swift, run `make test`. It builds the app scheme unsigned and runs its tests with no host application. It prints each test, then a last line that starts with `test: pass` or `test: fail`.
-3. If you changed the forecast, run `tools/forecast`. It prints every poll's verdict for each limit, what then happened, and each limit's score. Give it a path to read another history file, and `--json` for one line per poll with every number in full.
+3. If you changed the forecast or its sentences, run `tools/forecast`. It prints every poll's verdict for each limit, what then happened, and the account's two sentences. Then it prints the score of each limit and of the account. Give it a path to read another history file, and `--json` for one line per poll with every number in full. `--at after-banked-reset` prints one named moment. `--at "2025-11-18 23:45"` prints one time in the Mac's zone, and `--account A` keeps one account.
 4. The build needs no signing. To build the app alone:
 
 	```bash
