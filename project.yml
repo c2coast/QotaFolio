@@ -536,7 +536,39 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         GENERATE_INFOPLIST_FILE: "YES"
 
+  # The Ceiling graph: its geometry, its colours and the view that draws them. The app does not
+  # take it yet.
+  Graph:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: app/views/panel/graph
+        excludes: ["tests/**"]
+    dependencies:
+      - { target: Kit }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        SKIP_INSTALL: "YES"
+
+  # The graph's tests, with no host application. They read the frozen record through the same
+  # helper and reader as Kit's tests.
+  GraphTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - app/views/panel/graph/tests
+      - kit/tests/Record.swift
+      - app/recorder/legacy
+    dependencies:
+      - { target: Graph }
+      - { target: Kit }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        GENERATE_INFOPLIST_FILE: "YES"
+
 schemes:
   QotaFolio:
     build: { targets: { QotaFolio: all } }
-    test: { targets: [KitTests] }
+    test: { targets: [KitTests, GraphTests] }

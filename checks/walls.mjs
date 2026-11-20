@@ -23,6 +23,18 @@ export const walls = [
     calls: [],
   },
   {
+    folder: "app/views/panel/graph/",
+    imports: ["Foundation", "Kit", "SwiftUI"],
+    importFix: "The graph draws a week picture it is handed. What it needs from the Mac comes in as plain values.",
+    calls: pure("The graph"),
+  },
+  {
+    folder: "app/views/panel/graph/tests/",
+    imports: ["AppKit", "Foundation", "Graph", "Kit", "Testing"],
+    importFix: "The graph's tests read its geometry, with words measured by AppKit's fonts. Nothing else.",
+    calls: [],
+  },
+  {
     folder: "app/recorder/legacy/",
     imports: ["Foundation", "Kit"],
     importFix: "The reader of 1.0.0's history turns the file's bytes into kit's values, and needs nothing else.",
