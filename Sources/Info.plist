@@ -50,10 +50,6 @@
 	<true/>
 	<key>SUSignedFeedFailureExpirationInterval</key>
 	<integer>0</integer>
-	<key>SUEnableInstallerLauncherService</key>
-	<true/>
-	<key>SUEnableDownloaderService</key>
-	<false/>
 	<key>SUEnableSystemProfiling</key>
 	<false/>
 	<key>SUShowReleaseNotes</key>

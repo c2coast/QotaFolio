@@ -124,8 +124,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID)
         PRODUCT_NAME: QotaFolio
         INFOPLIST_FILE: Sources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Sources/QotaFolio.entitlements
-        ENABLE_APP_SANDBOX: "YES"
+        CODE_SIGN_ENTITLEMENTS: app/main/QotaFolio.entitlements
         ENABLE_HARDENED_RUNTIME: "YES"
         ENABLE_USER_SCRIPT_SANDBOXING: "NO"
         # The app declares no App Intents, so there is no metadata to extract.
@@ -162,7 +161,6 @@ targets:
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Resources"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Updater.app"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/XPCServices"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Autoupdate"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Sparkle"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B"
@@ -172,7 +170,6 @@ targets:
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/_CodeSignature"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Autoupdate"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Sparkle"
@@ -295,20 +292,6 @@ targets:
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUVersionComparisonProtocol.h"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUVersionDisplayProtocol.h"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/Sparkle.h"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/_CodeSignature"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/Info.plist"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/_CodeSignature/CodeResources"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS/Downloader"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/_CodeSignature"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/Info.plist"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS/Installer"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Modules/module.modulemap"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Modules/module.private.modulemap"
         outputFiles:
@@ -318,21 +301,17 @@ targets:
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Autoupdate"
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app"
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app/Contents/MacOS/Updater"
-          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices"
-          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc"
-          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc/Contents/MacOS/Installer"
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/_CodeSignature/CodeResources"
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app/Contents/_CodeSignature/CodeResources"
-          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources"
-          - "$(TARGET_TEMP_DIR)/QotaFolio-Sparkle-v3-$(WRAPPER_NAME)-$(CONFIGURATION)-$(ACTION)-$(CODE_SIGNING_ALLOWED)-$(EXPANDED_CODE_SIGN_IDENTITY).stamp"
+          - "$(TARGET_TEMP_DIR)/QotaFolio-Sparkle-v4-$(WRAPPER_NAME)-$(CONFIGURATION)-$(ACTION)-$(CODE_SIGNING_ALLOWED)-$(EXPANDED_CODE_SIGN_IDENTITY).stamp"
         script: |
           set -euo pipefail
-          phase_version="3"
+          phase_version="4"
           source_framework="${BUILT_PRODUCTS_DIR}/Sparkle.framework"
           framework="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework"
           versions="${framework}/Versions"
           current="${versions}/Current"
-          stamp_file="${SCRIPT_OUTPUT_FILE_12}"
+          stamp_file="${SCRIPT_OUTPUT_FILE_8}"
 
           if [ ! -d "${source_framework}" ]; then
             printf '%s\n' "Missing resolved Sparkle framework: ${source_framework}" >&2
@@ -353,9 +332,12 @@ targets:
             exit 1
           fi
 
-          /usr/bin/find "${framework}" -name Downloader.xpc -prune -exec /bin/rm -rf {} +
-          if /usr/bin/find "${framework}" -name Downloader.xpc -print -quit | /usr/bin/grep -q .; then
-            printf '%s\n' "Sparkle Downloader.xpc remains after pruning" >&2
+          # The app is not sandboxed, so Sparkle installs through Autoupdate and needs none of
+          # its XPC services. Sparkle's sandboxing guide says such an app may remove them; the
+          # bundle then carries no service that a stray Info.plist key could switch on.
+          /bin/rm -rf "${framework}/XPCServices" "${version_dir}/XPCServices"
+          if /usr/bin/find "${framework}" -name "*.xpc" -print -quit | /usr/bin/grep -q .; then
+            printf '%s\n' "A Sparkle XPC service remains after pruning" >&2
             exit 1
           fi
 
@@ -388,8 +370,8 @@ targets:
               /usr/bin/codesign --verify --strict --verbose=2 "${code}"
             }
 
-            # Sparkle's documented manual order is Installer, Autoupdate, Updater, then framework.
-            sign_code "${version_dir}/XPCServices/Installer.xpc"
+            # Sparkle's documented manual order, with no XPC service: Autoupdate, Updater, then
+            # the framework.
             sign_code "${version_dir}/Autoupdate"
             sign_code "${version_dir}/Updater.app"
             sign_code "${framework}"
@@ -401,10 +383,6 @@ targets:
             "${version_dir}/Autoupdate" \
             "${version_dir}/Updater.app/Contents/MacOS/Updater" \
             "${version_dir}/Updater.app/Contents/_CodeSignature/CodeResources" \
-            "${version_dir}/XPCServices/Installer.xpc/Contents/MacOS/Installer" \
-            "${version_dir}/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources" \
-            "${version_dir}/XPCServices/Installer.xpc" \
-            "${version_dir}/XPCServices" \
             "${version_dir}/Updater.app" \
             "${version_dir}/_CodeSignature/CodeResources" \
             "${framework}"
@@ -463,7 +441,7 @@ targets:
               f"expanded_code_sign_identity={identity}",
               f"identity_name={identity_name}",
               f"timestamp_mode={timestamp_mode}",
-              "downloader_present=false",
+              "xpc_services_present=false",
               "",
           ])
           stamp_tmp = Path(stamp_path + ".tmp")

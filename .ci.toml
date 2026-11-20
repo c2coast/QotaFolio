@@ -6,7 +6,7 @@
 "kit/" = ["swift", "node"]
 "app/" = ["swift", "node"]
 "Assets/" = ["swift"]
-"project.yml" = ["swift"]
+"project.yml" = ["swift", "node"]
 "Package.swift" = ["swift", "node"]
 "checks/" = ["node"]
 "tools/" = ["swift", "node"]
