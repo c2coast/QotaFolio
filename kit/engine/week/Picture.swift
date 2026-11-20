@@ -11,7 +11,9 @@ extension Forecast {
         let poll = polls[i]
         let now = poll.reading.at
         let model = poll.verdicts.keys.first { $0 != .week }
-        let start = poll.resets.instant - secondsPerWeek
+        // A reset is known to the minute, so a poll can carry its new week a moment before the
+        // week's start. The poll in force is always in its own week.
+        let start = min(poll.resets.instant - secondsPerWeek, now)
 
         var points = polls[...i].filter { $0.reading.at >= start }.map { Self.point($0, model) }
         var unrecorded: DateInterval?

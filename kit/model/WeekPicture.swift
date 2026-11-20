@@ -9,7 +9,8 @@ public struct WeekPicture: Sendable {
     public let account: AccountID
     /// The model's week the account has, such as Fable's. None for an account with only the week.
     public let model: Limit.Kind?
-    /// The week's start, a week before its reset, and the reset in force.
+    /// The week's start, a week before its reset, and the reset in force. A reset is known to the
+    /// minute, so when the poll in force came a moment before that start, the week starts at it.
     public let start: Date
     public let resets: ResetTime
     /// This week's points up to the poll in force, in time order. The last is the poll in force:
