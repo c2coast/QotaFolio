@@ -7,8 +7,7 @@ import Foundation
 /// neutrals, the plate and the band, which is the app's recess, and `LevelPalette` for the three
 /// levels. Two are the graph's own, each the least weight that meets its contrast in every form,
 /// on the plate and on the band: the ceiling, a line that carries the picture's meaning, at 3 to
-/// 1, and the secondary words at 4.5 to 1. A later phase writes this value from one file of
-/// design values.
+/// 1, and the secondary words at 4.5 to 1.
 public struct Palette: Hashable, Sendable {
     public let appearance: Appearance
 

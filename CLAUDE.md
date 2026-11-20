@@ -7,13 +7,13 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | Path | What it holds |
 |---|---|
 | `Sources/` | The code of version 1.0.0: the app, its widget, the `qota` command and their libraries. |
-| `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. The app does not link it yet. |
+| `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it, and the app does not. |
 | `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`. |
 | `kit/engine/forecast/` | The Engine: the forecast for each limit at every poll, the falls, and the score against what then happened. |
 | `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
-| `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in four forms, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. The app does not take it yet. |
+| `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in four forms, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
 | `Assets/` | The app icon. |
 | `project.yml` | The XcodeGen spec. XcodeGen writes `QotaFolio.xcodeproj` from it, and git ignores that project. |
 | `Package.swift` | The Swift package of `QotaFolioModel` and `QotaFolioCore`, whose code is in `Sources/`. |

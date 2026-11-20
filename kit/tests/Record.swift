@@ -6,8 +6,8 @@ import Testing
 /// Wed 12 Nov 2025 14:12 to Fri 21 Nov 2025 14:31. Every time is moved by a whole number of weeks
 /// from when it was recorded, which changes no verdict, and the accounts are renamed.
 ///
-/// The tests read it through the reader of 1.0.0's history, as the app will. Every moment is
-/// written in UTC on the Gregorian calendar, whatever the Mac running the tests is set to.
+/// The tests read it through the reader of 1.0.0's history. Every moment is written in UTC on the
+/// Gregorian calendar, whatever the Mac running the tests is set to.
 enum Record {
     static let fixtures = URL(filePath: #filePath).deletingLastPathComponent().appending(path: "fixtures")
 

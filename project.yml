@@ -506,8 +506,9 @@ targets:
           stamp_tmp.replace(stamp_path)
           PYTHON
 
-  # The new tree's pure Swift: the values and the Engine. Foundation only, no clock, no files. The
-  # app does not link it yet. A library ships nonisolated API and lets its caller choose where it runs.
+  # The new tree's pure Swift: the values and the Engine. Foundation only, no clock, no files.
+  # tools/forecast links it, and the app does not. A library ships nonisolated API and lets its caller
+  # choose where it runs.
   Kit:
     type: library.static
     platform: macOS
@@ -536,8 +537,8 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         GENERATE_INFOPLIST_FILE: "YES"
 
-  # The Ceiling graph: its geometry, its colours and the view that draws them. The app does not
-  # take it yet; tools/forecast --draw does.
+  # The Ceiling graph: its geometry, its colours and the view that draws them. tools/forecast links
+  # it, and the app does not.
   Graph:
     type: library.static
     platform: macOS
