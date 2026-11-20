@@ -70,6 +70,32 @@ struct LabelTests {
         }
     }
 
+    /// The record is never cut, so no label may sit on it. The test walks each of the record's
+    /// lines half a point at a time and finds no step inside a label's box, widened by the stroke.
+    @Test("No label covers a line of the record", arguments: Week.all, [false, true])
+    func recordWhole(_ week: Week, twelveHour: Bool) {
+        for width in Week.widths {
+            let ceiling = week.ceiling(width: width, twelveHour: twelveHour)
+            let at = "\(week.name) at \(Int(width)) points\(twelveHour ? ", 12-hour" : "")"
+            for stroke in ceiling.strokes {
+                guard case .record = stroke.part else { continue }
+                for line in stroke.lines {
+                    for (a, b) in zip(line, line.dropFirst()) {
+                        let steps = max(1, Int(hypot(b.x - a.x, b.y - a.y) * 2))
+                        for label in ceiling.labels {
+                            let box = label.box.insetBy(dx: -stroke.width / 2, dy: -stroke.width / 2).insetBy(dx: 0.01, dy: 0.01)
+                            let covered = (0...steps).contains { k in
+                                let t = Double(k) / Double(steps)
+                                return box.contains(CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t))
+                            }
+                            #expect(!covered, "\(at): \(label.text) at \(label.box) covers the record from \(a) to \(b)")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// A forecast's label that says when its limit runs out, "Weekly · Wed 7:15 PM" or the time
     /// alone, and the sentence under the graph say the same time in the same words, on either clock.
     @Test("The forecast's label and its sentence say the time the same way", arguments: Week.all, [false, true])

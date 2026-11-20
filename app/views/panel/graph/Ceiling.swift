@@ -24,8 +24,9 @@ public struct Ceiling: Sendable {
     /// Every line, in the order it is drawn.
     public let strokes: [Stroke]
     public let dots: [Dot]
-    /// The words inside the plot, each in its own box. No two boxes overlap, and every line stops
-    /// short of a box, so a word that sits on a line reads whole.
+    /// The words inside the plot, each in its own box. No two boxes overlap, and no box covers a
+    /// line of the record. Every other line stops short of a box, so a word that sits on it reads
+    /// whole.
     public let labels: [Label]
     /// The words under the plot: days, hours and the reset's time.
     public let ticks: [Label]
@@ -149,7 +150,8 @@ public struct Ceiling: Sendable {
         ceiling(.week, weekCeiling)
         stroke(.now, [[CGPoint(x: x(now.at), y: 0), CGPoint(x: x(now.at), y: h)]], 1, .rule, dash: [1, 2])
 
-        // The record: solid where watched, dotted across a gap.
+        // The record: solid where watched, dotted across a gap. No word covers it.
+        var placer = Placer(width: w, height: h)
         func record(_ kind: Limit.Kind, _ value: (WeekPicture.Point) -> Double, _ width: Double, _ tone: Tone, _ opacity: Double) {
             var solid: [[CGPoint]] = [], dotted: [[CGPoint]] = []
             for (a, b) in zip(picture.points, picture.points.dropFirst()) {
@@ -160,6 +162,7 @@ public struct Ceiling: Sendable {
             }
             stroke(.record(kind), dotted, max(1.25, width - 0.5), tone, dash: [1, 3.5], opacity: opacity, round: true)
             stroke(.record(kind), solid, width, tone, opacity: opacity, round: true)
+            placer.record(dotted + solid, width: width)
         }
         let modelTone = Tone.level(Level(used: now.model?.used ?? 0)), weekTone = Tone.level(Level(used: now.week.used))
         if let model { record(model, modelWork, 1.5, modelTone, picture.spent ? 0.45 : 1) }
@@ -212,7 +215,6 @@ public struct Ceiling: Sendable {
 
         // The words, each in the first of its places that touches nothing placed before it. A word
         // with no free place is left out: the sentence under the graph says everything it says.
-        var placer = Placer(width: w, height: h)
         placer.dot(at(now.at, nowWeek), 6)
         if model != nil { placer.dot(at(now.at, nowModel), 4) }
         let ordered = ends.filter(\.strong) + ends.filter { !$0.strong }

@@ -28,8 +28,9 @@ public struct CeilingChart: View {
         for band in ceiling.bands {
             context.fill(Path(band), with: .color(Color(palette.band)))
         }
-        // Every line stops a point short of each word's box, so a word on a line reads whole and
-        // whatever lies under the line, plate or band, shows round the word as it is.
+        // Every line but the record's stops a point short of each word's box, so a word on a line
+        // reads whole and whatever lies under the line, plate or band, shows round the word as it
+        // is. The record is never cut: no word takes a place on it.
         var lines = context
         var open = Path(CGRect(origin: .zero, size: size).insetBy(dx: -8, dy: -8))
         for label in ceiling.labels + ceiling.ticks { open.addRect(label.box.insetBy(dx: -1, dy: 0)) }
@@ -39,7 +40,8 @@ public struct CeilingChart: View {
             for line in stroke.lines { path.addLines(line) }
             let style = StrokeStyle(lineWidth: stroke.width, lineCap: stroke.round ? .round : .butt,
                                     lineJoin: stroke.round ? .round : .miter, dash: stroke.dash.map { CGFloat($0) })
-            lines.stroke(path, with: .color(Color(palette.colour(stroke.tone)).opacity(stroke.opacity)), style: style)
+            let into = if case .record = stroke.part { context } else { lines }
+            into.stroke(path, with: .color(Color(palette.colour(stroke.tone)).opacity(stroke.opacity)), style: style)
         }
         for dot in ceiling.dots {
             context.fill(circle(dot.center, dot.radius), with: .color(Color(palette.colour(dot.tone))))

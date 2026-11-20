@@ -2,13 +2,15 @@ import Foundation
 import Kit
 
 /// The rule that places the words inside the plot: each tries its places in order and takes the
-/// first that lies inside the plot and touches no word and no dot placed before it. A word with
-/// a shorter form tries that in each place next. A word with no such place is left out, never
-/// drawn over another.
+/// first that lies inside the plot, touches no word and no dot placed before it, and covers no line
+/// of the record. A word with a shorter form tries that in each place next. A word with no such
+/// place is left out, never drawn over another and never over the record.
 struct Placer {
     let width: Double
     let height: Double
     private var taken: [CGRect] = []
+    /// Each piece of the record's lines, with how far its stroke reaches either side of it.
+    private var record: [(a: CGPoint, b: CGPoint, reach: Double)] = []
     private(set) var placed: [Ceiling.Label] = []
 
     init(width: Double, height: Double) {
@@ -36,6 +38,13 @@ struct Placer {
         taken.append(CGRect(x: center.x - radius, y: center.y - radius, width: 2 * radius, height: 2 * radius))
     }
 
+    /// The record's lines, stroked this wide. No word covers them.
+    mutating func record(_ lines: [[CGPoint]], width: Double) {
+        for line in lines {
+            record += zip(line, line.dropFirst()).map { ($0, $1, width / 2) }
+        }
+    }
+
     mutating func put(_ text: String, or short: String? = nil, _ kind: Ceiling.Label.Kind, _ weight: Weight, _ tone: Tone,
                       _ spots: [Spot]) {
         for text in [text] + (short.map { [$0] } ?? []) {
@@ -44,7 +53,8 @@ struct Placer {
                 let x0 = spot.anchor == .end ? spot.x - wide : spot.anchor == .middle ? spot.x - wide / 2 : spot.x
                 let box = CGRect(x: x0 - 1, y: spot.y - 9, width: wide + 2, height: 11)
                 guard box.minX >= 0, box.maxX <= width, box.minY >= 0, box.maxY <= height,
-                      !taken.contains(where: { overlap($0, box) }) else { continue }
+                      !taken.contains(where: { overlap($0, box) }),
+                      !record.contains(where: { crosses($0.a, $0.b, box.insetBy(dx: -$0.reach, dy: -$0.reach)) }) else { continue }
                 taken.append(box)
                 placed.append(Ceiling.Label(kind: kind, text: text, weight: weight, tone: tone, box: box))
                 return
@@ -56,6 +66,24 @@ struct Placer {
 /// Two boxes overlap when they share some area; boxes that only touch do not.
 func overlap(_ a: CGRect, _ b: CGRect) -> Bool {
     a.minX < b.maxX && b.minX < a.maxX && a.minY < b.maxY && b.minY < a.maxY
+}
+
+/// Whether the straight line from a to b passes through the box's inside. A line along its edge
+/// does not.
+func crosses(_ a: CGPoint, _ b: CGPoint, _ box: CGRect) -> Bool {
+    // Liang and Barsky: the part of the line inside each of the four edges, as a span of 0 to 1.
+    var enter = 0.0, leave = 1.0
+    let dx = b.x - a.x, dy = b.y - a.y
+    for (p, q) in [(-dx, a.x - box.minX), (dx, box.maxX - a.x), (-dy, a.y - box.minY), (dy, box.maxY - a.y)] {
+        if p == 0 {
+            if q <= 0 { return false }
+        } else if p < 0 {
+            enter = max(enter, q / p)
+        } else {
+            leave = min(leave, q / p)
+        }
+    }
+    return enter < leave
 }
 
 /// The places around a point at the end of a forecast, in the order they are tried.
