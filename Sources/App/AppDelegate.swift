@@ -52,7 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case .held(let lease):
                 guard !Self.anotherCopyIsRunning() else {
                     presentLaunchFailure(
-                        "Another copy of QotaFolio is running. Quit it from its menu bar item, then open QotaFolio again."
+                        "Another copy of QotaFolio is running. Quit the other copy, then open QotaFolio again."
                     )
                     requestApplicationTermination()
                     return
