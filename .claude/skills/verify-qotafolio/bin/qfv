@@ -2,8 +2,8 @@
 # qfv — build, launch, drive, photograph and stop a QotaFolio Debug build over fixture accounts.
 #
 # One lane is one bundle identifier, net.c2coast.QotaFolio.dev.<lane>. AppIdentity derives every
-# name the app owns from it: its group, its preferences domain, its Keychain service and the support
-# folder that holds its single-instance lease. So the installed app (net.c2coast.QotaFolio) and a
+# name the app owns from it and the signing team: its group, its preferences domain, its Keychain
+# service and the support folder that holds its single-instance lease. So the installed app (net.c2coast.QotaFolio) and a
 # developer's own `.dev` build are never touched.
 # Every subcommand prints JSON on stdout. Run `qfv help` for the list.
 set -euo pipefail
@@ -13,7 +13,6 @@ ROOT="$(git -C "$SKILL_BIN" rev-parse --show-toplevel)"
 LANE="${QFV_LANE:-verify}"
 case "$LANE" in *[!a-z0-9]*|"") echo '{"ok":false,"error":"QFV_LANE must be lower-case letters and digits"}'; exit 64;; esac
 BUNDLE_ID="net.c2coast.QotaFolio.dev.$LANE"
-RELEASED_ID="net.c2coast.QotaFolio"
 STATE="$ROOT/.build/verify/$LANE"
 DERIVED="$STATE/DerivedData"
 APP="$DERIVED/Build/Products/Debug/QotaFolio.app"
@@ -88,6 +87,7 @@ cmd_build() {
   printf '{"ok":%s,"exit":%d,"seconds":%d,"lane":%s,"bundleId":%s,"app":%s,"source":%s,"report":%s}\n' \
     "$([ $rc -eq 0 ] && echo true || echo false)" "$rc" "$(( $(date +%s) - started ))" "$(json_str "$LANE")" \
     "$(json_str "$BUNDLE_ID")" "$(json_str "$APP")" "$(json_str "$stamp")" "$(json_str "$STATE/build.json")"
+  REPORTED=1   # the line above is the answer, failed build or not
   return $rc
 }
 
@@ -121,11 +121,13 @@ cmd_launch() {
     pid_alive "$pid" || die "the app exited during launch; see $RUN/app.log"
     die "the status item did not appear within 20 s; see $RUN/app.log"
   }
-  local i=0
+  # The files for qota: wait at most 4 s for the app to say it wrote them, or that it could not.
+  local i=0 published=false
   until grep -q '^QF_PUBLISHED\|^QF_PUBLISH_FAILED' "$RUN/app.log" || [ $i -ge 40 ]; do sleep 0.1; i=$((i+1)); done
-  printf '{"ok":true,"pid":%d,"lane":%s,"scenario":%s,"evidence":%s,"log":%s,"statusItem":%s}\n' \
+  if grep -q '^QF_PUBLISHED' "$RUN/app.log"; then published=true; fi
+  printf '{"ok":true,"pid":%d,"lane":%s,"scenario":%s,"evidence":%s,"log":%s,"statusItem":%s,"published":%s}\n' \
     "$pid" "$(json_str "$LANE")" "$(json_str "$scenario")" "$(json_str "$dir")" "$(json_str "$RUN/app.log")" \
-    "$(json_str "$(echo "$ready" | field element.label)")"
+    "$(json_str "$(echo "$ready" | field element.label)")" "$published"
 }
 
 cmd_doctor() {
@@ -227,7 +229,7 @@ cmd_quit() {  # the user's own Quit: open the panel if it is closed, footer More
   printf '{"ok":true,"pid":%d,"exitedAfterMs":%d}\n' "$pid" $((i * 100))
 }
 
-cmd_reopen() {  # what Finder, Spotlight or a second double-click does: start the app again
+cmd_reopen() {  # a second process by path, which rings the running one through the lease and exits
   local pid; require_pid; pid=$PID   # with no instance running, a bare start would build the production runtime
   set +e; "$APP/Contents/MacOS/QotaFolio" >"$RUN/reopen.log" 2>&1 </dev/null; local rc=$?; set -e
   printf '{"ok":%s,"secondProcessExit":%d,"runningPid":%d,"stillRunning":%s}\n' \
@@ -277,7 +279,7 @@ qfv — QotaFolio verification lane "$LANE" ($BUNDLE_ID). Every command prints J
   qfv shot <name> <sel> [--frame]         save <evidence>/<name>.png: the element's window, or its frame
   qfv qota [args]                         run the lane's own qota; output kept as evidence
   qfv log                                 the instance's stdout: QF_ lines from the lab
-  qfv reopen                              start the app a second time; it rings the running one
+  qfv reopen                              start a second process; it rings the running one and exits
   qfv quit                                the user's Quit, through the panel's More menu
   qfv stop                                quit, or signal the recorded pid if Quit cannot
   qfv clean                               stop, remove what the lane left on this Mac; keep evidence
