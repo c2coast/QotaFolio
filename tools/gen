@@ -1,0 +1,5 @@
+#!/bin/bash
+# Writes every generated file of the repository from its source: kit/design/Tokens.swift from
+# design/tokens.json. Run it after a change to a source, and commit both. make check refuses a
+# generated file that differs from what this writes.
+exec node "$(dirname "$0")/gen.mjs"

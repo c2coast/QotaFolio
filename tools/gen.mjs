@@ -1,0 +1,133 @@
+// What tools/gen writes: each generated file of the repository, from its source. A generated file is
+// committed, and checks/generated.test.mjs refuses one that differs from what this makes of its source.
+import { readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const root = new URL("../", import.meta.url);
+const read = (path) => readFileSync(new URL(path, root), "utf8");
+
+const TOKENS = "design/tokens.json";
+
+// Each generated file: its path from the repository's root, its source, and what makes its text.
+export const generated = [{ path: "kit/design/Tokens.swift", source: TOKENS, make: () => tokensSwift(JSON.parse(read(TOKENS))) }];
+
+// ---- design/tokens.json to Swift ----
+
+const fail = (path, message) => {
+  throw new Error(`${TOKENS}: ${path.join(".")} ${message}`);
+};
+
+const FOUR = ["light", "lightIncreased", "dark", "darkIncreased"];
+const SHAPES = [
+  { keys: ["value"], four: () => null },
+  { keys: ["plain", "increased"], four: (v) => [v.plain, v.increased, v.plain, v.increased] },
+  { keys: ["light", "dark"], four: (v) => [v.light, v.light, v.dark, v.dark] },
+  { keys: FOUR, four: (v) => FOUR.map((k) => v[k]) },
+];
+
+// The values of a token in the looks it varies over: one value, or four, one for each look.
+function looks(token, path) {
+  const keys = Object.keys(token).filter((k) => !["why", "unit", "reduceTransparency"].includes(k));
+  const shape = SHAPES.find((s) => s.keys.length === keys.length && s.keys.every((k) => keys.includes(k)));
+  if (!shape) fail(path, `varies over ${keys.join(", ") || "nothing"}. A token is a value, plain and increased, light and dark, or ${FOUR.join(", ")}.`);
+  return shape.four(token) ?? token.value;
+}
+
+const number = (n, path) => {
+  if (typeof n !== "number" || !Number.isFinite(n)) fail(path, `is ${JSON.stringify(n)}, which is not a number.`);
+  return String(n);
+};
+
+const weight = (n, path) => {
+  if (typeof n !== "number" || n < 0 || n > 1) fail(path, `has the weight ${JSON.stringify(n)}. A weight runs from 0 to 1.`);
+  return String(n);
+};
+
+function colour(c, path) {
+  if (typeof c === "string") {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(c)) fail(path, `is ${c}. A colour written as text is sRGB, #RRGGBB.`);
+    return `.srgb(0x${c.slice(1).toUpperCase()})`;
+  }
+  const keys = Object.keys(c ?? {}).sort().join(",");
+  if (keys === "black" || keys === "white" || keys === "ink") return `.${keys}(${weight(c[keys], path)})`;
+  if (keys === "grey,weight") return `.grey(${weight(c.grey, path)}, weight: ${weight(c.weight, path)})`;
+  fail(path, `is ${JSON.stringify(c)}. A colour is #RRGGBB, { "black" | "white" | "ink": weight } or { "grey": g, "weight": w }.`);
+}
+
+const UNITS = { percent: "Int", points: "Double", weight: "Double" };
+// A literal number says nothing of its type, so a number's declaration names it.
+const SCALARS = { Int: true, Double: true };
+const WEIGHTS = ["regular", "medium", "semibold"];
+const CURVES = ["smooth", "easeOut", "easeInOut"];
+
+// One token as Swift: its type and the expression of its value.
+function swiftToken(token, path) {
+  if (typeof token.why !== "string" || !token.why) fail(path, "has no why. Each value carries the reason it is what it is.");
+  if ("size" in token) {
+    if (!WEIGHTS.includes(token.weight)) fail(path, `has the weight ${token.weight}. A type role's weight is ${WEIGHTS.join(", ")}.`);
+    if (typeof token.monospacedDigits !== "boolean") fail(path, "does not say whether its digits are monospaced.");
+    const value = `TypeRole(size: ${number(token.size, path)}, weight: .${token.weight}, monospacedDigits: ${token.monospacedDigits})`;
+    return { type: "TypeRole", value };
+  }
+  if ("curve" in token) {
+    if (!CURVES.includes(token.curve)) fail(path, `has the curve ${token.curve}. A motion's curve is ${CURVES.join(", ")}.`);
+    return { type: "Timing", value: `Timing(curve: .${token.curve}, duration: ${number(token.duration, path)})` };
+  }
+  const unit = token.unit;
+  if (unit !== undefined && !(unit in UNITS)) fail(path, `has the unit ${unit}. A number's unit is ${Object.keys(UNITS).join(", ")}.`);
+  const [type, write] = unit ? [UNITS[unit], unit === "weight" ? weight : number] : ["Colour", colour];
+  const all = (values, at) => `Looks<${type}>(${FOUR.map((k, i) => `${k}: ${write(values[i], [...path, at, k].filter(Boolean))}`).join(", ")})`;
+  const values = looks(token, path);
+  if (token.reduceTransparency) {
+    if (!Array.isArray(values)) fail(path, "has a form for Reduce Transparency but no looks to set it beside.");
+    const opaque = looks(token.reduceTransparency, [...path, "reduceTransparency"]);
+    if (!Array.isArray(opaque)) fail([...path, "reduceTransparency"], "is one value. Give it plain and increased, or its looks.");
+    return { type: `Translucent<${type}>`, value: `Translucent(glass: ${all(values, "glass")}, opaque: ${all(opaque, "opaque")})` };
+  }
+  return Array.isArray(values) ? { type: `Looks<${type}>`, value: all(values, "") } : { type, value: write(values, path) };
+}
+
+// A why as doc comment lines, wrapped to the width of the file.
+function doc(text, indent) {
+  const lines = [];
+  let line = "";
+  for (const word of text.split(/\s+/)) {
+    if (line && indent.length + 4 + line.length + 1 + word.length > 110) {
+      lines.push(line);
+      line = word;
+    } else line = line ? `${line} ${word}` : word;
+  }
+  lines.push(line);
+  return lines.map((l) => `${indent}/// ${l}`);
+}
+
+function tokensSwift(json) {
+  const out = [
+    `// Generated by tools/gen from ${TOKENS}. Do not edit this file: change the JSON and run tools/gen.`,
+    "",
+    ...doc(json.about, ""),
+    "public enum Tokens {",
+  ];
+  for (const [group, tokens] of Object.entries(json)) {
+    if (group === "about") continue;
+    out.push(...doc(tokens.why ?? fail([group], "has no why."), "    "));
+    out.push(`    public enum ${group[0].toUpperCase()}${group.slice(1)} {`);
+    for (const [name, token] of Object.entries(tokens)) {
+      if (name === "why") continue;
+      const { type, value } = swiftToken(token, [group, name]);
+      const declared = type in SCALARS ? `${name}: ${type}` : name;
+      out.push(...doc(token.why, "        "), `        public static let ${declared} = ${value}`);
+    }
+    out.push("    }");
+  }
+  out.push("}", "");
+  return out.join("\n");
+}
+
+// Run as a program, it writes every generated file.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  for (const { path, make } of generated) {
+    writeFileSync(new URL(path, root), make());
+    console.log(path);
+  }
+}
