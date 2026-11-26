@@ -279,13 +279,10 @@ public enum Tone: Hashable, Sendable {
     case ceiling
 }
 
-/// How much of a limit is left, in three steps: more than half, more than a fifth, or less.
-public enum Level: Hashable, Sendable {
-    case plenty, low, nearlyGone
-
+extension Level {
+    /// The step of a share used, 0 to 100, from the whole share left.
     public init(used: Double) {
-        let remaining = Int(min(100, max(0, 100 - used)).rounded(.down))
-        self = remaining <= 20 ? .nearlyGone : remaining > 50 ? .plenty : .low
+        self.init(remainingPercent: Int(min(100, max(0, 100 - used)).rounded(.down)))
     }
 }
 
