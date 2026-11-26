@@ -88,8 +88,10 @@ nonisolated func run(arguments: [String]) -> Never {
         fail("qota: QotaFolio's files at \(container.directoryURL.path) cannot be read by this build.", .unreadable)
     case .reading(let value):
         // The panel leaves out the accounts the person hid in Settings, and so does this command. The app keeps
-        // the list in its preferences domain, which this process reads by the domain's name.
-        let hidden = UserDefaults(suiteName: identity.preferencesDomain).map(HiddenAccounts.ids(in:)) ?? []
+        // the list in its preferences domain, which this process reads by the domain's name. This process's main
+        // bundle is the app, and Foundation ignores a suite named after the main bundle, so it reads the domain whole.
+        let domain = UserDefaults.standard.persistentDomain(forName: identity.preferencesDomain)
+        let hidden = HiddenAccounts.ids(stored: domain?[HiddenAccounts.key] as? [String])
         reading = value.hiding(hidden)
     }
 
