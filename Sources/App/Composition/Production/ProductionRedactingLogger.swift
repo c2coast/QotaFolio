@@ -33,13 +33,11 @@ nonisolated final class ProductionRedactingLogger: RedactingLog, Sendable {
     ///
     /// `.info` is a memory-only level: `log show` reads the persisted store, so an `.info`
     /// line is gone by the time anyone looks. That is right for a poll, which happens every
-    /// few minutes and whose last result is on screen anyway. It is wrong for the one-time
-    /// move of a user's accounts into the App Group container, which happens once in an
-    /// install's life and is the first thing anybody asks about afterwards.
+    /// few minutes and whose last result is on screen anyway.
     private static func level(for event: DiagEvent) -> OSLogType {
         switch event.outcome {
         case .ok:
-            event.operation == .containerMigrate ? .default : .info
+            .info
         case .transient, .refused:
             .default
         case .permanent, .contractViolation:

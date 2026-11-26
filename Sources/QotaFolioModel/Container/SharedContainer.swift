@@ -2,10 +2,9 @@ import Foundation
 
 /// The four files this app writes, in the one place everything that reads them can reach.
 ///
-/// The panel, the widget extension, the menu-bar Control and the `qota` command are separate
-/// processes, and a separate process cannot open another's sandbox container. An App Group
-/// container can be reached by every process signed into the group, so that is where the files
-/// live.
+/// The app and the `qota` command are separate processes. Version 1.0.0 put the files in the
+/// App Group container so that every one of its processes could reach them, and they are still
+/// there.
 public nonisolated enum SharedFile: String, CaseIterable, Sendable {
     /// The accounts: names, providers, order. No secrets — those are in the Keychain.
     case catalog

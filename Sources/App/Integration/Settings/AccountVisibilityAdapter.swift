@@ -12,34 +12,18 @@ protocol AccountVisibilityPreferenceStoring: AnyObject {
 
 @MainActor
 final class UserDefaultsAccountVisibilityPreferenceStore: AccountVisibilityPreferenceStoring {
-    static let defaultKey = "settings.accountVisibility.hiddenAccountIDs.v1"
-
     private let defaults: UserDefaults
-    private let key: String
 
-    init(
-        defaults: UserDefaults = .standard,
-        key: String = UserDefaultsAccountVisibilityPreferenceStore.defaultKey
-    ) {
+    init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.key = key
     }
 
     func loadHiddenAccountIDs() -> Set<AccountID> {
-        Set(
-            (defaults.stringArray(forKey: key) ?? []).compactMap { rawValue in
-                UUID(uuidString: rawValue).map { AccountID(rawValue: $0) }
-            }
-        )
+        HiddenAccounts.ids(in: defaults)
     }
 
     func saveHiddenAccountIDs(_ accountIDs: Set<AccountID>) {
-        defaults.set(
-            accountIDs
-                .map { $0.rawValue.uuidString.lowercased() }
-                .sorted(),
-            forKey: key
-        )
+        HiddenAccounts.store(accountIDs, in: defaults)
     }
 }
 

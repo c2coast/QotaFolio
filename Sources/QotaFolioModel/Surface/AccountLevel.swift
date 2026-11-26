@@ -2,11 +2,10 @@ import Foundation
 
 /// What one account holds right now, as every surface draws it.
 ///
-/// The strip's battery, the panel's card, the Control's symbol, the widget's ring and the
-/// `qota` command all answer the same three questions about an account — how much of its week
-/// it still holds, how much of this session it still holds, and whether it has anything it can
-/// spend at all. The arithmetic lives here, once, in a target the extension can link, and the
-/// words stay where the words are.
+/// The strip's battery, the panel's card and the `qota` command all answer the same three
+/// questions about an account — how much of its week it still holds, how much of this session
+/// it still holds, and whether it has anything it can spend at all. The arithmetic lives here,
+/// once, in a target `qota` can link, and the words stay where the words are.
 ///
 /// The two windows are two quantities, each measured against its own budget, and neither is
 /// expressed in the other's units. Holding a fifth of the week and a half of the session are
@@ -31,8 +30,8 @@ public nonisolated struct AccountLevel: Hashable, Sendable {
     /// What the account holds, in Apple's own battery language, read off what can be spent
     /// right now: red under a fifth, nothing at all when either window has run dry.
     ///
-    /// This is the state the WORDS carry — the tooltip, what VoiceOver reads, the Control's
-    /// title, the card's return time and the wake that arms for a reset. The battery is drawn to
+    /// This is the state the WORDS carry — the tooltip, what VoiceOver reads, the card's
+    /// return time and the wake that arms for a reset. The battery is drawn to
     /// whichever quantity the person asked to see, which can be the healthier of the two, so the
     /// picture and this state answer two different questions about one account and both are
     /// true.

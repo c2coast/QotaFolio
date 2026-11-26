@@ -1,31 +1,43 @@
 # QotaFolio
 
-QotaFolio is a macOS menu-bar app that shows how much usage each AI account has left. Version 1.0.0 is in `Sources/`. The rebuild puts the next version in new folders beside it.
+QotaFolio is a macOS menu-bar app that shows how much usage each AI account has left. Most of the app is still the code of version 1.0.0, in `Sources/`. The rebuild puts the next version in new folders beside it.
 
 ## The folders
 
 | Path | What it holds |
 |---|---|
-| `Sources/` | The code of version 1.0.0: the app, its widget, the `qota` command and their libraries. |
+| `Sources/` | The code of version 1.0.0: the app, the `qota` command and their libraries. |
 | `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it, and the app does not. |
 | `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`, `Whole`. |
 | `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
 | `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
+| `app/` | The app's code in the new tree. The app compiles `app/lease/`, `app/settings/legacy/` and `app/settings/hidden/`, and signs with the entitlements file in `app/main/`. `qota` compiles `app/settings/hidden/` too. Tools and tests link the other folders. |
+| `app/main/` | The app's entitlements file, and `tests/AppIdentityTests.swift`, the part of `AppTests` that pins the names `AppIdentity` derives. |
+| `app/lease/` | The lease. `tests/` holds its tests, in `AppTests`. |
+| `app/settings/legacy/` | The carry. `tests/` holds its tests, in `AppTests`. |
+| `app/settings/hidden/` | The hidden accounts: the key under which the app keeps the list in its preferences domain, and the filter that leaves them out of `qota status`. `tests/` holds its tests, in `AppTests`. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
 | `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in every look, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
 | `Assets/` | The app icon. |
 | `project.yml` | The XcodeGen spec. XcodeGen writes `QotaFolio.xcodeproj` from it, and git ignores that project. |
 | `Package.swift` | The Swift package of `QotaFolioModel` and `QotaFolioCore`, whose code is in `Sources/`. |
 | `checks/` | The rules of the codebase, as node test files. |
-| `tools/` | Scripts and tools. `tools/forecast` prints the forecast and its sentences on a recorded history, and draws the graph. It is the project's `forecast` target, which the app scheme builds too. `tools/release/ship.sh` is the release lane. `tools/make-battery-symbols.py` writes the battery symbols in `Sources/`. |
+| `Makefile` | `make check` and `make test`. |
+| `tools/` | Scripts and tools. `tools/forecast` prints the forecast and its sentences on a recorded history, and draws the graph. It is the project's `forecast` target, which the app scheme builds too. `tools/release/ship.sh` is the release lane. |
 | `docs/` | The release documents and the pictures in `README.md`. |
 | `.ci.toml` | The stacks of the landing check that read each path. |
+| `.mcp.json`, `.xcodebuildmcp/` | The MCP servers a session in this repository starts, and the macOS tools of XcodeBuildMCP. |
+| `.claude/skills/verify-qotafolio/` | The verify skill: the lab, driven by `bin/qfv`. Git ignores the rest of `.claude/`. |
 
 ## The words
 
+- **The identity** is the app's bundle identifier. `AppIdentity` derives every name the app owns from it and the signing team: its App Group, its preferences domain, its Keychain service and its support folder. The release is `net.c2coast.QotaFolio`, and a development build adds `.dev`.
+- **The lease** is a locked file in the identity's support folder. It lets one copy of each identity run. Version 1.0.0 keeps its own lease inside its sandbox container, where this lease cannot see it. So `AppDelegate` makes a second check: it refuses to start while another process runs with the same identifier.
+- **The carry** copies the settings of version 1.0.0, once, from its sandbox container into the app's preferences domain.
+- **The lab** is the fixture runtime, `FixtureAppRuntime`: the real app over invented accounts, which every Debug build carries. The verify skill drives it under its own identity, `net.c2coast.QotaFolio.dev.verify`, so it runs beside the installed app.
 - **The old tree** is `Sources/`. No rule reads it. Put new code in the new tree.
-- **The new tree** is every folder except `Sources/`.
+- **The new tree** is every folder except `Sources/` and `.claude/`.
 - **A rule** is a test in `checks/` that reads the source of the new tree.
 - **A wall** is a rule about one folder: the modules its Swift files may import and the calls they may not make. `checks/walls.mjs` holds the walls.
 - **A breach** is one place that breaks a rule. It prints as `file:line` and then the fix.
@@ -57,16 +69,19 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - Each wall in `checks/walls.mjs` holds for its folder.
 - A fixture or a recording holds no email address, account id or home path. The repository is public.
 - Every test is hostless.
+- The app runs outside the App Sandbox. No entitlements file and no setting in `project.yml` asks for the sandbox or for a sandbox exception.
+- The build number in `project.yml` is a whole number above 100, the build of version 1.0.0. Version 1.0.0 updates only to such a number.
 - A hand-written code file in the new tree has 400 lines at most.
 
 ## Proving a change
 
 1. Run `make check`. It runs every rule in about a second. It prints each breach, then a last line that starts with `check: pass` or `check: fail`.
-2. If you changed Swift, run `make test`. It builds the app scheme unsigned, `tools/forecast` included, and runs the tests of `kit/` and of the graph with no host application. It prints each test, then a last line that starts with `test: pass` or `test: fail`.
+2. If you changed Swift, run `make test`. It builds the app scheme unsigned, `tools/forecast` included, and runs `KitTests`, `GraphTests` and `AppTests` with no host application. It prints each test, then a last line that starts with `test: pass` or `test: fail`.
 3. If you changed the forecast or its sentences, run `tools/forecast`. It prints every poll's verdict for the week and the model's week, what then happened, and the account's two sentences. Then it prints the score of the week, of the model's week and of the account. Give it a path to read another history file, and `--json` for one line per poll with every number in full. `--at after-banked-reset` prints one named moment. `--at "2025-11-18 23:45"` prints one time in the Mac's zone, and `--account A` keeps one account.
 4. If you changed the graph, run `tools/forecast --draw after-banked-reset`. It writes the graph's part of the card at that moment to a PNG, and prints the two sentences and the file's path. Nothing opens on screen: read the file. `--dark`, `--increased-contrast`, `--reduce-transparency` and `--12-hour` set the look, `--width` the chart's width in points, and `--out` names the file. The graph and the sentences say times in the Mac's zone, so `TZ=America/New_York tools/forecast --draw …` draws a week in New York. A run after a change builds the tool through its scheme, in a few seconds once `.build/` holds a build; a run with nothing changed takes a tenth of a second.
-5. To build with no tests, follow "Build from source" in `README.md`. The build needs no signing. The app scheme builds the app and `tools/forecast` together.
-6. The landing check runs the same rules, because they are tests. It also builds the app and runs its tests.
+5. If you changed what a person sees or does in the app, prove it on the app itself with the lab. Read `.claude/skills/verify-qotafolio/SKILL.md`. A launch puts the lab's item in the owner's menu bar, so ask him first.
+6. To build with no tests, follow "Build from source" in `README.md`. The build needs no signing. The app scheme builds the app and `tools/forecast` together.
+7. The landing check runs the same rules, because they are tests. It also builds the app and runs its tests.
 
 ## Adding to the tree
 

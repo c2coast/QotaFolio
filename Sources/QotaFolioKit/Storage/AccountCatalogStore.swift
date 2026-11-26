@@ -157,9 +157,8 @@ public nonisolated struct FileCatalogStore: AccountCatalogPersisting {
     }
 
     fileprivate static func productionLocation(requestedURL: URL?) throws -> CatalogLocation {
-        // The App Group container, not this app's own. The panel, the widget extension and
-        // the `qota` command are separate processes and none of them can open a sandbox
-        // container that is not theirs; every one of them can open this.
+        // The App Group container, where version 1.0.0 kept the files and where the `qota`
+        // command reads them.
         //
         // `SharedContainer` resolves the same directory two ways — `containerManagerd` for a
         // sandboxed process, the path it hands out for anything else. Both branches name one

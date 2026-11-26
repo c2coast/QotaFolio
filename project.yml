@@ -17,18 +17,18 @@ settings:
   base:
     DEVELOPMENT_TEAM: NCCKY76LD4
     CODE_SIGN_STYLE: Automatic
-    # The one identifier everything else is derived from. The app IS this string; the widget
-    # extension is `.Widgets`, the `qota` tool is `.qota`, the `QotaFolioKit` framework is `.Kit`,
-    # and `AppIdentity` derives the container, the App Group, the Keychain service, the defaults
-    # domain and the lease from the app's. A private build sets it on the xcodebuild line
+    # The one identifier everything else is derived from. The app IS this string; the `qota`
+    # tool is `.qota` and the `QotaFolioKit` framework is `.Kit`, and `AppIdentity` derives the
+    # support folder, the App Group, the Keychain service, the defaults domain and the lease from
+    # the app's. A private build sets it on the xcodebuild line
     # (`QOTAFOLIO_BUNDLE_ID=net.c2coast.QotaFolio.dev.mine`) and gets its own everything.
     #
     # It is not `PRODUCT_BUNDLE_IDENTIFIER` on purpose: a setting given on the command line
-    # applies to every target in the build, and an extension whose identifier equals its host's
-    # does not register. This knob fans out into three distinct identifiers instead of one.
+    # applies to every target in the build, and the tool and the framework need identifiers of
+    # their own. This knob fans out into three distinct identifiers instead of one.
     QOTAFOLIO_BUNDLE_ID: net.c2coast.QotaFolio
-    MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "100"
+    MARKETING_VERSION: "1.1.0"
+    CURRENT_PROJECT_VERSION: "110"
     VERSIONING_SYSTEM: apple-generic
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
@@ -38,9 +38,9 @@ settings:
   configs:
     Debug:
       # A development build is a different app to macOS, and that is the whole point. One
-      # identifier here gives a Debug build its own container, its own defaults, its own
+      # identifier here gives a Debug build its own support folder, its own defaults, its own
       # Keychain service and its own App Group -- and makes it impossible for a developer's
-      # build to read, write or delete the installed app's data. Its extension and its tool
+      # build to read, write or delete the installed app's data. Its tool and its framework
       # follow, because they derive from the same string.
       QOTAFOLIO_BUNDLE_ID: net.c2coast.QotaFolio.dev
     Release:
@@ -85,44 +85,16 @@ targets:
       base:
         SKIP_INSTALL: "YES"
 
-  # The widget extension: the menu-bar / Control Center Control and the desktop widget. It links
-  # the Model target and never Core -- Core's main-actor default isolation makes every
-  # synthesized Codable main-actor-isolated, and an extension decoding on its own queue cannot
-  # use one. It reads the App Group files the app writes and draws them.
-  # `Sources/Surfaces` is compiled into it AND into the app: the account entity, the intent that
-  # opens the app, the ring -- two processes, one source, no framework between them.
-  QotaFolioWidgets:
-    type: app-extension
-    platform: macOS
-    sources:
-      - path: Sources/QotaFolioWidgets
-        excludes: [Info.plist, "*.entitlements"]
-      - Sources/Surfaces
-    dependencies:
-      - { package: QotaFolioCore, product: QotaFolioModel }
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).Widgets
-        PRODUCT_NAME: QotaFolioWidgets
-        INFOPLIST_FILE: Sources/QotaFolioWidgets/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Sources/QotaFolioWidgets/QotaFolioWidgets.entitlements
-        ENABLE_APP_SANDBOX: "YES"
-        ENABLE_HARDENED_RUNTIME: "YES"
-        SKIP_INSTALL: "YES"
-        # WidgetKit's providers and App Intents are nonisolated protocols; the extension
-        # compiles without a default actor so their witnesses are what the protocols ask for.
-        # Every type in `Sources/Surfaces` spells its isolation out, because the same file is
-        # compiled into the app, which keeps the main-actor default.
-        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-
-  # `qota`: the terminal command. Reads the three group files by path from outside the sandbox
-  # (that is the day-one check it exists to make), links the Model target statically, and ships
-  # inside the app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
+  # `qota`: the terminal command. Reads the three group files by path and the hidden accounts
+  # from the app's preferences domain, links the Model target statically, and ships inside the
+  # app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
   qota:
     type: tool
     platform: macOS
-    sources: [Sources/Qota]
+    sources:
+      - Sources/Qota
+      - path: app/settings/hidden
+        excludes: ["tests/**"]
     dependencies:
       - { package: QotaFolioCore, product: QotaFolioModel }
     settings:
@@ -130,7 +102,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).qota
         PRODUCT_NAME: qota
         ENABLE_HARDENED_RUNTIME: "YES"
-        ENABLE_APP_SANDBOX: "NO"
         SKIP_INSTALL: "YES"
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
 
@@ -139,7 +110,12 @@ targets:
     platform: macOS
     sources:
       - Sources/App
-      - Sources/Surfaces
+      - path: app/lease
+        excludes: ["tests/**"]
+      - path: app/settings/legacy
+        excludes: ["tests/**"]
+      - path: app/settings/hidden
+        excludes: ["tests/**"]
       - Assets/Assets.xcassets
       # The macOS 26 layered icon (Icon Composer format), authored by hand from
       # Assets/BrandSources: the Time Fold on the brand ground, three glass layers.
@@ -148,7 +124,6 @@ targets:
     dependencies:
       - { target: QotaFolioKit, embed: true }
       - { package: QotaFolioCore, product: QotaFolioCoreXcode, embed: true }
-      - { target: QotaFolioWidgets, embed: true }
       - { target: qota, embed: true, copy: { destination: executables } }
       - { target: QotaFolioCoreFixtures, link: false }
       - { target: QotaFolioKitFixtures, link: false }
@@ -158,13 +133,11 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID)
         PRODUCT_NAME: QotaFolio
         INFOPLIST_FILE: Sources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Sources/QotaFolio.entitlements
-        ENABLE_APP_SANDBOX: "YES"
+        CODE_SIGN_ENTITLEMENTS: app/main/QotaFolio.entitlements
         ENABLE_HARDENED_RUNTIME: "YES"
         ENABLE_USER_SCRIPT_SANDBOXING: "NO"
-        # Deliberately NOT skipping App Intents metadata extraction here: the app carries the
-        # intents Spotlight and the Control perform (Sources/Surfaces), and the processor is
-        # what registers them.
+        # The app declares no App Intents, so there is no metadata to extract.
+        LM_SKIP_METADATA_EXTRACTION: "YES"
         LD_ADDITIONAL_DEPLOYMENT_TARGET_FLAGS:
           - -Xlinker
           - -rpath
@@ -176,8 +149,8 @@ targets:
       configs:
         Debug:
           # The Debug identifier itself lives at the project level (`QOTAFOLIO_BUNDLE_ID`), so
-          # the extension and the tool follow it. CFBundleIdentifier and the two Sparkle
-          # mach-lookup names interpolate PRODUCT_BUNDLE_IDENTIFIER, which is that string here.
+          # the tool and the framework follow it. CFBundleIdentifier and the App Group
+          # interpolate PRODUCT_BUNDLE_IDENTIFIER, which is that string here.
           #
           # A Debug build carries the fixture lab (`FixtureAppRuntime`), which imports both
           # fixture slices, so both archives are linked here. They are dependencies with
@@ -197,7 +170,6 @@ targets:
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Resources"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Updater.app"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/XPCServices"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Autoupdate"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Sparkle"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B"
@@ -207,7 +179,6 @@ targets:
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/PrivateHeaders"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Resources"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Updater.app"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/_CodeSignature"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Autoupdate"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Sparkle"
@@ -330,20 +301,6 @@ targets:
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUVersionComparisonProtocol.h"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/SUVersionDisplayProtocol.h"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Headers/Sparkle.h"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/_CodeSignature"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/Info.plist"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/_CodeSignature/CodeResources"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS/Downloader"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/_CodeSignature"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/Info.plist"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources"
-          - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS/Installer"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Modules/module.modulemap"
           - "$(BUILT_PRODUCTS_DIR)/Sparkle.framework/Versions/B/Modules/module.private.modulemap"
         outputFiles:
@@ -353,21 +310,17 @@ targets:
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Autoupdate"
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app"
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app/Contents/MacOS/Updater"
-          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices"
-          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc"
-          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc/Contents/MacOS/Installer"
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/_CodeSignature/CodeResources"
           - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/Updater.app/Contents/_CodeSignature/CodeResources"
-          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/Current/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources"
-          - "$(TARGET_TEMP_DIR)/QotaFolio-Sparkle-v3-$(WRAPPER_NAME)-$(CONFIGURATION)-$(ACTION)-$(CODE_SIGNING_ALLOWED)-$(EXPANDED_CODE_SIGN_IDENTITY).stamp"
+          - "$(TARGET_TEMP_DIR)/QotaFolio-Sparkle-v4-$(WRAPPER_NAME)-$(CONFIGURATION)-$(ACTION)-$(CODE_SIGNING_ALLOWED)-$(EXPANDED_CODE_SIGN_IDENTITY).stamp"
         script: |
           set -euo pipefail
-          phase_version="3"
+          phase_version="4"
           source_framework="${BUILT_PRODUCTS_DIR}/Sparkle.framework"
           framework="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework"
           versions="${framework}/Versions"
           current="${versions}/Current"
-          stamp_file="${SCRIPT_OUTPUT_FILE_12}"
+          stamp_file="${SCRIPT_OUTPUT_FILE_8}"
 
           if [ ! -d "${source_framework}" ]; then
             printf '%s\n' "Missing resolved Sparkle framework: ${source_framework}" >&2
@@ -388,9 +341,12 @@ targets:
             exit 1
           fi
 
-          /usr/bin/find "${framework}" -name Downloader.xpc -prune -exec /bin/rm -rf {} +
-          if /usr/bin/find "${framework}" -name Downloader.xpc -print -quit | /usr/bin/grep -q .; then
-            printf '%s\n' "Sparkle Downloader.xpc remains after pruning" >&2
+          # The app is not sandboxed, so Sparkle installs through Autoupdate and needs none of
+          # its XPC services. Sparkle's sandboxing guide says such an app may remove them; the
+          # bundle then carries no service that a stray Info.plist key could switch on.
+          /bin/rm -rf "${framework}/XPCServices" "${version_dir}/XPCServices"
+          if /usr/bin/find "${framework}" -name "*.xpc" -print -quit | /usr/bin/grep -q .; then
+            printf '%s\n' "A Sparkle XPC service remains after pruning" >&2
             exit 1
           fi
 
@@ -423,8 +379,8 @@ targets:
               /usr/bin/codesign --verify --strict --verbose=2 "${code}"
             }
 
-            # Sparkle's documented manual order is Installer, Autoupdate, Updater, then framework.
-            sign_code "${version_dir}/XPCServices/Installer.xpc"
+            # Sparkle's documented manual order, with no XPC service: Autoupdate, Updater, then
+            # the framework.
             sign_code "${version_dir}/Autoupdate"
             sign_code "${version_dir}/Updater.app"
             sign_code "${framework}"
@@ -436,10 +392,6 @@ targets:
             "${version_dir}/Autoupdate" \
             "${version_dir}/Updater.app/Contents/MacOS/Updater" \
             "${version_dir}/Updater.app/Contents/_CodeSignature/CodeResources" \
-            "${version_dir}/XPCServices/Installer.xpc/Contents/MacOS/Installer" \
-            "${version_dir}/XPCServices/Installer.xpc/Contents/_CodeSignature/CodeResources" \
-            "${version_dir}/XPCServices/Installer.xpc" \
-            "${version_dir}/XPCServices" \
             "${version_dir}/Updater.app" \
             "${version_dir}/_CodeSignature/CodeResources" \
             "${framework}"
@@ -498,7 +450,7 @@ targets:
               f"expanded_code_sign_identity={identity}",
               f"identity_name={identity_name}",
               f"timestamp_mode={timestamp_mode}",
-              "downloader_present=false",
+              "xpc_services_present=false",
               "",
           ])
           stamp_tmp = Path(stamp_path + ".tmp")
@@ -569,6 +521,23 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         GENERATE_INFOPLIST_FILE: "YES"
 
+  # The tests of the app's shell, with no host application. They compile the shell's folders from source,
+  # as the app does, and pin the names the identity derives.
+  AppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - app/lease
+      - app/settings/legacy
+      - app/settings/hidden
+      - app/main/tests
+    dependencies:
+      - { package: QotaFolioCore, product: QotaFolioModel }
+    settings:
+      base:
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        GENERATE_INFOPLIST_FILE: "YES"
+
   # tools/forecast. The app scheme builds it, so a change that breaks the tool fails the build.
   # The script tools/forecast builds it through the scheme of the same name.
   forecast:
@@ -589,6 +558,6 @@ targets:
 schemes:
   QotaFolio:
     build: { targets: { QotaFolio: all, forecast: all } }
-    test: { targets: [KitTests, GraphTests] }
+    test: { targets: [KitTests, GraphTests, AppTests] }
   forecast:
     build: { targets: { forecast: all } }

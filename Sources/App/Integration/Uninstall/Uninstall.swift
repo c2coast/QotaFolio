@@ -10,7 +10,7 @@ import QotaFolioKit
 /// A protocol and not `SMAppService`, which is a concrete handle on Background Task Management:
 /// every call on it reaches `backgroundtaskmanagementd` for real, and a test has no way to ask
 /// for a different answer than the developer's own Mac gives. It is a seam for the reason
-/// `dataDirectory` is one — the code that deletes a user's things has to be testable without
+/// `home` is one — the code that deletes a user's things has to be testable without
 /// deleting anybody's.
 @MainActor
 protocol LoginItemRegistration {
@@ -53,8 +53,8 @@ struct UninstallSurroundings {
 ///   1. Stop polling.
 ///   2. Delete the app's own Keychain service, and end the grants those credentials held.
 ///      **This is the point of no return.**
-///   3. Remove the app's files — the App Group container and the old sandbox container both —
-///      and the preferences domain.
+///   3. Remove the app's files and the preferences domain: what this build writes outside the
+///      sandbox, what version 1.0.0 left in its container, and the group's files.
 ///   4. Unregister the login item.
 ///   5. Show the app in Finder, say what is left to do in one sentence, quit.
 ///
@@ -72,12 +72,9 @@ struct UninstallSurroundings {
 /// delete follows one level down — nothing the user can see is ever behind a provider that may
 /// not answer — applied to the whole removal rather than to one step of it.
 ///
-/// A sandboxed app cannot delete `/Applications/QotaFolio.app` and it cannot delete its own
-/// container while it is living in it. Neither matters. Every byte the user cares about is
-/// gone after step 3; what is left is operating-system bookkeeping macOS reaps with the
-/// bundle — the app's and the widget extension's empty container stubs and their Application
-/// Scripts directories, which were checked and hold no user bytes — and an app bundle the
-/// user drags to the Trash.
+/// Every byte the user cares about is gone after step 3. What is left is version 1.0.0's
+/// container stub, whose `Data` folder links to the user's own Desktop, Documents and Downloads
+/// and is never walked, and an app bundle the user drags to the Trash.
 ///
 /// **Every step is bounded, because a quit is refused while this runs.**
 /// `applicationShouldTerminate` answers `.terminateCancel` for the whole of `run()`, which is
@@ -96,15 +93,9 @@ final class Uninstall: UninstallPresenting {
     @ObservationIgnored private let credentials: any OwnedGrantEnding
     @ObservationIgnored private let surroundings: UninstallSurroundings
     @ObservationIgnored private let loginItem: any LoginItemRegistration
-    /// This process's sandbox container `Data` directory. Injectable for one reason: it is what
-    /// lets the code that deletes a user's files be tested without deleting anybody's files.
-    ///
-    /// `@Sendable` because step 3 runs off the main actor, and this is what tells it where to dig.
-    @ObservationIgnored private let dataDirectory: @Sendable () throws -> URL
-    /// The App Group directory the four files live in. A seam for the same reason, and
-    /// derived from `identity` when nobody passes one, so it moves with the identity the way
-    /// every other owned location does.
-    @ObservationIgnored private let groupDirectory: @Sendable () throws -> URL
+    /// The home folder every owned place is under. Injectable for one reason: it is what lets the
+    /// code that deletes a user's files be tested without deleting anybody's files.
+    @ObservationIgnored private let home: URL
     @ObservationIgnored private var activeTask: Task<Void, Never>?
 
     init(
@@ -112,23 +103,13 @@ final class Uninstall: UninstallPresenting {
         credentials: any OwnedGrantEnding,
         surroundings: UninstallSurroundings,
         loginItem: any LoginItemRegistration = SMAppService.mainApp,
-        dataDirectory: @escaping @Sendable () throws -> URL = {
-            try OwnedContainerDataDirectory.resolve()
-        },
-        groupDirectory: (@Sendable () throws -> URL)? = nil
+        home: URL = .homeDirectory
     ) {
         self.identity = identity
         self.credentials = credentials
         self.surroundings = surroundings
         self.loginItem = loginItem
-        self.dataDirectory = dataDirectory
-        // Derived from the identity this removal was given, not from the running process's.
-        // That is what makes the default safe in a test: a synthetic identity names a group
-        // that does not exist, so the resolution answers a path with nothing under it, and a
-        // suite that forgot to pass a seam still cannot reach the developer's own accounts.
-        self.groupDirectory = groupDirectory ?? {
-            try SharedContainer.resolve(identity: identity, create: false).directoryURL
-        }
+        self.home = home
     }
 
     /// True while the removal is running, so a quit does not race it past step 2.
@@ -211,7 +192,7 @@ final class Uninstall: UninstallPresenting {
             problems.append(.credentialsDeleted)
         }
 
-        // 3. Remove the container's own files and the preferences domain.
+        // 3. Remove the app's files and the preferences domain.
         //
         // The status item goes first, on the main actor where it lives: its saved position is in
         // the domain about to be removed, and AppKit rewrites it when the item is torn down with
@@ -224,14 +205,9 @@ final class Uninstall: UninstallPresenting {
         // resume, because a deadline's resumption is itself a main-actor hop.
         surroundings.removeStatusItem()
         let identity = self.identity
-        let dataDirectory = self.dataDirectory
-        let groupDirectory = self.groupDirectory
+        let home = self.home
         let removedFiles = await withDeadline {
-            Self.removeLocalFiles(
-                identity: identity,
-                dataDirectory: dataDirectory,
-                groupDirectory: groupDirectory
-            )
+            Self.removeLocalFiles(identity: identity, home: home)
         }
         if removedFiles != true {
             problems.append(.localFilesRemoved)
@@ -282,15 +258,11 @@ final class Uninstall: UninstallPresenting {
         return problems
     }
 
-    /// Removes every file this app wrote, and its preferences.
+    /// Removes every place this app owns, and its preferences.
     ///
-    /// Five independent removals, and two of them are the same three files: the App Group
-    /// container is where they live now, and the old sandbox container is where a migrated
-    /// install deliberately left the originals so a downgrade would keep working. Both go.
-    ///
-    /// Each is attempted whatever the ones before it did, because a directory that refuses to
-    /// go is no reason to leave the next one behind. A path that was never created is not a
-    /// failure.
+    /// The places come from the identity, so a test pins the list. Each is attempted whatever the
+    /// ones before it did, because a folder that refuses to go is no reason to leave the next one
+    /// behind. A place that was never created is not a failure.
     ///
     /// `nonisolated` and static because this runs off the main actor, and it takes what it needs
     /// by value for the same reason. `FileManager` and `UserDefaults` are both non-`Sendable`, so
@@ -298,50 +270,20 @@ final class Uninstall: UninstallPresenting {
     /// the preferences domain is addressed by name — `removePersistentDomain(forName:)` empties
     /// the named domain whichever `UserDefaults` is asked, so the receiver was never the seam.
     /// `identity` is.
-    private nonisolated static func removeLocalFiles(
-        identity: AppIdentity,
-        dataDirectory: @Sendable () throws -> URL,
-        groupDirectory: @Sendable () throws -> URL
-    ) -> Bool {
-        var everythingWent = true
-
-        // The persistent domain first, then the file behind it. `cfprefsd` owns that file
-        // and can rewrite it from its own cache, so removing the domain is what actually
-        // empties it and removing the file is what stops an empty shell being left behind.
+    private nonisolated static func removeLocalFiles(identity: AppIdentity, home: URL) -> Bool {
+        // The persistent domain first, then the file behind it. `cfprefsd` owns that file and
+        // rewrites it from its own cache, so removing the domain is what empties it.
         UserDefaults.standard.removePersistentDomain(forName: identity.preferencesDomain)
 
-        let container: URL
-        do {
-            container = try dataDirectory()
-        } catch {
-            return false
-        }
-        let locations = AppIdentityLocations(
-            identity: identity,
-            dataDirectoryPath: container.path
-        )
-
         let fileManager = FileManager()
-        let owned: [String?] = [
-            // The four files, in the App Group container where they live now.
-            (try? groupDirectory())?.path,
-            // The same three files in the old location. A migrated install left its
-            // originals there so a downgrade would keep working, and Remove My Data has to
-            // take those too — this is the user's account list, twice over.
-            locations.applicationSupportDirectoryPath,
-            // Sparkle's downloads and extracted updates.
-            locations.sparkleCachePath,
-            // The preferences file `cfprefsd` writes the domain into.
-            container.path + "/Library/Preferences/\(identity.preferencesDomain).plist",
-        ]
-        for path in owned.compactMap({ $0 }) where fileManager.fileExists(atPath: path) {
+        var everythingWent = true
+        for place in identity.ownedPlaces(home: home) where fileManager.fileExists(atPath: place.path) {
             do {
-                try fileManager.removeItem(atPath: path)
+                try fileManager.removeItem(at: place)
             } catch {
                 everythingWent = false
             }
         }
-
         return everythingWent
     }
 
