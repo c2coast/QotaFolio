@@ -14,7 +14,7 @@ public struct MenuBarPlacementAdvisoryRow: View {
     public var body: some View {
         HStack(alignment: .center, spacing: 12) {
             Image(systemName: "menubar.rectangle")
-                .font(.system(size: 15, weight: .medium))
+                .font(PanelType.advisoryGlyph)
                 .foregroundStyle(.secondary)
                 .frame(width: PanelMetrics.markSize, height: PanelMetrics.markSize)
                 .accessibilityHidden(true)
@@ -23,7 +23,7 @@ public struct MenuBarPlacementAdvisoryRow: View {
                 defaultValue: "macOS has hidden QotaFolio's batteries. Turn them on in System Settings → Menu Bar.",
                 comment: "Panel advisory when macOS refused to place the status item on the menu bar, and where to allow it."
             ))
-            .font(.system(size: 12))
+            .font(PanelType.body)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             Button {

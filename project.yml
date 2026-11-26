@@ -51,6 +51,9 @@ targets:
     platform: macOS
     sources: [Sources/QotaFolioKit]
     dependencies:
+      # Kit for the design values, Tokens, which the panel and the strip draw with. XcodeGen does
+      # not link a static library into a framework unless it is asked.
+      - { target: Kit, link: true }
       - { package: QotaFolioCore, product: QotaFolioCoreXcode }
       - { package: Sparkle, product: Sparkle }
     settings:

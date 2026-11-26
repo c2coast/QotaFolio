@@ -46,8 +46,7 @@ public struct PanelFooterView: View {
                     defaultValue: "Updated \(clock)",
                     comment: "Quiet footer note: the clock time of the newest reading across the accounts."
                 ))
-                .font(.system(size: 11))
-                .monospacedDigit()
+                .font(PanelType.captionFigures)
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText())
                 .lineLimit(1)
@@ -209,7 +208,7 @@ struct PanelChromeButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 13, weight: .medium))
+                .font(PanelType.glyph)
                 .frame(width: PanelMetrics.glyphWell, height: PanelMetrics.glyphWell)
         }
         .buttonStyle(PanelChromeButtonStyle())
@@ -227,7 +226,7 @@ private struct PanelChromeGlyph: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(.system(size: 13, weight: .medium))
+            .font(PanelType.glyph)
             .foregroundStyle(.secondary)
             .frame(width: PanelMetrics.glyphWell, height: PanelMetrics.glyphWell)
             .background(
@@ -235,7 +234,7 @@ private struct PanelChromeGlyph: View {
                 in: Circle()
             )
             .contentShape(Rectangle())
-            .animation(.easeOut(duration: 0.15), value: hovered)
+            .animation(PanelMotion.hover, value: hovered)
             .onHover { hovered = $0 }
     }
 }
@@ -267,7 +266,7 @@ private struct PanelChromeButtonBody: View {
             .frame(width: PanelMetrics.hitTarget, height: PanelMetrics.hitTarget)
             .contentShape(Rectangle())
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.96 : 1)
-            .animation(.easeOut(duration: 0.15), value: hovered)
+            .animation(PanelMotion.hover, value: hovered)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
             .onHover { hovered = $0 }
     }

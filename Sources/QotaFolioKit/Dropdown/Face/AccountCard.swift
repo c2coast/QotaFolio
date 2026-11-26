@@ -131,12 +131,12 @@ struct AccountCard: View {
                     .opacity(face.isSpent ? 0.7 : 1)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(presentedAccountName(account, namesHidden: namesHidden))
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(PanelType.title)
                         .lineLimit(1)
                         .contentTransition(.opacity)
                     if let plan = face.planName {
                         Text(plan)
-                            .font(.system(size: 11))
+                            .font(PanelType.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -144,8 +144,7 @@ struct AccountCard: View {
                 Spacer(minLength: 8)
                 if let note = headerNote {
                     Text(note)
-                        .font(.system(size: 11, weight: .medium))
-                        .monospacedDigit()
+                        .font(PanelType.note)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .contentTransition(.numericText())
@@ -264,7 +263,7 @@ struct AccountCard: View {
     /// The state's words, hidden from VoiceOver because the card's sentence already says them.
     private func stateText(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 12))
+            .font(PanelType.body)
             .foregroundStyle(.secondary)
             .accessibilityHidden(true)
     }
@@ -307,7 +306,7 @@ struct ReconnectRefusalCaption: View {
 
     var body: some View {
         Label(reason, systemImage: "exclamationmark.triangle.fill")
-            .font(.system(size: 12))
+            .font(PanelType.body)
             .foregroundStyle(.primary)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)

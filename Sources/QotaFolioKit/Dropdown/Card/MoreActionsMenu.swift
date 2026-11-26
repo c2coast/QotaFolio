@@ -116,7 +116,7 @@ public struct MoreActionsMenu: View {
             .disabled(mutationBlocked)
         } label: {
             Image(systemName: "ellipsis.circle")
-                .font(.system(size: 13, weight: .medium))
+                .font(PanelType.glyph)
                 .foregroundStyle(isRaised || hoveredSelf ? AnyShapeStyle(.secondary) : AnyShapeStyle(.tertiary))
                 .frame(width: PanelMetrics.glyphWell, height: PanelMetrics.glyphWell)
                 .background(
@@ -131,8 +131,8 @@ public struct MoreActionsMenu: View {
         .frame(width: PanelMetrics.hitTarget, height: PanelMetrics.hitTarget)
         .contentShape(Rectangle())
         .onHover { hoveredSelf = $0 }
-        .animation(.easeOut(duration: 0.15), value: isRaised)
-        .animation(.easeOut(duration: 0.15), value: hoveredSelf)
+        .animation(PanelMotion.hover, value: isRaised)
+        .animation(PanelMotion.hover, value: hoveredSelf)
         .help(blockedReason ?? qfLocalized("action.more", defaultValue: "More actions", comment: "Account actions menu help text."))
         .accessibilityLabel(spokenLabel)
         .accessibilityHint(blockedReason ?? "")
