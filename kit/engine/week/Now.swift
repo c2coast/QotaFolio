@@ -20,7 +20,7 @@ extension AccountNow {
         let poll = forecast.poll(at: now)
         let reset = poll.map { now >= $0.resets.instant } ?? false
         let verdicts = poll.flatMap { !reset && $0.reading.at == newest.at ? $0.verdicts : nil } ?? [:]
-        let said = Said(words: words, weekSpent: (newest.limit(.week)?.used.value ?? 0) >= 100)
+        let said = Said(words: words, weekSpent: (newest.limit(.week)?.used.value ?? 0) >= 100, week: verdicts[.week])
 
         let limits = Self.order(newest.limits)
         let rows = limits.map { said.row($0, verdicts[$0.kind], now: now) }
@@ -55,6 +55,8 @@ extension AccountNow {
 private struct Said {
     let words: TimeWords
     let weekSpent: Bool
+    /// The week's verdict at the poll, which a model's week's row reads.
+    let week: Verdict?
 
     func row(_ limit: Limit, _ verdict: Verdict?, now: Date) -> AccountNow.Row {
         let name = title(limit.kind)
@@ -70,13 +72,28 @@ private struct Said {
     }
 
     func verdict(_ verdict: Verdict, _ limit: Limit) -> String {
-        switch verdict {
+        if limit.kind != .week, limit.kind.period == .week, weekFirst(before: verdict) { return "the week runs out first" }
+        return switch verdict {
         case .spent: limit.kind != .week && weekSpent && limit.used.value < 100 ? "waits on the week" : "spent"
         case .silent(.notStarted): "no use yet"
         case .silent(.noClockYet): "too early to say"
         case .silent(.insideOneStep): "too close to call"
         case .runsOut(let at, _, _): "runs out around \(words.quarterDay(at))"
         case .lasts(let landing, _, _): "lasts with about \(Whole.left(landing))% left"
+        }
+    }
+
+    /// Whether the week's verdict has the week run out before a model's week's own verdict ends:
+    /// it runs out, and the model's week lasts or runs out no earlier. There the model's week's
+    /// own time was right about half the time on the frozen record, and wrong by days, because
+    /// its outcome falls past a spent week and a banked reset that no pace sees. Elsewhere it is
+    /// as good as the week's. So its row says the week comes first, with no time.
+    func weekFirst(before verdict: Verdict) -> Bool {
+        guard case .runsOut(let week, _, _)? = self.week else { return false }
+        switch verdict {
+        case .lasts: return true
+        case .runsOut(let at, _, _): return week <= at
+        case .spent, .silent: return false
         }
     }
 

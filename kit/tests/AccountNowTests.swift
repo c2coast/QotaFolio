@@ -50,6 +50,32 @@ struct AccountNowTests {
                                                   spoken: "week spent, back Fri 13:00"))
     }
 
+    /// A, Wed 19 Nov 09:20. The poll of 09:17 reads the week at 54 and Fable at 29. At 4.26 points an
+    /// hour the week's 46 points left last 10.8 hours, so it runs out around Wed 20:05, before both
+    /// reset at 21:00. Fable at 3.71 an hour lands near 72 at the reset and lasts, but nothing is
+    /// spent after the week runs out, so its row names the week and no time. The sentence is the
+    /// week's, as before.
+    @Test("When the week runs out first, the model's week's row says so and gives no time")
+    func weekRunsOutFirst() throws {
+        let now = try Self.now(0, at: Self.at("after-a-gap"))
+        let week = try Self.read(now.rows[0]), fable = try Self.read(now.rows[1])
+        #expect(week.verdict == "runs out around Wed 20:00")
+        #expect([fable.percent, fable.resets, fable.verdict] == ["29%", "resets Wed 21:00", "the week runs out first"])
+        #expect(now.rows[1].spoken == "Fable, 29% used, resets Wed 21:00, the week runs out first.")
+        #expect(now.week?.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Wed 20:00, 1h 0m before it resets.")
+    }
+
+    /// A, Fri 14 Nov 00:35. The week at 98 runs out around 00:50, and Fable at 89 around 02:07, later:
+    /// the week comes first. B, Fri 14 Nov 19:20: Fable at 73 runs out around 21:28, before the week
+    /// at 23:26, so Fable keeps its own time.
+    @Test("A model's week that runs out after the week names the week; one that runs out before keeps its time")
+    func modelWeekAfterOrBefore() throws {
+        let after = try Self.read(try Self.now(0, at: Self.at("out-in-15-minutes")).rows[1])
+        #expect(after.verdict == "the week runs out first")
+        let before = try Self.read(try Self.now(1, at: Self.at("fable-near-its-limit")).rows[1])
+        #expect(before.verdict == "runs out around Fri 21:30")
+    }
+
     /// A, Wed 19 Nov 21:02: the week reset at 21:00 and resets again Wed 26 Nov 21:00, seven days on.
     @Test("A reset seven days away says its date")
     func resetAWeekAway() throws {
