@@ -49,12 +49,13 @@ import UIFixtures
 ///   printing `QF_PROBE` once and `QF_SCREEN_WATCHED` on every change.
 /// - `QOTAFOLIO_UI_PLACEMENT=hidden` — the panel is told macOS refused the item, and draws the
 ///   sentence that says so.
-/// - `QOTAFOLIO_UI_ALERTS=1` — the fixture assessment's alerts go through the deliverer to a
-///   recording centre that prints each as `QF_ALERT` instead of asking macOS.
+/// - `QOTAFOLIO_UI_ALERTS=1` — one poll arrives that finds a spent limit back, and the alert goes
+///   through the deliverer to a recording centre that prints it as `QF_ALERT` instead of asking
+///   macOS.
 /// - `QOTAFOLIO_UI_OPEN_SETTINGS=<general|accounts|alerts|privacy|updates|about>` — opens the
 ///   Settings window on that tab and prints `QF_SETTINGS_REGION`, with the window's number, for a
 ///   photograph.
-/// - `QOTAFOLIO_UI_PUBLISH_FILES=1` — the scenario's catalog, snapshots and recommendation are
+/// - `QOTAFOLIO_UI_PUBLISH_FILES=1` — the scenario's catalog, snapshots and history are
 ///   written into this build's group container through the real codecs, so `qota` has files to
 ///   read. The process prints `QF_PUBLISHED` with the folder, or `QF_PUBLISH_FAILED` with the
 ///   error.
@@ -187,10 +188,7 @@ final class FixtureAppRuntime: AppRuntime {
             recoveryAdvisory: scenario.recoveryAdvisory
         )
         let store = FixtureAccountsStore(snapshots: scenario.snapshots, pollStatus: scenario.pollStatus)
-        if let history = scenario.history {
-            store.traceBook = history.traces
-            store.publish(history.assessment)
-        }
+        store.replay(traces: scenario.history?.traces, snapshots: scenario.history?.snapshots)
         let addFlow = FixtureAddFlowPresenter(
             activeFlow: scenario.activeFlow,
             activeFlowProvider: scenario.activeFlowProvider,
@@ -223,7 +221,7 @@ final class FixtureAppRuntime: AppRuntime {
         let appearancePreferences = AppearancePreferences(defaults: defaults)
         let stripPreferences = StripPreferences(defaults: defaults)
         stripPreferences.shows = options.stripShows
-        let alerts = AlertDeliverer(store: store, preferences: alertPreferences, center: alertCenter, defaults: defaults)
+        let alerts = AlertDeliverer(store: store, catalog: catalog, preferences: alertPreferences, center: alertCenter, defaults: defaults)
 
         let statusSurface = AppKitStatusItemSurface()
         let statusItem = StatusItemController(
@@ -353,23 +351,14 @@ final class FixtureAppRuntime: AppRuntime {
         }
         if options.deliversAlerts {
             alerts.start()
-            // The fixture week rarely has an alert due at photograph time, so one is put into
-            // the published assessment by hand: a fresh five-hour window on the first account.
-            // Everything after that — the sentence, the once-per-key rule, the permission ask
-            // — is the app's own, ending at the recording centre instead of macOS.
-            if let base = store.assessment, let first = base.accounts.first {
-                let fresh = FleetAlert(
-                    kind: .freshWindow(windowKey: "session", since: scheduler.now),
-                    account: first.id,
-                    key: "fixture|fresh-window|\(first.id.rawValue.uuidString)"
-                )
-                store.publish(FleetAssessment(
-                    generatedAt: base.generatedAt,
-                    accounts: base.accounts,
-                    alerts: base.alerts + [fresh],
-                    nextReviewAt: base.nextReviewAt,
-                    activity: base.activity
-                ))
+            // The fixture week has a spent limit, and no poll that finds it back, so one arrives
+            // here: the first spent limit read again at nothing before its reset, as a banked
+            // reset gives it back.
+            // Everything after that — the readings, the condition, the sentence, the once-per-key
+            // rule, the permission ask — is the app's own, ending at the recording centre
+            // instead of macOS.
+            if let (id, poll) = Self.pollBringingBackASpentLimit(scenario, at: Date()) {
+                store.record(poll, for: id, at: poll.fetchedAt)
             }
         }
         if let tab = options.settingsTab {
@@ -436,7 +425,7 @@ final class FixtureAppRuntime: AppRuntime {
         defaults.removePersistentDomain(forName: defaultsDomain)
     }
 
-    /// Writes the scenario's catalog, snapshots and recommendation into this build's group
+    /// Writes the scenario's catalog, snapshots and history into this build's group
     /// container, exactly as the app writes them: the same codecs, atomic writes, the same
     /// leaf names. `QF_PUBLISHED` prints the directory so a script can hand it to `qota`.
     private func publishScenarioFiles() {
@@ -450,30 +439,50 @@ final class FixtureAppRuntime: AppRuntime {
             try AccountCatalogCodec.encode(records)
                 .write(to: container.url(for: .catalog), options: [.atomic])
 
-            var book = UsageSnapshotBook()
-            for (id, snapshot) in scenario.snapshots {
-                book.record(PersistedUsageSnapshot(account: id, snapshot: snapshot))
+            var book = scenario.history?.snapshots ?? UsageSnapshotBook()
+            if scenario.history == nil {
+                for (id, snapshot) in scenario.snapshots {
+                    book.record(PersistedUsageSnapshot(account: id, snapshot: snapshot))
+                }
             }
             if let data = UsageHistoryCodec.encode(book, for: .snapshots) {
                 try data.write(to: container.url(for: .snapshots), options: [.atomic])
             }
-
-            let assessment = scenario.history?.assessment ?? FleetAssessment.silent(
-                at: scenario.now,
-                accounts: scenario.accounts.map(FleetAccount.init(config:))
-            )
-            let document = RecommendationDocument(
-                assessment: assessment,
-                sentences: AssessmentSentences.recommendation(assessment)
-            )
-            if let data = RecommendationCodec.encode(document) {
-                try data.write(to: container.url(for: .recommendation), options: [.atomic])
+            if let traces = scenario.history?.traces, let data = UsageHistoryCodec.encode(traces, for: .traces) {
+                try data.write(to: container.url(for: .traces), options: [.atomic])
             }
             print("QF_PUBLISHED \(container.directoryURL.path)")
         } catch {
             print("QF_PUBLISH_FAILED \(error)")
         }
         fflush(stdout)
+    }
+
+    /// A poll of the first account whose newest snapshot has a limit at 100 percent, read a moment
+    /// later with that limit at nothing and the same reset.
+    private static func pollBringingBackASpentLimit(_ scenario: FixtureUIScenario, at time: Date) -> (AccountID, UsageSnapshot)? {
+        for account in scenario.accounts {
+            guard let last = scenario.snapshots[account.id],
+                  let spent = last.readings.firstIndex(where: { $0.window.usedPercent >= 100 && $0.window.resetsAt != nil })
+            else { continue }
+            var readings = last.readings
+            let reading = readings[spent]
+            readings[spent] = UsageReading(
+                scope: reading.scope,
+                period: reading.period,
+                window: UsageWindow(usedPercent: 0, resetsAt: reading.window.resetsAt, severity: nil)
+            )
+            let poll = UsageSnapshot(
+                provider: last.provider,
+                readings: readings,
+                planName: last.planName,
+                extraUsage: last.extraUsage,
+                credits: last.credits,
+                fetchedAt: max(time, last.fetchedAt + 1)
+            )
+            return (account.id, poll)
+        }
+        return nil
     }
 
     // MARK: - The backdrop: the wallpaper with the batteries on it

@@ -13,12 +13,12 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
 | `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, the account now, a spent limit that is back, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
-| `app/` | The app's code in the new tree. The app compiles `app/lease/`, `app/settings/legacy/` and `app/settings/hidden/`, and signs with the entitlements file in `app/main/`. `qota` compiles `app/settings/hidden/` and `app/recorder/legacy/` too, and links Kit. Tools and tests link the other folders. |
+| `app/` | The app's code in the new tree. The app compiles `app/lease/`, `app/settings/legacy/` and `app/settings/hidden/`, and signs with the entitlements file in `app/main/`. Its framework `QotaFolioKit` compiles `app/recorder/legacy/` and links Kit, once. `qota` compiles `app/settings/hidden/` and `app/recorder/legacy/` too, and links Kit. Tools and tests link the other folders. |
 | `app/main/` | The app's entitlements file, and `tests/AppIdentityTests.swift`, the part of `AppTests` that pins the names `AppIdentity` derives. |
 | `app/lease/` | The lease. `tests/` holds its tests, in `AppTests`. |
 | `app/settings/legacy/` | The carry. `tests/` holds its tests, in `AppTests`. |
 | `app/settings/hidden/` | The hidden accounts: the key under which the app keeps the list in its preferences domain, and the filter that leaves them out of `qota status`. `tests/` holds its tests, in `AppTests`. |
-| `app/recorder/legacy/` | The reader of version 1.0.0's books: the trace and the snapshots, as the files' bytes, into each account's readings. |
+| `app/recorder/legacy/` | The reader of version 1.0.0's books: the trace and the snapshots, as the files' bytes, into each account's readings. The app's history writer reads its books through it after each poll, and `qota` and `tools/forecast` read the files through it. |
 | `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in every look from the design values, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
 | `design/` | `tokens.json`: the design values, every value that carries a decision of the look, each with its why. |
 | `Assets/` | The app icon. |

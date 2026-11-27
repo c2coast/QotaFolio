@@ -11,7 +11,8 @@ import Kit
 /// the reset in force at each sample. So that reset is rebuilt here, as the forecast's method
 /// rebuilds it. A week's reset is moved back a whole week at a time from its minute until the
 /// sample falls inside its week. Occurrences of any other period do not run back to back, so a
-/// sample before the open one has no reset.
+/// sample before the open one has the reset of the completed occurrence it fell in, and none
+/// outside every one.
 ///
 /// A reading joins the samples of one second. Version 1.0.0 spaces each limit's samples on its own,
 /// so a model's week missed by one poll is sampled at other seconds than the week from then on.
@@ -123,12 +124,22 @@ private nonisolated struct TraceBook: Decodable, Versioned {
         let sampleUsedBasisPoints: [Int]
         let currentOpenedAt: Int
         let currentResetsAt: Int?
+        let completed: [Completed]?
+
+        /// An occurrence that has ended: from its open to the reset it ended at.
+        struct Completed: Decodable {
+            let openedAt: Int
+            let closedAt: Int
+        }
 
         func reset(inForceAt t: Int) -> ResetTime? {
+            func at(_ seconds: Int) -> ResetTime { ResetTime(Date(timeIntervalSince1970: TimeInterval(seconds))) }
+            guard case .weekly = period else {
+                if let current = currentResetsAt, t >= currentOpenedAt { return at(current) }
+                return completed?.first { $0.openedAt <= t && t < $0.closedAt }.map { at($0.closedAt) }
+            }
             guard let current = currentResetsAt else { return nil }
-            let open = ResetTime(Date(timeIntervalSince1970: TimeInterval(current)))
-            guard case .weekly = period else { return t >= currentOpenedAt ? open : nil }
-            var r = open.instant
+            var r = at(current).instant
             while r.timeIntervalSince1970 - week > TimeInterval(t) { r -= week }
             return ResetTime(r)
         }

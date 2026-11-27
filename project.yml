@@ -49,9 +49,14 @@ targets:
   QotaFolioKit:
     type: framework
     platform: macOS
-    sources: [Sources/QotaFolioKit]
+    sources:
+      - Sources/QotaFolioKit
+      # The reader of version 1.0.0's books. The history writer reads each account's readings
+      # through it, as qota and tools/forecast read the files.
+      - app/recorder/legacy
     dependencies:
-      # XcodeGen does not link a static library into a framework unless it is asked.
+      # XcodeGen does not link a static library into a framework unless it is asked. Kit is
+      # linked here once, and the app links it through this framework.
       - { target: Kit, link: true }
       - { package: QotaFolioCore, product: QotaFolioCoreXcode }
       - { package: Sparkle, product: Sparkle }
@@ -464,8 +469,8 @@ targets:
           PYTHON
 
   # The new tree's pure Swift: the values and the Engine. Foundation only, no clock, no files.
-  # tools/forecast links it, and the app does not. A library ships nonisolated API and lets its caller
-  # choose where it runs.
+  # QotaFolioKit links it into the app, once; qota and tools/forecast link their own. A library ships
+  # nonisolated API and lets its caller choose where it runs.
   Kit:
     type: library.static
     platform: macOS

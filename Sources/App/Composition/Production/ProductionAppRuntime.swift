@@ -164,6 +164,7 @@ final class ProductionAppRuntime: AppRuntime {
         let stripPreferences = StripPreferences()
         let alerts = AlertDeliverer(
             store: store,
+            catalog: catalog,
             preferences: alertPreferences,
             center: UserNotificationAlertCenter()
         )
@@ -367,7 +368,7 @@ final class ProductionAppRuntime: AppRuntime {
         updaterSource.start()
         store.start()
         // The blanket watches for a shared screen from here on; the deliverer watches the
-        // assessment and asks the system for permission only when an alert is first due.
+        // readings and asks the system for permission only when an alert is first due.
         privacy.start()
         alerts.start()
     }

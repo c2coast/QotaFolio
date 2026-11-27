@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import QotaFolioCore
+import QotaFolioKit
 
 @MainActor @Observable public final class FixtureAccountsStore: AccountsStoring {
     public private(set) var snapshots: [AccountID: UsageSnapshot]
@@ -8,12 +9,12 @@ import QotaFolioCore
     public private(set) var isPanelVisible: Bool
     public private(set) var manualRefresh: ManualRefreshActivity?
     public private(set) var usageUpdates: UsageUpdatesState
-    /// What the fixture says about the fleet. `nil` by default — the state the app is in before
-    /// its first poll — and whatever a scenario publishes through `publish(_:)`, which is how a
-    /// fixture panel gets an instrument to open.
-    public private(set) var assessment: FleetAssessment?
-    /// The traces a fixture answers `trace(for:)` from, when a scenario replays a week into one.
-    @ObservationIgnored public var traceBook: UsageTraceBook?
+    /// Each account's readings, read from the fixture's books by the reader the app's history
+    /// uses. Empty until `replay(_:)`.
+    public private(set) var readings: AccountReadings = [:]
+    /// The books the readings are read from: a scenario's replayed week, or its snapshots alone.
+    @ObservationIgnored private var traces = UsageTraceBook()
+    @ObservationIgnored private var books = UsageSnapshotBook()
 
     @ObservationIgnored public private(set) var isRunning = false
     @ObservationIgnored public private(set) var refreshAllCallCount = 0
@@ -70,12 +71,24 @@ import QotaFolioCore
         refreshRequests.append(id)
     }
 
-    /// Publishes an assessment the way the production store does when the brain answers.
-    public func publish(_ assessment: FleetAssessment?) {
-        self.assessment = assessment
+    /// Takes a scenario's books, or with none its snapshots alone, and publishes the readings the
+    /// app's history would read from them.
+    public func replay(traces: UsageTraceBook?, snapshots replayed: UsageSnapshotBook?) {
+        if let traces, let replayed {
+            (self.traces, books) = (traces, replayed)
+        } else {
+            books = UsageSnapshotBook()
+            for (id, snapshot) in snapshots { books.record(PersistedUsageSnapshot(account: id, snapshot: snapshot)) }
+        }
+        readings = AccountReadings(traces: self.traces, snapshots: books)
     }
 
-    public func trace(for account: AccountID) async -> AccountUsageTrace? {
-        traceBook?.trace(for: account)
+    /// One poll arriving, as the app's history records it: into the books, then the readings and
+    /// the snapshot published.
+    public func record(_ snapshot: UsageSnapshot, for id: AccountID, at time: Date) {
+        books.record(PersistedUsageSnapshot(account: id, snapshot: snapshot))
+        traces.observe(snapshot, for: id, at: usageHistoryEpochSeconds(time))
+        snapshots[id] = snapshot
+        readings = AccountReadings(traces: traces, snapshots: books)
     }
 }

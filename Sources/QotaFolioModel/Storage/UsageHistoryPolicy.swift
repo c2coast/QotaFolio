@@ -5,34 +5,11 @@ import Foundation
 ///
 /// ## What the samples are for
 ///
-/// The only consumer is the verdict engine, `FleetBrain`. It asks three questions:
-///
-///  1. **Where does this window land?** A burn rate over the current occurrence, projected
-///     to the reset instant.
-///  2. **How many sessions are left in the week?** The median weekly cost of a completed
-///     short window, over the last several of them, needing at least three.
-///  3. **Am I early in the window?** The first 10–15% of an occurrence is damped, because a
-///     post-reset burst read linearly looks like a deficit that is not there.
-///
-/// Question 1 wants a trace over hours. Question 3 wants the occurrence's start instant.
-/// Question 2 wants **one number per completed occurrence** — not a trace at all.
-///
-/// ## Why this is not "15-minute samples for eight days"
-///
-/// Eight days of trace kept to answer question 2 would be trace nobody reads, because
-/// question 2 does not read a trace. Over eight days a five-hour window closes about
-/// thirty-eight times; thirty-eight numbers answer it exactly. Seven hundred and sixty-eight
-/// samples per window answer it approximately, and cost twenty times the bytes.
-///
-/// Approximately, because a trace has gaps. The app polls between every three minutes and
-/// every thirty (`AdaptiveCadence`), so the last sample before a reset can be half an hour
-/// stale, and a window's true final consumption is then a guess. `CompletedUsageWindow`
-/// records that number **at the poll where the reset is observed**, from the reading that
-/// observed it — the best figure the app will ever hold for that occurrence. So the ledger
-/// is not a cheaper answer to question 2. It is a better one.
-///
-/// The sampling serves questions 1 and 3: fine resolution over the recent past, coarse
-/// resolution over the long past.
+/// The Engine reads them, through the reader of version 1.0.0's books, and so does version 1.0.0
+/// itself, which reads this file too. So the rings keep 1.0.0's shape: fine resolution over the
+/// recent past for the five-hour window, a sample a quarter-hour over eight days and a half for
+/// the week. The ledger of completed windows records each occurrence's close at the poll where
+/// its reset is observed, the best figure the app will ever hold for it, and 1.0.0 reads it.
 ///
 /// ## One minute is a floor the poller cannot beat
 ///

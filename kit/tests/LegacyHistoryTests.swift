@@ -131,4 +131,23 @@ struct LegacyHistoryTests {
         #expect(accounts.map { $0[0].account.rawValue } == ["A", "C"])
         #expect(accounts[1].count == 1)
     }
+
+    /// A session spent at 100 and 200 that ended at its reset of 18000, and the next one open from
+    /// 18000 to 36000, read at 18100. The samples of the ended session keep its reset, so the poll
+    /// that found the session back is "a spent limit is back".
+    @Test("A sample of an ended session keeps that session's reset")
+    func endedSession() throws {
+        let trace = """
+            {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 18100, "windows": [
+              {"key": "session", "period": {"session": {}}, "sampleTimes": [50, 100, 200, 18100],
+               "sampleUsedBasisPoints": [9000, 10000, 10000, 300],
+               "completed": [{"openedAt": 0, "closedAt": 18000, "usedBasisPointsAtClose": 10000}],
+               "currentOpenedAt": 18000, "currentResetsAt": 36000, "lastObservedAt": 18100}]}]}
+            """
+        let readings = try #require(try LegacyHistory.readings(history: Data(trace.utf8), snapshots: nil).first)
+        let session = Limit.Kind(model: nil, period: .session)
+        #expect(readings.map { $0.limit(session)?.resets?.instant.timeIntervalSince1970 } == [18000, 18000, 18000, 36000])
+        #expect(SpentLimitBack.between(readings[2], readings[3])
+            == [SpentLimitBack(account: AccountID("A"), limit: session, spentUntil: ResetTime(Date(timeIntervalSince1970: 18000)), how: .reset)])
+    }
 }
