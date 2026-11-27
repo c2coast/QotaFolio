@@ -6,6 +6,10 @@ import Testing
 /// under node on the frozen record in UTC: at every poll, its week view, its forecast for the
 /// account, the sentence that says it with the clause a spent week adds, and the record's
 /// sentence in points. Nothing in this repository writes it.
+///
+/// Where the Engine departs from the prototype, at the minutes after a reset (`PrototypeTests`),
+/// `fixtures/chart-page-after-reset.json` is the page's own code run on the changed prototype, and
+/// the sentences equal it there.
 @Suite("Equal to the chart page at every poll")
 struct ChartPageTests {
     static let expected: Expected = {
@@ -13,12 +17,19 @@ struct ChartPageTests {
         return try! JSONDecoder().decode(Expected.self, from: data)
     }()
 
+    static let afterReset: Departures = {
+        let data = try! Data(contentsOf: Record.fixtures.appending(path: "chart-page-after-reset.json"))
+        return try! JSONDecoder().decode(Departures.self, from: data)
+    }()
+
     @Test("The week, the account's forecast and both sentences", arguments: [0, 1])
     func everyPoll(account: Int) throws {
         let want = Self.expected.accounts[account]
         let forecast = [Record.a, Record.b][account]
         #expect(forecast.polls.count == want.polls.count)
-        for (poll, wanted) in zip(forecast.polls, want.polls) {
+        var polls = want.polls
+        for departure in Self.afterReset.accounts[account].polls { polls[departure.index] = departure.poll }
+        for (poll, wanted) in zip(forecast.polls, polls) {
             let at = "\(want.account) \(Record.minute(poll.reading.at))"
             #expect(poll.reading.at.timeIntervalSince1970 == wanted.t, "\(at)")
             let picture = try #require(forecast.picture(at: poll.reading.at))
@@ -55,11 +66,12 @@ struct ChartPageTests {
     }
 
     /// The account's forecast, scored as the page's sentence says it, against the first limit that
-    /// ran out. The page's own sentences scored this on the record; none of the four may get worse.
+    /// ran out. The page's own sentences scored this on the record, by the same rule for the minutes
+    /// after a reset; none of the four may get worse.
     @Test("The score of what is said is no worse than the page's")
     func score() throws {
         let score = Score(accountsOf: [Record.a, Record.b], recordEnd: Record.end)
-        let page = Self.expected.score
+        let page = Self.afterReset.score
         #expect(Double(score.right) / Double(score.judged) >= Double(page.right) / Double(page.judged),
                 "\(score.right) right of \(score.judged)")
         #expect(Double(score.named) / Double(score.timingErrors.count) >= Double(page.named) / Double(page.timedRunOuts),
@@ -146,6 +158,28 @@ struct ChartPageTests {
             let first, speed: String?
             let weekOut, fableOut: Double?
             let week: Week
+        }
+    }
+
+    /// The page's answer on the changed prototype at each poll where it differs, by the poll's place.
+    struct Departures: Decodable {
+        let score: Expected.Score
+        let accounts: [Account]
+
+        struct Account: Decodable {
+            let polls: [Departure]
+        }
+
+        struct Departure: Decodable {
+            let index: Int
+            let poll: Expected.Poll
+
+            init(from decoder: Decoder) throws {
+                index = try decoder.container(keyedBy: Key.self).decode(Int.self, forKey: .index)
+                poll = try Expected.Poll(from: decoder)
+            }
+
+            enum Key: CodingKey { case index }
         }
     }
 }

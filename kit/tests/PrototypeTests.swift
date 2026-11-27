@@ -6,12 +6,30 @@ import Testing
 /// is the prototype's own answer on that record, frozen, and never written from this code. At
 /// every poll, each limit's verdict is equal to it: the kind, the reason for silence and the speed
 /// are the same, and every time, rate and landing is the same number to the last bit.
+///
+/// One rule departs from it. The prototype counts the minutes after a week's reset as blocked
+/// when the poll before the reset read 100 percent; the Engine does not, because a limit that
+/// has reset can be spent again. `fixtures/prototype-after-reset.json` is the prototype with that
+/// one line changed, run the same way: at each poll where its answer differs, the Engine equals
+/// it instead. `MomentsTests` works two of those polls by hand.
 @Suite("Equal to the prototype at every poll")
 struct PrototypeTests {
     static let expected: Expected = {
         let data = try! Data(contentsOf: Record.fixtures.appending(path: "prototype.json"))
         return try! JSONDecoder().decode(Expected.self, from: data)
     }()
+
+    static let afterReset: Departures = {
+        let data = try! Data(contentsOf: Record.fixtures.appending(path: "prototype-after-reset.json"))
+        return try! JSONDecoder().decode(Departures.self, from: data)
+    }()
+
+    /// The prototype's answer at each poll, with the changed prototype's where the two differ.
+    static func wanted(_ account: Int) -> [Expected.Poll] {
+        var polls = expected.accounts[account].polls
+        for departure in afterReset.accounts[account].polls { polls[departure.index] = departure.poll }
+        return polls
+    }
 
     @Test("Every verdict, every point given back and every outcome", arguments: [0, 1])
     func everyPoll(account: Int) {
@@ -20,7 +38,7 @@ struct PrototypeTests {
         #expect(forecast.polls.count == want.polls.count)
         let weekOutcomes = forecast.outcomes(of: .week, recordEnd: Record.end)
         let fableOutcomes = forecast.outcomes(of: Record.fable, recordEnd: Record.end)
-        for (i, (poll, wanted)) in zip(forecast.polls, want.polls).enumerated() {
+        for (i, (poll, wanted)) in zip(forecast.polls, Self.wanted(account)).enumerated() {
             let at = "\(want.account) poll \(i), \(Record.minute(poll.reading.at))"
             #expect(poll.reading.at.timeIntervalSince1970 == wanted.t, "\(at)")
             #expect(Said(poll.verdicts[.week]) == wanted.weekVerdict, "\(at) week")
@@ -54,13 +72,32 @@ struct PrototypeTests {
         }
     }
 
+    /// The rule departs only in the three weeks that opened after a poll at 100 percent: A's from
+    /// Wed 12 Nov 21:00, and B's from Fri 14 Nov and Fri 21 Nov 13:00. The record says which they
+    /// are: the last poll before each of those resets read 100.
+    @Test("The departures lie in the weeks that opened after a spent poll", arguments: [0, 1])
+    func departuresInSpentWeeks(account: Int) {
+        let readings = Record.accounts[account]
+        let opened = Set(zip(readings, readings.dropFirst()).compactMap { before, after -> ResetTime? in
+            let old = before.limit(.week)!, new = after.limit(.week)!
+            return old.resets != new.resets && old.used.value >= 100 ? new.resets : nil
+        })
+        #expect(opened.map { Record.minute($0.instant) }.sorted() == [["Wed 19 Nov 21:00"], ["Fri 21 Nov 13:00", "Fri 28 Nov 13:00"]][account])
+        let departures = Self.afterReset.accounts[account].polls
+        #expect(departures.count == [5, 34][account])
+        for departure in departures {
+            #expect(opened.contains(readings[departure.index].limit(.week)!.resets!), "\(Record.minute(readings[departure.index].at))")
+        }
+    }
+
     /// The prototype's own score for each limit, over both accounts: verdicts right out of judged,
-    /// flips, and the median timing error of run-outs said and seen.
+    /// flips, and the median timing error of run-outs said and seen. With the minutes after a reset
+    /// not blocked, the week is right 240 times of 248 and Fable 152 of 204.
     @Test("The score of each limit")
     func scores() {
         for (name, kind) in [("week", Limit.Kind.week), ("fable", Record.fable)] {
             let score = Score(of: [Record.a, Record.b], limit: kind, recordEnd: Record.end)
-            let want = Self.expected.scores[name]!
+            let want = Self.afterReset.scores[name]!
             let got: [Int] = [score.spoken, score.silent, score.judged, score.right, score.flips, score.timingErrors.count]
             let wanted: [Int] = [want.spoken, want.silent, want.judged, want.right, want.flips, want.errors]
             #expect(Record.end.timeIntervalSince1970 == Self.expected.lastPoll)
@@ -137,6 +174,28 @@ struct PrototypeTests {
             let weekVerdict, fableVerdict: Said
             let weekGivenBack, fableGivenBack: Double
             let weekTruth, fableTruth: Then
+        }
+    }
+
+    /// The changed prototype's answer at each poll where it differs, by the poll's place in the record.
+    struct Departures: Decodable {
+        let scores: [String: Expected.Score]
+        let accounts: [Account]
+
+        struct Account: Decodable {
+            let polls: [Departure]
+        }
+
+        struct Departure: Decodable {
+            let index: Int
+            let poll: Expected.Poll
+
+            init(from decoder: Decoder) throws {
+                index = try decoder.container(keyedBy: Key.self).decode(Int.self, forKey: .index)
+                poll = try Expected.Poll(from: decoder)
+            }
+
+            enum Key: CodingKey { case index }
         }
     }
 }

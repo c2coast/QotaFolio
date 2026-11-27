@@ -26,12 +26,12 @@ func cumulative(at x: Double, poll i: Int, _ c: [Double], _ m: Meters) -> Double
 /// Seconds between x0 and poll i when the meter could not be spent. Time at the limit is not a
 /// choice not to work; it is demand nobody could see.
 ///
-/// A stretch is blocked from a poll at 100 percent to the next poll, even when the week reset
-/// inside it: then the new week's first minutes count as blocked.
+/// A stretch is blocked from a poll at 100 percent to the next poll, or to the poll's own reset
+/// when that comes first: a limit that has reset can be spent again.
 func blocked(from x0: Double, poll i: Int, _ meter: Meters.Meter, _ m: Meters) -> Double {
     var total = 0.0
     for k in min(max(0, m.opens[i] - 1), i)..<i {
-        let a = max(m.t[k], x0), b = m.t[k + 1]
+        let a = max(m.t[k], x0), b = min(m.t[k + 1], m.reset(k))
         if b <= a { continue }
         if m.pinned(meter, k) { total += b - a }
     }
