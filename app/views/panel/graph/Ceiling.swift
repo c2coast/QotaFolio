@@ -279,12 +279,6 @@ public enum Tone: Hashable, Sendable {
     case ceiling
 }
 
-extension Level {
-    public init(used: Double) {
-        self.init(remainingPercent: Int(min(100, max(0, 100 - used)).rounded(.down)))
-    }
-}
-
 public enum Weight: Hashable, Sendable { case regular, medium, semibold }
 
 extension Verdict {
