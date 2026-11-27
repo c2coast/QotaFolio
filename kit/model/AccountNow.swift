@@ -59,7 +59,8 @@ public struct AccountNow: Sendable {
             /// "resets Fri 13:00". None when the provider named no reset.
             public let resets: String?
             /// The verdict in a few words, "runs out around Thu 19:15", for the week and the model's
-            /// week. None for a limit of any other period, and once the week has reset.
+            /// week when the Engine speaks. None while it is silent, for a limit of any other
+            /// period, and once the week has reset.
             public let verdict: String?
 
             public init(used: Percent, level: Level, percent: String, resets: String?, verdict: String?) {

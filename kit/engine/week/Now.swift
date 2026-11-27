@@ -65,18 +65,18 @@ private struct Said {
         }
         let read = AccountNow.Row.Read(used: limit.used, level: Level(used: limit.used.value), percent: "\(Whole.percent(limit.used.value))%",
                                        resets: limit.resets.map { "resets \(words.day($0.instant))" },
-                                       verdict: verdict.map { self.verdict($0, limit) })
+                                       verdict: verdict.flatMap { self.verdict($0, limit) })
         let spoken = [name, "\(read.percent) used", read.resets, read.verdict].compactMap(\.self).joined(separator: ", ") + "."
         return AccountNow.Row(limit: limit.kind, title: name, state: .read(read), spoken: spoken)
     }
 
-    func verdict(_ verdict: Verdict, _ limit: Limit) -> String {
+    /// The verdict in a few words when the Engine speaks. A silent verdict says nothing on the row,
+    /// and the tapped card's sentence says why in its own words.
+    func verdict(_ verdict: Verdict, _ limit: Limit) -> String? {
         if limit.kind != .week, limit.kind.period == .week, weekFirst(before: verdict) { return "the week runs out first" }
         return switch verdict {
         case .spent: limit.kind != .week && weekSpent && limit.used.value < 100 ? "waits on the week" : "spent"
-        case .silent(.notStarted): "no use yet"
-        case .silent(.noClockYet): "too early to say"
-        case .silent(.insideOneStep): "too close to call"
+        case .silent: nil
         case .runsOut(let at, _, _): "runs out around \(words.quarterDay(at))"
         case .lasts(let landing, _, _): "lasts with about \(Whole.left(landing))% left"
         }

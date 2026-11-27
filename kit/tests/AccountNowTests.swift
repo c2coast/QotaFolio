@@ -20,7 +20,8 @@ struct AccountNowTests {
     struct Unread: Error { let row: String }
 
     /// A, Tue 18 Nov 23:45. The poll of 23:42 reads the week at 15 and Fable at 12; the week runs out
-    /// around Wed 19:15 and Fable is inside one step (`MomentsTests`). Both reset Wed 19 Nov 21:00.
+    /// around Wed 19:15 and Fable is inside one step (`MomentsTests`), a silent verdict, which its
+    /// row does not say. Both reset Wed 19 Nov 21:00.
     @Test("After a banked reset: each limit's reading, its reset with its day, and its verdict")
     func afterBankedReset() throws {
         let now = try Self.now(0, at: Self.at("after-banked-reset"))
@@ -28,7 +29,7 @@ struct AccountNowTests {
         #expect(now.rows.map(\.title) == ["Week", "Fable"])
         let week = try Self.read(now.rows[0]), fable = try Self.read(now.rows[1])
         #expect([week.percent, week.resets, week.verdict] == ["15%", "resets Wed 21:00", "runs out around Wed 19:15"])
-        #expect([fable.percent, fable.resets, fable.verdict] == ["12%", "resets Wed 21:00", "too close to call"])
+        #expect([fable.percent, fable.resets, fable.verdict] == ["12%", "resets Wed 21:00", nil])
         #expect(week.level == .plenty)
         #expect(now.rows[0].spoken == "Week, 15% used, resets Wed 21:00, runs out around Wed 19:15.")
         #expect(now.week?.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Wed 19:15, 1h 45m before it resets.")
@@ -76,11 +77,12 @@ struct AccountNowTests {
     }
 
     /// A, Wed 19 Nov 21:02: the week reset at 21:00 and resets again Wed 26 Nov 21:00, seven days on.
+    /// No use yet is silent: the row says nothing of it, and the sentence does.
     @Test("A reset seven days away says its date")
     func resetAWeekAway() throws {
         let now = try Self.now(0, at: Self.at("new-week-at-zero"))
         let week = try Self.read(now.rows[0])
-        #expect([week.percent, week.resets, week.verdict] == ["0%", "resets Wed 26 Nov 21:00", "no use yet"])
+        #expect([week.percent, week.resets, week.verdict] == ["0%", "resets Wed 26 Nov 21:00", nil])
         #expect(now.week?.sentences.forecast == "No use yet this week. It resets Wed 26 Nov 21:00.")
         #expect(try Self.now(0, at: Self.at("new-week-at-zero"), twelveHour: true).menuBar.text == "100% left this week")
     }
