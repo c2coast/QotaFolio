@@ -16,7 +16,7 @@ public nonisolated struct AccountAccessibilityPresentation: Equatable, Sendable 
     }
 
     /// The sentence for one account, from the same face the card draws, with each limit's row and
-    /// the header's times as Kit says them: "Week, 38% used, resets Fri 13:00, runs out around Thu
+    /// the header's times as Kit says them: "Weekly, 38% used, resets Fri 13:00, runs out around Thu
     /// 19:15.", "Wed 21:00".
     public static func make(
         account: AccountConfig,

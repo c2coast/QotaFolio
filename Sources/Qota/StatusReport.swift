@@ -12,7 +12,7 @@ nonisolated enum StatusReport {
     /// The document `--json` prints.
     struct Document: Codable, Equatable, Sendable {
         struct Row: Codable, Equatable, Sendable {
-            /// "Week", "Fable", "Session".
+            /// "Weekly", "Fable", "Session".
             let title: String
             /// What the newest reading read. Absent once the limit's reset has passed.
             let usedPercent: Double?

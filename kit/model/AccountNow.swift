@@ -32,10 +32,10 @@ public struct AccountNow: Sendable {
     /// One limit of the newest reading.
     public struct Row: Hashable, Sendable {
         public let limit: Limit.Kind
-        /// "Week", "Fable", "Session".
+        /// "Weekly", "Fable", "Session".
         public let title: String
         public let state: State
-        /// The row in one line, for VoiceOver and `qota`: "Week, 38% used, resets Fri 13:00, runs out
+        /// The row in one line, for VoiceOver and `qota`: "Weekly, 38% used, resets Fri 13:00, runs out
         /// around Thu 19:15."
         public let spoken: String
 

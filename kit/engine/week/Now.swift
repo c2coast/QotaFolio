@@ -130,10 +130,11 @@ private struct Said {
         }
     }
 
-    /// "Week", "Fable", "Session", "Fable session", "30 days".
+    /// "Weekly", "Fable", "Session", "Fable session", "30 days". The week is "Weekly", as the graph
+    /// names it.
     func title(_ kind: Limit.Kind) -> String {
         switch (kind.model, kind.period) {
-        case (nil, .week): "Week"
+        case (nil, .week): "Weekly"
         case (let model?, .week): model
         case (nil, .session): "Session"
         case (let model?, .session): "\(model) session"
