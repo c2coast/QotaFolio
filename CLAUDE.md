@@ -94,8 +94,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 
 1. Change the value, or add one with its why, in `design/tokens.json`.
 2. Run `tools/gen`. It writes `kit/design/Tokens.swift`. Commit both.
-3. Change the value's line in `kit/tests/TokensTests.swift`, which holds every value as the app draws it.
-4. Run `make check` and `make test`. A graph change shows in `tools/forecast --draw`.
+3. Run `make check` and `make test`. A graph change shows in `tools/forecast --draw`.
 
 Never edit `Tokens.swift` by hand: `make check` refuses it and names the command. A new kind of value, such as a new shape of colour, is a case in `kit/design/Design.swift`, a form `tools/gen.mjs` reads, and a case in each side's turning.
 
