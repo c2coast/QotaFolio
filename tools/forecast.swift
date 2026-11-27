@@ -9,12 +9,14 @@ import Kit
 ///
 /// `--at` prints one moment as the app says it, each account's `AccountNow`: a name from
 /// `moments.json` beside the history, a day and a time, "2025-11-18 23:45", in the Mac's time zone,
-/// or `now`. `--account` keeps one account. `--draw` takes a moment the same way and writes the
-/// graph at it to a PNG; `tools/forecast-draw.swift` has it.
+/// or `now`. `--since` prints and scores only the polls from a moment on, so a newer copy is scored
+/// on the days an older one does not hold. `--account` keeps one account. `--draw` takes a moment
+/// the same way and writes the graph at it to a PNG; `tools/forecast-draw.swift` has it.
 @main
 enum ForecastTool {
     static let usage = """
-        usage: tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm | now>] [--account <id>] [usage-history.json | folder]
+        usage: tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm | now>] [--since <moment name | yyyy-MM-dd HH:mm>]
+                              [--account <id>] [usage-history.json | folder]
                tools/forecast --draw <moment name | yyyy-MM-dd HH:mm | now> [--dark] [--increased-contrast] [--reduce-transparency]
                               [--12-hour] [--width <points>] [--out <file.png>] [--account <id>] [usage-history.json | folder]
 
@@ -23,12 +25,13 @@ enum ForecastTool {
     static func main() throws {
         var arguments = Array(CommandLine.arguments.dropFirst())
         var path = arguments.removeFirst()
-        var json = false, at: String?, only: String?, draw: String?, out: String?, look = Look()
+        var json = false, at: String?, since: String?, only: String?, draw: String?, out: String?, look = Look()
         while !arguments.isEmpty {
             let argument = arguments.removeFirst()
             switch argument {
             case "--json": json = true
             case "--at" where !arguments.isEmpty: at = arguments.removeFirst()
+            case "--since" where !arguments.isEmpty: since = arguments.removeFirst()
             case "--draw" where !arguments.isEmpty: draw = arguments.removeFirst()
             case "--out" where !arguments.isEmpty: out = arguments.removeFirst()
             case "--dark": look.appearance.dark = true
@@ -61,13 +64,21 @@ enum ForecastTool {
         // The week first, then each model's week, as the polls carry them.
         let kinds = [Limit.Kind.week] + Set(all.flatMap { $0.polls.flatMap(\.verdicts.keys) })
             .filter { $0 != .week }.sorted { ($0.model ?? "") < ($1.model ?? "") }
+        var from = Date.distantPast
+        if let since {
+            guard let moment = moment(since, beside: history) else { fail("--since takes a day and a time, \"2025-11-18 23:45\", or a moment's name\n" + usage) }
+            from = moment.at
+        }
         let forecasts = all.filter { only == nil || $0.polls.first?.reading.account.rawValue == only }
-        let scores = kinds.map { Score(of: forecasts, limit: $0, recordEnd: recordEnd) }
-        let account = Score(accountsOf: forecasts, recordEnd: recordEnd)
+        // The verdicts were read on the whole history, and an outcome reads only the polls after its
+        // own, so dropping the polls before `from` changes neither.
+        let scored = forecasts.map { Forecast(polls: $0.polls.filter { $0.reading.at >= from }, falls: $0.falls) }
+        let scores = kinds.map { Score(of: scored, limit: $0, recordEnd: recordEnd) }
+        let account = Score(accountsOf: scored, recordEnd: recordEnd)
         if json {
-            printJSON(forecasts, kinds, scores, account, recordEnd)
+            printJSON(forecasts, from, kinds, scores, account, recordEnd)
         } else {
-            printText(path, forecasts, kinds, scores, account, recordEnd)
+            printText(path, forecasts, from, kinds, scores, account, recordEnd)
         }
     }
 
@@ -170,14 +181,15 @@ enum ForecastTool {
 
     // MARK: - For a person
 
-    static func printText(_ path: String, _ forecasts: [Forecast], _ kinds: [Limit.Kind], _ scores: [Score], _ account: Score, _ end: Date) {
-        let zone = TimeZone.current
-        print("The forecast at every poll of \(path)")
+    static func printText(_ path: String, _ forecasts: [Forecast], _ from: Date, _ kinds: [Limit.Kind], _ scores: [Score], _ account: Score,
+                          _ end: Date) {
+        let zone = TimeZone.current, since = from == .distantPast ? "" : " from \(day(from, zone))"
+        print("The forecast at every poll of \(path)\(since)")
         print("Times are \(zone.identifier). \"then\" is what happened next; right or wrong once it is known.")
         print("\"says\" is the forecast's sentence for the account; \"shows\" is the record's.")
         for forecast in forecasts {
             let outcomes = kinds.map { forecast.outcomes(of: $0, recordEnd: end) }
-            for (i, poll) in forecast.polls.enumerated() {
+            for (i, poll) in forecast.polls.enumerated() where poll.reading.at >= from {
                 let head = [poll.reading.account.rawValue, day(poll.reading.at, zone)]
                 for (k, kind) in kinds.enumerated() {
                     guard let verdict = poll.verdicts[kind], let used = poll.used[kind] else { continue }
@@ -192,7 +204,8 @@ enum ForecastTool {
             }
         }
         print("")
-        print("Score over \(forecasts.map { "\($0.polls.count)" }.joined(separator: " + ")) polls; the record ends \(day(end, zone)).")
+        let polls = forecasts.map { "\($0.polls.count { $0.reading.at >= from })" }.joined(separator: " + ")
+        print("Score over \(polls) polls\(since); the record ends \(day(end, zone)).")
         for (kind, score) in zip(kinds, scores) {
             print("  \(pad(label(kind), 7))  \(score.right) right of \(score.judged) judged, \(score.flips) flips, "
                 + "median timing error \(median(score)) over \(score.timingErrors.count) run-outs "
@@ -278,12 +291,12 @@ enum ForecastTool {
         let medianError: Double?
     }
 
-    static func printJSON(_ forecasts: [Forecast], _ kinds: [Limit.Kind], _ scores: [Score], _ account: Score, _ end: Date) {
+    static func printJSON(_ forecasts: [Forecast], _ from: Date, _ kinds: [Limit.Kind], _ scores: [Score], _ account: Score, _ end: Date) {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         func emit(_ value: some Encodable) { print(String(decoding: try! encoder.encode(value), as: UTF8.self)) }
         for forecast in forecasts {
-            for poll in forecast.polls {
+            for poll in forecast.polls where poll.reading.at >= from {
                 var limits: [String: Said] = [:]
                 for kind in kinds {
                     guard let verdict = poll.verdicts[kind] else { continue }
