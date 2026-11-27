@@ -1,4 +1,6 @@
 import SwiftUI
+import Kit
+import Graph
 import QotaFolioCore
 
 public struct AboutView: View {
@@ -7,7 +9,7 @@ public struct AboutView: View {
     public var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "hourglass")
-                .font(PanelType.aboutGlyph)
+                .font(Tokens.Typography.aboutGlyph.font)
                 .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
 

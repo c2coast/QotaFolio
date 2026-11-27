@@ -1,10 +1,7 @@
 import AppKit
 import CoreGraphics
-import Foundation
 
-import QotaFolioCore
-
-/// Turns the strip's cells into the picture the menu bar holds.
+/// Turns the strip's batteries into the picture the menu bar holds.
 ///
 /// The image is drawn into its own `CGContext` at scale 2 and wrapped in an `NSImage`, not
 /// hosted from SwiftUI. Two reasons, both measured on this Mac: SwiftUI compositing modifiers
@@ -21,14 +18,10 @@ import QotaFolioCore
     /// Every input the picture depends on. Two renders with the same key are the same
     /// picture, so the cache is exact rather than approximate.
     struct Key: Hashable {
-        let cells: [BatteryCell]
+        let batteries: [Battery]
         let appearance: MenuBarAppearance
         let increaseContrast: Bool
         let differentiateWithoutColor: Bool
-        /// Which quantity the batteries are drawn to. Two modes over the same cells are two
-        /// different pictures, so the choice belongs in the key or the cache would hand back
-        /// the picture the person just switched away from.
-        let shows: StripShows
     }
 
     private let cacheCapacity: Int
@@ -60,18 +53,16 @@ import QotaFolioCore
     }
 
     public func image(
-        for cells: [BatteryCell],
+        for batteries: [Battery],
         appearance: MenuBarAppearance,
         increaseContrast: Bool,
-        differentiateWithoutColor: Bool,
-        showing: StripShows
+        differentiateWithoutColor: Bool
     ) -> NSImage {
         let key = Key(
-            cells: cells,
+            batteries: batteries,
             appearance: appearance,
             increaseContrast: increaseContrast,
-            differentiateWithoutColor: differentiateWithoutColor,
-            shows: showing
+            differentiateWithoutColor: differentiateWithoutColor
         )
         if let cached = cachedImage(for: key) { return cached }
 
@@ -92,13 +83,12 @@ import QotaFolioCore
     private func render(_ key: Key) -> NSImage {
         var options = options
         options.mono = key.differentiateWithoutColor
-        options.shows = key.shows
         let theme = BatteryTheme.make(
             darkBar: key.appearance == .darkAqua,
             contrast: key.increaseContrast
         )
         let size = NSSize(
-            width: Self.itemLength(cellCount: key.cells.count),
+            width: Self.itemLength(cellCount: key.batteries.count),
             height: barHeight
         )
         let scale = 2.0
@@ -121,11 +111,11 @@ import QotaFolioCore
         ctx.setShouldAntialias(true)
         ctx.interpolationQuality = .high
 
-        let ink = batteryStripInkWidth(count: max(1, key.cells.count), options, layout)
+        let ink = batteryStripInkWidth(count: max(1, key.batteries.count), options, layout)
         let x0 = ((size.width - ink) / 2).rounded()
         let midY = size.height / 2
 
-        if key.cells.isEmpty {
+        if key.batteries.isEmpty {
             // Nothing to report: the outline alone, at the weight an account that is not
             // answering is drawn in. The two strings say why.
             let y = (midY - options.body.h / 2).rounded()
@@ -136,7 +126,7 @@ import QotaFolioCore
                 ink: batteryFade(theme.ink, theme.dim)
             )
         } else {
-            drawStrip(ctx, key.cells, at: x0, midY: midY, theme, options, layout)
+            drawStrip(ctx, key.batteries, at: x0, midY: midY, theme, options, layout)
         }
 
         guard let cgImage = ctx.makeImage() else {

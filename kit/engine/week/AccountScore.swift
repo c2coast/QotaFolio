@@ -9,7 +9,7 @@ extension Score {
     /// week lasted, once both outcomes are known.
     public init(accountsOf forecasts: [Forecast], recordEnd: Date) {
         self.init(calls: forecasts.map { forecast in
-            let model = forecast.polls.first?.verdicts.keys.first { $0 != .week }
+            let model = forecast.model
             let week = forecast.outcomes(of: .week, recordEnd: recordEnd)
             let modelOutcomes = model.map { forecast.outcomes(of: $0, recordEnd: recordEnd) }
             return forecast.polls.indices.compactMap { i in

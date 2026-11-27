@@ -95,6 +95,12 @@ public enum Level: Hashable, Sendable, CaseIterable {
             : remainingPercent > Tokens.Level.plentyAbove ? .plenty : .low
     }
 
+    /// The step of a share used: the whole share left is what remains, rounded down. The card, the
+    /// menu bar, the graph and what each says aloud all take a limit's level here.
+    public init(used: Double) {
+        self.init(remainingPercent: Int(min(100, max(0, 100 - used)).rounded(.down)))
+    }
+
     public var colour: Looks<Colour> {
         switch self {
         case .plenty: Tokens.Level.plenty

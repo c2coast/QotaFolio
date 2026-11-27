@@ -3,8 +3,7 @@ import Foundation
 /// One window's level: what is spent of it now, and when it comes back.
 ///
 /// A row on the panel is this and nothing else — the window's name as the provider gave it,
-/// the percentage used, the reset instant. Nothing here predicts. The projection lives behind
-/// a click, in the instrument, and is a different type (`WindowForecast`).
+/// the percentage used, the reset instant. Nothing here predicts: the forecast is Kit's.
 public nonisolated struct UsageWindowLevel: Hashable, Sendable, Identifiable {
     /// `UsageReading.id` — the provider's own name for the limit and its length. The same key
     /// the history keeps the window's trace under.
@@ -73,7 +72,7 @@ public nonisolated struct AccountFace: Hashable, Sendable {
     }
 
     /// Apple turns a battery red at a fifth of its charge left. The strip reads that off what
-    /// can be spent right now (`StatusStripModel.lowRemainingPercent` — twenty percent left);
+    /// can be spent right now (`AccountLevel.lowRemainingPercent` — twenty percent left);
     /// a row reads it off its own window, in the used-language the row is written in: eighty
     /// percent used is a fifth left. A level statement about now, never a prediction.
     public static let lowUsedPercent: Double = 80

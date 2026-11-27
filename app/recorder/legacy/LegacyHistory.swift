@@ -1,104 +1,182 @@
 import Foundation
 import Kit
 
-/// Version 1.0.0's usage history, the file `usage-history.json`, read into readings.
+/// Version 1.0.0's two books of usage, read into each account's readings: the trace,
+/// `usage-history.json`, and the last poll of each account, `usage-snapshots.json`.
 ///
-/// A pure function of the file's bytes: the caller reads the file. Version 1.0.0 keeps each limit's
-/// samples and the reset time of the occurrence now open, and not the reset in force at each
-/// sample. So that reset is rebuilt here, as the forecast's method rebuilds it. A week's reset is
-/// moved back a whole week at a time from its minute until the sample falls inside its week.
-/// Occurrences of any other period do not run back to back, so a sample before the open one has no
-/// reset.
+/// A pure function of the books' bytes: the caller reads the files, or encodes the books it holds
+/// in memory as the files are, so the app, `qota` and `tools/forecast` read the same readings.
 ///
-/// A reading joins the samples of one second, and the Engine reads a model's week only where every
-/// reading carries it. So a file whose model's week was sampled at other seconds than the week is
-/// refused, rather than read as an account with no model's week.
-public enum LegacyHistory {
+/// The trace keeps each limit's samples and the reset time of the occurrence now open, and not
+/// the reset in force at each sample. So that reset is rebuilt here, as the forecast's method
+/// rebuilds it. A week's reset is moved back a whole week at a time from its minute until the
+/// sample falls inside its week. Occurrences of any other period do not run back to back, so a
+/// sample before the open one has the reset of the completed occurrence it fell in, and none
+/// outside every one.
+///
+/// A reading joins the samples of one second. Version 1.0.0 spaces each limit's samples on its own,
+/// so a model's week missed by one poll is sampled at other seconds than the week from then on.
+/// Each reading keeps the limits sampled at its time, and the Engine reads the model's week from
+/// the readings that carry it.
+///
+/// The trace keeps a week's sample a quarter-hour after the last at most, so it usually lacks the
+/// newest poll, or keeps only the limits of shorter periods from it. The snapshot is that poll whole,
+/// with each reset as the provider sent it. It is the last reading when it is newer than the trace,
+/// and it takes the place of the trace's last reading when the two are of the same second.
+///
+/// Nonisolated, because the app's history writer reads its books through it off the main actor.
+public nonisolated enum LegacyHistory {
     public struct Unreadable: Error, CustomStringConvertible {
         public let description: String
     }
 
-    /// One array for each account in the file, in the file's order, each in time order. A reading
-    /// holds every limit sampled at its time.
-    public static func readings(from data: Data) throws -> [[Reading]] {
-        let file: File
+    /// One array for each account, each in time order: the trace's accounts in its order, then any
+    /// account only the snapshots hold. With no snapshots, the trace alone, and with no trace, the
+    /// snapshots alone.
+    public static func readings(history: Data?, snapshots: Data?) throws -> [[Reading]] {
+        var accounts = try history.map { try decode(TraceBook.self, $0, "a usage history").accounts.map(trace).filter { !$0.isEmpty } } ?? []
+        guard let snapshots else { return accounts }
+        for snapshot in try decode(SnapshotBook.self, snapshots, "a snapshot book").accounts {
+            let newest = try snapshot.reading()
+            if let k = accounts.firstIndex(where: { $0[0].account == newest.account }) {
+                let last = accounts[k].count - 1
+                if newest.at > accounts[k][last].at { accounts[k].append(newest) }
+                if newest.at == accounts[k][last].at { accounts[k][last] = newest }
+            } else {
+                accounts.append([newest])
+            }
+        }
+        return accounts
+    }
+
+    private static func decode<Book: Decodable & Versioned>(_ type: Book.Type, _ data: Data, _ what: String) throws -> Book {
+        let book: Book
         do {
-            file = try JSONDecoder().decode(File.self, from: data)
+            book = try JSONDecoder().decode(Book.self, from: data)
         } catch {
-            throw Unreadable(description: "not a usage history of version 1.0.0: \(error)")
+            throw Unreadable(description: "not \(what) of version 1.0.0: \(error)")
         }
-        guard file.schemaVersion == 1 else {
-            throw Unreadable(description: "schema version \(file.schemaVersion); version 1.0.0 wrote 1")
+        guard book.schemaVersion == 1 else {
+            throw Unreadable(description: "\(what) of schema version \(book.schemaVersion); version 1.0.0 wrote 1")
         }
-        return try file.accounts.map { account in
-            let id = AccountID(account.account.rawValue)
-            if let week = account.windows.first(where: { $0.kind == .week }),
-               let off = account.windows.first(where: { $0.kind.model != nil && $0.kind.period == .week && $0.sampleTimes != week.sampleTimes }) {
-                throw Unreadable(description: "\(id.rawValue) \(off.key): sampled at other times than the week, \(week.key)")
+        return book
+    }
+
+    private static func trace(_ account: TraceBook.Account) throws -> [Reading] {
+        let id = AccountID(account.account.rawValue)
+        var limits: [Int: [Limit]] = [:]
+        for window in account.windows {
+            guard window.sampleTimes.count == window.sampleUsedBasisPoints.count else {
+                throw Unreadable(description: "\(id.rawValue) \(window.key): times and amounts differ in number")
             }
-            var limits: [Int: [Limit]] = [:]
-            for window in account.windows {
-                guard window.sampleTimes.count == window.sampleUsedBasisPoints.count else {
-                    throw Unreadable(description: "\(id.rawValue) \(window.key): times and amounts differ in number")
+            for (t, basisPoints) in zip(window.sampleTimes, window.sampleUsedBasisPoints) {
+                guard let used = Percent(basisPoints: basisPoints) else {
+                    throw Unreadable(description: "\(id.rawValue) \(window.key) at \(t): \(basisPoints) is not 0 to 10000")
                 }
-                for (t, basisPoints) in zip(window.sampleTimes, window.sampleUsedBasisPoints) {
-                    guard let used = Percent(basisPoints: basisPoints) else {
-                        throw Unreadable(description: "\(id.rawValue) \(window.key) at \(t): \(basisPoints) is not 0 to 10000")
-                    }
-                    limits[t, default: []].append(Limit(kind: window.kind, used: used, resets: window.reset(inForceAt: t)))
-                }
+                limits[t, default: []].append(Limit(kind: window.period.kind(window.scope), used: used, resets: window.reset(inForceAt: t)))
             }
-            return limits.keys.sorted().map { t in
-                Reading(account: id, at: Date(timeIntervalSince1970: TimeInterval(t)), limits: limits[t]!)
-            }
+        }
+        return limits.keys.sorted().map { t in
+            Reading(account: id, at: Date(timeIntervalSince1970: TimeInterval(t)), limits: limits[t]!)
         }
     }
 }
 
-private let week: TimeInterval = 7 * 86400
+private nonisolated let week: TimeInterval = 7 * 86400
 
-private struct File: Decodable {
-    let schemaVersion: Int
-    let accounts: [Account]
+private nonisolated protocol Versioned {
+    var schemaVersion: Int { get }
 }
 
-private struct Account: Decodable {
-    struct ID: Decodable { let rawValue: String }
-    let account: ID
-    let windows: [Window]
-}
+private nonisolated struct ID: Decodable { let rawValue: String }
 
-private struct Window: Decodable {
-    /// As version 1.0.0 encodes it: `{"weekly":{}}`, `{"session":{}}` or `{"other":{"seconds":n}}`.
-    enum Period: Decodable {
-        case weekly
-        case session
-        case other(seconds: Double)
-    }
+/// A limit's period as version 1.0.0 encodes it: `{"weekly":{}}`, `{"session":{}}` or
+/// `{"other":{"seconds":n}}`.
+private nonisolated enum Period: Decodable {
+    case weekly
+    case session
+    case other(seconds: Double)
 
-    let key: String
-    /// The model a limit counts, absent for a limit on every model.
-    let scope: String?
-    let period: Period
-    let sampleTimes: [Int]
-    let sampleUsedBasisPoints: [Int]
-    let currentOpenedAt: Int
-    let currentResetsAt: Int?
-
-    var kind: Limit.Kind {
-        switch period {
+    func kind(_ scope: String?) -> Limit.Kind {
+        switch self {
         case .weekly: Limit.Kind(model: scope, period: .week)
         case .session: Limit.Kind(model: scope, period: .session)
         case .other(let seconds): Limit.Kind(model: scope, period: .other(seconds: seconds))
         }
     }
+}
 
-    func reset(inForceAt t: Int) -> ResetTime? {
-        guard let current = currentResetsAt else { return nil }
-        let open = ResetTime(Date(timeIntervalSince1970: TimeInterval(current)))
-        guard case .weekly = period else { return t >= currentOpenedAt ? open : nil }
-        var r = open.instant
-        while r.timeIntervalSince1970 - week > TimeInterval(t) { r -= week }
-        return ResetTime(r)
+private nonisolated struct TraceBook: Decodable, Versioned {
+    let schemaVersion: Int
+    let accounts: [Account]
+
+    struct Account: Decodable {
+        let account: ID
+        let windows: [Window]
+    }
+
+    struct Window: Decodable {
+        let key: String
+        /// The model a limit counts, absent for a limit on every model.
+        let scope: String?
+        let period: Period
+        let sampleTimes: [Int]
+        let sampleUsedBasisPoints: [Int]
+        let currentOpenedAt: Int
+        let currentResetsAt: Int?
+        let completed: [Completed]?
+
+        /// An occurrence that has ended: from its open to the reset it ended at.
+        struct Completed: Decodable {
+            let openedAt: Int
+            let closedAt: Int
+        }
+
+        func reset(inForceAt t: Int) -> ResetTime? {
+            func at(_ seconds: Int) -> ResetTime { ResetTime(Date(timeIntervalSince1970: TimeInterval(seconds))) }
+            guard case .weekly = period else {
+                if let current = currentResetsAt, t >= currentOpenedAt { return at(current) }
+                return completed?.first { $0.openedAt <= t && t < $0.closedAt }.map { at($0.closedAt) }
+            }
+            guard let current = currentResetsAt else { return nil }
+            var r = at(current).instant
+            while r.timeIntervalSince1970 - week > TimeInterval(t) { r -= week }
+            return ResetTime(r)
+        }
+    }
+}
+
+private nonisolated struct SnapshotBook: Decodable, Versioned {
+    let schemaVersion: Int
+    let accounts: [Snapshot]
+
+    /// The last successful poll of one account, whole, as the provider answered it.
+    struct Snapshot: Decodable {
+        let account: ID
+        let fetchedAt: Int
+        let readings: [Entry]
+
+        /// One limit as the provider answered it.
+        struct Entry: Decodable {
+            let scope: String?
+            let period: Period
+            let usedPercent: Double
+            let resetsAt: Int?
+        }
+
+        /// The poll as a reading. Its percents are held in hundredths and clamped to 0 to 100, as
+        /// version 1.0.0 writes them into the trace, so the snapshot reads as the trace would.
+        func reading() throws -> Reading {
+            let id = AccountID(account.rawValue)
+            let limits = try readings.map { entry in
+                let basisPoints = Int(max(0, min(10_000, (entry.usedPercent * 100).rounded())))
+                guard let used = Percent(basisPoints: basisPoints) else {
+                    throw LegacyHistory.Unreadable(description: "\(id.rawValue) snapshot: \(entry.usedPercent) is not a percent")
+                }
+                return Limit(kind: entry.period.kind(entry.scope), used: used,
+                             resets: entry.resetsAt.map { ResetTime(Date(timeIntervalSince1970: TimeInterval($0))) })
+            }
+            return Reading(account: id, at: Date(timeIntervalSince1970: TimeInterval(fetchedAt)), limits: limits)
+        }
     }
 }

@@ -4,7 +4,9 @@ import Testing
 
 /// The graph's contrast, measured from its colours as they are drawn: each colour laid over the
 /// card's plate, which lies over the flat stand-in for the panel's glass, and over the band on
-/// that plate, by WCAG 2's relative luminance. In every look: light and dark, each plain and with
+/// that plate, by WCAG 2's relative luminance. The plate is the one the panel draws: both turn a
+/// design colour through `Colour.color(dark:)`, so the look's ink is pure black or white at its
+/// weight on both, never the system's label colour. In every look: light and dark, each plain and with
 /// Increase Contrast, each with Reduce Transparency or without.
 @Suite("The graph's contrast in every look")
 struct ContrastTests {

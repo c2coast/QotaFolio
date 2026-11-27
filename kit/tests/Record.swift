@@ -13,7 +13,7 @@ enum Record {
 
     static let accounts: [[Reading]] = {
         let data = try! Data(contentsOf: fixtures.appending(path: "usage-history.json"))
-        return try! LegacyHistory.readings(from: data)
+        return try! LegacyHistory.readings(history: data, snapshots: nil)
     }()
 
     static let a = Forecast(readings: accounts[0])
@@ -43,9 +43,11 @@ enum Record {
         return try #require(forecast.picture(at: Date(timeIntervalSince1970: moment.at)))
     }
 
+    static let zone = TimeZone(identifier: "UTC")!
+
     static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.timeZone = zone
         return calendar
     }()
 

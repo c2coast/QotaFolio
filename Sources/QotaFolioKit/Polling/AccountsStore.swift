@@ -86,13 +86,9 @@ private nonisolated enum StoreEngineOperation: Sendable {
     public private(set) var isPanelVisible = false
     public private(set) var manualRefresh: ManualRefreshActivity?
 
-    /// What the app has decided about the fleet: which account to use, and when that answer
-    /// could change on its own.
-    ///
-    /// `nil` until the app has read its own books once, and that is a real state rather than
-    /// a placeholder — before there is an assessment the strip draws every battery at full
-    /// strength, because nothing has been chosen and nobody should be shown sitting back.
-    public private(set) var assessment: FleetAssessment?
+    /// Each account's readings, as the history last read them from its books. Replaced whole
+    /// when they change, after each recorded poll and each account forgotten.
+    public private(set) var readings: AccountReadings = [:]
 
     /// Whether quota updates are still running for this run of the app.
     ///
@@ -139,10 +135,6 @@ private nonisolated enum StoreEngineOperation: Sendable {
     /// filled when a refresh cannot start and drained the moment the engine catches up.
     @ObservationIgnored private var deferredManualAccounts: Set<AccountID> = []
     @ObservationIgnored private var manualLinger: Task<Void, Never>?
-    /// Wakes at the assessment's own `nextReviewAt` — the earliest reset or verdict boundary
-    /// — and asks again. The answer changes when a window resets whether or not anyone polled,
-    /// so the assessment carries its own next question and this is what asks it.
-    @ObservationIgnored private var reviewWake: Task<Void, Never>?
 
     @ObservationIgnored let clock: any PollClock
     @ObservationIgnored var knownConfigs: [AccountID: AccountConfig] = [:]
@@ -220,8 +212,9 @@ private nonisolated enum StoreEngineOperation: Sendable {
         )
         self.ops = continuation
 
-        history?.onAssessment = { [weak self] assessment in
-            self?.publish(assessment)
+        history?.onReadings = { [weak self] readings in
+            guard let self, self.readings != readings else { return }
+            self.readings = readings
         }
 
         let lifecycleSink = lifecycle
@@ -264,6 +257,9 @@ private nonisolated enum StoreEngineOperation: Sendable {
         if snapshots.isEmpty, let restored = history?.restoreSnapshots(), !restored.isEmpty {
             snapshots = restored
         }
+        if readings.isEmpty {
+            history?.restoreReadings()
+        }
 
         let configs = stableConfigs()
         ops.yield(
@@ -296,8 +292,6 @@ private nonisolated enum StoreEngineOperation: Sendable {
         activeEpoch = nil
 
         retireAllSupervisors(reason: .stopped)
-        reviewWake?.cancel()
-        reviewWake = nil
         pendingAttention.removeAll()
         pendingNextAttemptDeadline.removeAll()
         tearDownObservers()
@@ -326,10 +320,7 @@ private nonisolated enum StoreEngineOperation: Sendable {
             pendingAttention[id] = nil
             pendingNextAttemptDeadline[id] = nil
             snapshots[id] = nil
-            // The fleet as it will be, not as it was: this loop runs before `knownConfigs` is
-            // replaced, and an assessment naming the account it just forgot is a lie about
-            // the fleet a tenth of a second before anyone could read it.
-            history?.forget(id, fleet: fleetAccounts(incoming.values))
+            history?.forget(id)
             pollStatus[id] = nil
             lastReport[id] = nil
             engineEpoch[id] = nil
@@ -367,7 +358,7 @@ private nonisolated enum StoreEngineOperation: Sendable {
                 // splicing two accounts' usage into one line would read as a burn rate that
                 // nobody could see was wrong.
                 snapshots[account.id] = nil
-                history?.forget(account.id, fleet: fleetAccounts(incoming.values))
+                history?.forget(account.id)
                 retireSupervisor(account.id, reason: .lineageReset)
                 pendingAttention[account.id] = nil
                 ops.yield(
@@ -395,9 +386,6 @@ private nonisolated enum StoreEngineOperation: Sendable {
         knownConfigs = incoming
         completeManualCycleIfReady()
         updateActivityLease()
-        // A rename, a reorder, an account added or signed out: the fleet changed without a
-        // poll, so the answer is asked again. It costs a pass over books already in memory.
-        reassess()
     }
 
     // MARK: - Triggers
@@ -502,11 +490,11 @@ private nonisolated enum StoreEngineOperation: Sendable {
             // History leaves with the lineage. A cleared snapshot means this row now points at a
             // different grant, and the app itself has stopped trusting its old numbers. Carrying
             // a trace across that would let two accounts' usage be spliced into one line, and
-            // the brain would read the join as a burn rate — wrong in a way nobody could see.
+            // the Engine would read the join as a pace — wrong in a way nobody could see.
             //
             // The cost is a day of samples after a reconnect. The alternative is a confident
-            // wrong recommendation, which is the one thing this app must not produce.
-            history?.forget(id, fleet: fleetAccounts())
+            // wrong forecast, which is the one thing this app must not produce.
+            history?.forget(id)
         }
 
         let pollable = PollingPolicy.isPollable(report.phase)
@@ -517,68 +505,6 @@ private nonisolated enum StoreEngineOperation: Sendable {
         updateActivityLease()
         if !pollable {
             settleManualParticipant(id)
-        }
-    }
-
-    /// Asks the brain again over the books as they stand, without waiting for a poll.
-    ///
-    /// Public because more than one thing has reason to ask: the review wake below, and any
-    /// surface that has just been shown and wants the freshest answer before it draws.
-    public func reassess() {
-        history?.reassess(fleet: fleetAccounts())
-    }
-
-    public func trace(for account: AccountID) async -> AccountUsageTrace? {
-        await history?.trace(for: account)
-    }
-
-    /// The catalog rows the brain is given, in the user's own order.
-    ///
-    /// Built here, on the main actor, and carried into the writer by value, so that nothing
-    /// off the main actor ever reaches for `AccountCatalog`.
-    private func fleetAccounts() -> [FleetAccount] {
-        fleetAccounts(knownConfigs.values)
-    }
-
-    private func fleetAccounts(_ configs: some Collection<AccountConfig>) -> [FleetAccount] {
-        configs
-            .sorted { lhs, rhs in
-                lhs.displayOrder == rhs.displayOrder
-                    ? lhs.id.rawValue.uuidString < rhs.id.rawValue.uuidString
-                    : lhs.displayOrder < rhs.displayOrder
-            }
-            .map(FleetAccount.init(config:))
-    }
-
-    private func publish(_ assessment: FleetAssessment) {
-        self.assessment = assessment
-        reconcileReviewWake(assessment.nextReviewAt)
-    }
-
-    /// Arms one timer at the assessment's own next question, and no timer at all when it has
-    /// none. Re-arming for an instant already reached would spin, so a deadline in the past
-    /// asks again once rather than scheduling.
-    private func reconcileReviewWake(_ deadline: Date?) {
-        reviewWake?.cancel()
-        reviewWake = nil
-        guard let deadline else { return }
-
-        let interval = deadline.timeIntervalSince(clock.wallNow())
-        guard interval > 0 else { return }
-        reviewWake = Task { @MainActor [weak self] in
-            try? await Task.sleep(
-                // Floored at a second. An assessment is entitled to name any instant it
-                // likes, and one that keeps naming an instant a millisecond away would
-                // otherwise be a timer spinning on a laptop battery for the rest of the day.
-                // A verdict boundary is never that urgent.
-                for: .seconds(max(interval, 1)),
-                // Half a minute of drift on a verdict boundary is invisible, and it lets macOS
-                // fold this wake into work it was already doing.
-                tolerance: .seconds(30)
-            )
-            guard let self, !Task.isCancelled else { return }
-            self.reviewWake = nil
-            self.reassess()
         }
     }
 
@@ -599,8 +525,8 @@ private nonisolated enum StoreEngineOperation: Sendable {
     /// deduplicated, and only to spare the panel a redraw it does not need.
     private func adoptSnapshot(_ snapshot: UsageSnapshot, for id: AccountID) {
         // Recorded above the guard on purpose: the sample ring wants every measurement, and a
-        // window that has not moved for an hour is a fact the verdict engine needs.
-        history?.record(snapshot, for: id, fleet: fleetAccounts())
+        // window that has not moved for an hour is a fact the Engine needs.
+        history?.record(snapshot, for: id)
 
         guard snapshots[id] != snapshot else { return }
         snapshots[id] = snapshot

@@ -10,8 +10,8 @@ public nonisolated struct FixtureUIScenario: Sendable {
     public let activeFlow: AccountFlowPhase?
     public let activeFlowProvider: AccountProvider?
     public let now: Date
-    /// A week of polls behind the accounts, when the scenario has one: what the panel's
-    /// instrument draws and what the brain assessed from it.
+    /// A week of polls behind the accounts, when the scenario has one: the books the fixture
+    /// store reads each account's readings from.
     public let history: FixtureFleetHistory?
 
     public init(

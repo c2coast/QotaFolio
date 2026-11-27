@@ -27,8 +27,8 @@ settings:
     # applies to every target in the build, and the tool and the framework need identifiers of
     # their own. This knob fans out into three distinct identifiers instead of one.
     QOTAFOLIO_BUNDLE_ID: net.c2coast.QotaFolio
-    MARKETING_VERSION: "1.2.0"
-    CURRENT_PROJECT_VERSION: "120"
+    MARKETING_VERSION: "1.3.0"
+    CURRENT_PROJECT_VERSION: "130"
     VERSIONING_SYSTEM: apple-generic
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
@@ -49,10 +49,18 @@ targets:
   QotaFolioKit:
     type: framework
     platform: macOS
-    sources: [Sources/QotaFolioKit]
+    sources:
+      - Sources/QotaFolioKit
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
+      - path: app/views/panel
+        excludes: ["graph/**", "tests/**"]
+      - path: app/views/menubar
+        excludes: ["tests/**"]
     dependencies:
       # XcodeGen does not link a static library into a framework unless it is asked.
       - { target: Kit, link: true }
+      - { target: Graph, link: true }
       - { package: QotaFolioCore, product: QotaFolioCoreXcode }
       - { package: Sparkle, product: Sparkle }
     settings:
@@ -88,8 +96,9 @@ targets:
         SKIP_INSTALL: "YES"
 
   # `qota`: the terminal command. Reads the three group files by path and the hidden accounts
-  # from the app's preferences domain, links the Model target statically, and ships inside the
-  # app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
+  # from the app's preferences domain, and says each account in Kit's words through the reader
+  # the app uses. It links the Model target and Kit statically, into its own binary, and ships
+  # inside the app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
   qota:
     type: tool
     platform: macOS
@@ -97,8 +106,11 @@ targets:
       - Sources/Qota
       - path: app/settings/hidden
         excludes: ["tests/**"]
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
     dependencies:
       - { package: QotaFolioCore, product: QotaFolioModel }
+      - { target: Kit }
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).qota
@@ -461,8 +473,8 @@ targets:
           PYTHON
 
   # The new tree's pure Swift: the values and the Engine. Foundation only, no clock, no files.
-  # tools/forecast links it, and the app does not. A library ships nonisolated API and lets its caller
-  # choose where it runs.
+  # QotaFolioKit links it into the app, once; qota and tools/forecast link their own. A library ships
+  # nonisolated API and lets its caller choose where it runs.
   Kit:
     type: library.static
     platform: macOS
@@ -483,7 +495,8 @@ targets:
     sources:
       - path: kit/tests
         excludes: ["fixtures/**"]
-      - app/recorder/legacy
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
     dependencies:
       - { target: Kit }
     settings:
@@ -491,8 +504,9 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         GENERATE_INFOPLIST_FILE: "YES"
 
-  # The Ceiling graph: its geometry, its colours and the view that draws them. tools/forecast links
-  # it, and the app does not.
+  # The Ceiling graph: its geometry, its colours and the view that draws them, and the one turning of
+  # a design value into a colour or a font, which the panel draws with too. QotaFolioKit links it
+  # into the app beside Kit, and tools/forecast links its own.
   Graph:
     type: library.static
     platform: macOS
@@ -514,7 +528,8 @@ targets:
     sources:
       - app/views/panel/graph/tests
       - kit/tests/Record.swift
-      - app/recorder/legacy
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
     dependencies:
       - { target: Graph }
       - { target: Kit }
@@ -533,8 +548,12 @@ targets:
       - app/settings/legacy
       - app/settings/hidden
       - app/main/tests
+      - app/recorder/legacy
+      - app/views/menubar/Strip.swift
+      - app/views/menubar/tests
     dependencies:
       - { package: QotaFolioCore, product: QotaFolioModel }
+      - { target: Kit }
     settings:
       base:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
@@ -548,7 +567,8 @@ targets:
     sources:
       - tools/forecast.swift
       - tools/forecast-draw.swift
-      - app/recorder/legacy
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
     dependencies:
       - { target: Kit }
       - { target: Graph }

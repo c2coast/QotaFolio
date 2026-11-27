@@ -6,7 +6,7 @@ The Settings window holds the user's choices in six tabs: General (open at login
 
 - `settings-open` opens Settings from the panel's footer.
 - `settings-tabs` switches between the six tabs.
-- `settings-strip-choice` chooses whether the batteries show the session or the week.
+- `settings-strip-choice` chooses whether the batteries show the week or the session.
 - `settings-appearance` chooses System, Light or Dark for QotaFolio's own windows.
 - `settings-login` turns open-at-login on and off.
 - `settings-reorder` moves an account up or down in the list, and so in the panel and the strip.
@@ -26,7 +26,7 @@ Preconditions:
 
 - **Open Settings.** Run `"$Q" ax press id=qotafolio.statusItem && "$Q" ax wait id=qotafolio.footer.more 5 && "$Q" ax press id=qotafolio.footer.more && "$Q" ax wait id=qotafolio.footer.settings 3 && "$Q" ax press id=qotafolio.footer.settings && "$Q" ax wait 'role=AXWindow&label=QotaFolio Settings' 5`. A window titled `QotaFolio Settings` appears; `"$Q" ax windows` shows it on layer 0.
 - **Switch tabs.** Run `"$Q" ax press 'role=AXRadioButton&label=Accounts'`. In the toolbar's `AXTabGroup`, `Accounts` has value `1`; the content heading is `Accounts` and lists each account with `More actions for <name>`, a `Show account` switch, `Up` and `Down`. The other tabs are `General`, `Alerts`, `Privacy`, `Updates`, `About`.
-- **Batteries to the week.** On General run `"$Q" ax press 'role=AXRadioButton&label=This week'`. That radio's value is `1` and `This session` is `0` in `qotafolio.settings.stripShows`.
+- **Batteries to the session.** The week is the default. On General run `"$Q" ax press 'role=AXRadioButton&label=This session'`. That radio's value is `1` and `This week` is `0` in `qotafolio.settings.stripShows`, and a `--frame` shot of the strip draws each account with a session to it.
 - **Appearance.** On General run `"$Q" ax press 'role=AXRadioButton&label=Dark'`. In `qotafolio.settings.appearance`, `Dark` has value `1`; a shot of the window shows it dark.
 - **Open at login.** On General run `"$Q" ax press id=qotafolio.settings.launchAtLogin`. Its value goes from `0` to `1`. The lab uses a stand-in for the login item, so nothing is registered with macOS.
 - **Move an account up.** On Accounts run `"$Q" ax press 'role=AXButton&label=Up&nth=2'`. The second account moves first, and `"$Q" ax find id=qotafolio.statusItem` speaks it first: in `face`, the sentence starts `QotaFolio. Attilus:`.

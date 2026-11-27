@@ -20,7 +20,7 @@ import QotaFolioCore
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         selection = defaults.string(forKey: Self.key)
-            .flatMap(StripShows.init(rawValue:)) ?? .session
+            .flatMap(StripShows.init(rawValue:)) ?? .standard
     }
 
     public var shows: StripShows {

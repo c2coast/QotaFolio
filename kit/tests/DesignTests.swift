@@ -4,7 +4,7 @@ import Testing
 struct DesignTests {
     @Test(arguments: [(0.0, Level.plenty), (49, .plenty), (49.5, .low), (50, .low), (79, .low), (79.5, .nearlyGone), (80, .nearlyGone), (100, .nearlyGone)])
     func theStepOfAShareUsed(used: Double, step: Level) {
-        #expect(Level(remainingPercent: Int((100 - used).rounded(.down))) == step)
+        #expect(Level(used: used) == step)
     }
 
     @Test func aLookPicksItsForm() {

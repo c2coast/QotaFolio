@@ -2,7 +2,7 @@ import Darwin
 import Foundation
 import QotaFolioCore
 
-/// The app's own files, on the device: the two history books and the recommendation.
+/// The app's own files, on the device: the two history books.
 ///
 /// Built on `CatalogFileIO`'s idiom — a trusted Foundation anchor, then a descriptor-relative
 /// `O_NOFOLLOW` / `O_RESOLVE_BENEATH` walk through descendants this app owns, then an atomic
@@ -307,11 +307,7 @@ extension UsageHistory {
     /// Two calls to wire: `restoreSnapshots()` at start, `record(_:for:)` after every
     /// successful poll. `forget(_:)` at Remove is a third and worth making.
     public static func live() -> UsageHistory {
-        UsageHistory(
-            files: UsageHistoryFileIO(),
-            assessor: FleetBrain(),
-            sentences: AssessmentSentences.recommendation
-        )
+        UsageHistory(files: UsageHistoryFileIO())
     }
 }
 

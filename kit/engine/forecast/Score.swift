@@ -16,15 +16,17 @@ public enum Outcome: Hashable, Sendable {
 extension Forecast {
     /// What then happened at each poll, for one limit. Work is measured with the points falls gave
     /// back, so a banked reset spent later does not hide work that was done. The record ends at
-    /// `recordEnd`, the last poll of any account.
+    /// `recordEnd`, the last poll of any account. At a poll that does not read the limit, what
+    /// happened to it is not known.
     public func outcomes(of kind: Limit.Kind, recordEnd: Date) -> [Outcome] {
         let t = polls.map { $0.reading.at.timeIntervalSince1970 }
         let reset = polls.map { $0.resets.instant.timeIntervalSince1970 }
-        let used = polls.map { $0.reading.limit(kind)?.used.value ?? 0 }
+        let used = polls.map { $0.used[kind]?.value ?? 0 }
         let c = polls.indices.map { used[$0] + (polls[$0].givenBack[kind] ?? 0) }
         let end = recordEnd.timeIntervalSince1970
         return polls.indices.map { i in
-            let week = polls[i].reading.limit(.week)?.used.value ?? 0
+            guard polls[i].used[kind] != nil else { return .unknown }
+            let week = polls[i].used[.week]?.value ?? 0
             if week >= 100 || used[i] >= 100 { return .spent }
             let h = 100 - used[i]
             for j in (i + 1)..<t.count {

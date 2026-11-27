@@ -130,16 +130,16 @@ public struct SettingsGeneralSection: View {
                     qfLocalized("settings.strip.label", defaultValue: "The menu-bar batteries", comment: "The row label for which quantity the menu-bar batteries are drawn to."),
                     selection: stripShows.binding()
                 ) {
-                    Text(qfLocalized("settings.strip.session", defaultValue: "This session", comment: "Battery quantity: what this five-hour session still holds.")).tag(StripShows.session)
                     Text(qfLocalized("settings.strip.week", defaultValue: "This week", comment: "Battery quantity: what the week still holds.")).tag(StripShows.week)
+                    Text(qfLocalized("settings.strip.session", defaultValue: "This session", comment: "Battery quantity: what this five-hour session still holds.")).tag(StripShows.session)
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier(SettingsAXIdentifiers.stripShows)
 
                 Text(qfLocalized(
                     "settings.strip.hint",
-                    defaultValue: "This session is what this five-hour session still holds; this week is what the week still holds. Each is drawn on its own; the words say both. The Control shows the same figure.",
-                    comment: "One line under the menu-bar battery picker, naming both quantities, saying each is drawn on its own and that the Control follows the choice."
+                    defaultValue: "This week is what the week still holds. This session is what an open five-hour session still holds; an account with none shows its week.",
+                    comment: "One line under the menu-bar battery picker, naming both quantities and what an account with no session shows."
                 ))
                 .font(.caption)
                 .foregroundStyle(.secondary)

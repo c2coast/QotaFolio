@@ -11,8 +11,8 @@ extension AccountForecast {
         let model = poll.verdicts.keys.first { $0 != .week }
         let week = poll.verdicts[.week] ?? .silent(.noClockYet)
         let modelVerdict = model.flatMap { poll.verdicts[$0] }
-        let weekUsed = poll.reading.limit(.week)?.used.value ?? 0
-        let modelUsed = model.flatMap { poll.reading.limit($0)?.used.value } ?? 0
+        let weekUsed = poll.used[.week]?.value ?? 0
+        let modelUsed = model.flatMap { poll.used[$0]?.value } ?? 0
 
         if weekUsed >= 100 {
             self = .spent

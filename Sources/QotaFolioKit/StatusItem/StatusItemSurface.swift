@@ -2,13 +2,11 @@ import QotaFolioCore
 
 @MainActor public protocol StatusItemSurface: AnyObject {
     /// `colourless` is the privacy blanket: the batteries in ink alone, as Differentiate Without
-    /// Colour draws them, so a shared screen shows levels and no provider. `showing` is which
-    /// quantity the batteries are drawn to, which is the person's own choice.
+    /// Colour draws them, so a shared screen shows levels and no provider.
     func apply(
-        _ strip: StatusStripModel,
+        _ strip: Strip,
         appearance: MenuBarAppearance,
-        colourless: Bool,
-        showing: StripShows
+        colourless: Bool
     )
     var currentAppearance: MenuBarAppearance { get }
     /// Whether macOS actually put the item on the bar. Answered only after a first `apply`,

@@ -1,4 +1,5 @@
 import Foundation
+import Kit
 import Observation
 import OSLog
 import QotaFolioCore
@@ -12,7 +13,7 @@ import QotaFolioCore
     /// The privacy blanket, when the app has one: names off the strip's words, colour off
     /// the batteries, while the screen is watched or the person asked.
     @ObservationIgnored private let privacy: ScreenPrivacy?
-    /// Which quantity the batteries are drawn to. Nil is the default one, this session.
+    /// Which quantity the batteries are drawn to. Nil is the default one, `StripShows.standard`.
     @ObservationIgnored private let stripShows: StripPreferences?
 
     @ObservationIgnored public weak var panel: (any PanelToggling)? {
@@ -26,10 +27,11 @@ import QotaFolioCore
     /// where macOS actually put the item.
     public private(set) var menuBarPlacement: MenuBarPlacement = .pending
 
-    @ObservationIgnored private var lastStrip: StatusStripModel?
+    /// The strip as the item last drew it.
+    public var strip: Strip? { lastStrip }
+    @ObservationIgnored private var lastStrip: Strip?
     @ObservationIgnored private var lastAppearance: MenuBarAppearance?
     @ObservationIgnored private var lastColourless = false
-    @ObservationIgnored private var lastShows: StripShows = .session
     @ObservationIgnored private var resetWake: (any CandidacyWake)?
     @ObservationIgnored private var resetWakeDeadline: Date?
     @ObservationIgnored private var observationRebuildScheduled = false
@@ -114,6 +116,7 @@ import QotaFolioCore
             _ = catalog.loadState
             _ = store.snapshots
             _ = store.pollStatus
+            _ = store.readings
             _ = privacy?.isBlanketed
             _ = stripShows?.shows
         } onChange: { [weak self] in
@@ -136,38 +139,31 @@ import QotaFolioCore
         let allAccounts = catalog.accounts
         let visibleAccounts = projectedVisibleAccounts(allAccounts, using: visibility)
         let blanketed = privacy?.isBlanketed ?? false
-        let strip: StatusStripModel
-        if isDefensiveZeroVisibleState(
+        let strip: Strip = if isDefensiveZeroVisibleState(
             allAccounts: allAccounts,
             visibleAccounts: visibleAccounts,
             loadState: catalog.loadState
         ) {
-            strip = noVisibleAccountsStrip()
+            Strip(saying: qfLocalized(
+                "strip.noVisibleAccounts",
+                defaultValue: "No accounts are visible. Open Settings to show one.",
+                comment: "Menu-bar strip words when configured accounts exist but every account is hidden."
+            ))
         } else {
-            strip = StatusStripModel.make(
-                catalog: visibleAccounts,
-                loadState: catalog.loadState,
-                snapshots: store.snapshots,
-                pollStatus: store.pollStatus,
-                now: now,
-                namesHidden: blanketed
-            )
+            strip(of: visibleAccounts, now: now, namesHidden: blanketed)
         }
         let appearance = surface.currentAppearance
-        let shows = stripShows?.shows ?? .session
 
         if strip != lastStrip
             || appearance != lastAppearance
-            || blanketed != lastColourless
-            || shows != lastShows {
-            surface.apply(strip, appearance: appearance, colourless: blanketed, showing: shows)
+            || blanketed != lastColourless {
+            surface.apply(strip, appearance: appearance, colourless: blanketed)
             lastStrip = strip
             lastAppearance = appearance
             lastColourless = blanketed
-            lastShows = shows
         }
 
-        reconcileWake(nextReset(in: strip, from: now))
+        reconcileWake(nextReset(of: visibleAccounts, from: now))
     }
 
     /// Whether macOS hosted the item.
@@ -215,24 +211,61 @@ import QotaFolioCore
         }
     }
 
-    private func noVisibleAccountsStrip() -> StatusStripModel {
-        let message = qfLocalized(
-            "strip.noVisibleAccounts",
-            defaultValue: "No accounts are visible. Open Settings to show one.",
-            comment: "Menu-bar strip words when configured accounts exist but every account is hidden."
-        )
-        return .saying(message)
+    /// The strip of the visible accounts: each as Kit says it at this moment, or the outline with
+    /// the reason it has no reading.
+    private func strip(of accounts: [AccountConfig], now: Date, namesHidden: Bool) -> Strip {
+        switch catalog.loadState {
+        case .unreadable:
+            return Strip(saying: qfLocalized(
+                "strip.catalogUnreadable",
+                defaultValue: "QotaFolio can't read its saved accounts. Open QotaFolio for details.",
+                comment: "Menu-bar strip words when the saved account list cannot be read. The retry lives in the panel, so this points there rather than offering one."
+            ))
+        case .loading:
+            return Strip(saying: qfLocalized("strip.loading", defaultValue: "Loading remaining quota.", comment: "Menu-bar strip words while the account list or the first reading is loading."))
+        case .missing, .loaded:
+            break
+        }
+        guard !accounts.isEmpty else {
+            return Strip(saying: qfLocalized("strip.noAccounts", defaultValue: "No accounts configured. Open QotaFolio to add one.", comment: "Menu-bar strip words when no account has been added yet."))
+        }
+        let words = TimeWords(locale: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, now: now)
+        return Strip(accounts.map { account in
+            let name = presentedAccountName(account, namesHidden: namesHidden)
+            let level = AccountLevel.make(account: account, snapshot: store.snapshots[account.id], status: store.pollStatus[account.id])
+            if level.hasReading, let said = AccountNow(readings: store.readings[account.id] ?? [], words: words) {
+                return .now(name: name, said)
+            }
+            return quiet(name, level.state)
+        }, session: (stripShows?.shows ?? .standard) == .session)
     }
 
-    /// When the strip's own words stop being true without another poll.
-    ///
-    /// A spent account counts down to its return in the tooltip and in what VoiceOver reads,
-    /// so the strip is re-made at the soonest of those instants even if nothing else happens.
-    private func nextReset(in strip: StatusStripModel, from now: Date) -> Date? {
-        strip.cells
-            .compactMap(\.minutesToReturn)
+    /// An account with nothing to draw, in the tooltip's line and the spoken sentence.
+    private func quiet(_ name: String, _ state: AccountLevel.State) -> Strip.Account {
+        switch state {
+        case .noReading(.needsSignIn):
+            .quiet(line: qfLocalized("strip.tooltip.needsSignIn", defaultValue: "\(name) — needs sign-in", comment: "Menu-bar strip tooltip line for an account whose grant has lapsed."),
+                   sentence: qfLocalized("strip.ax.account.needsSignIn", defaultValue: "\(name) needs sign-in.", comment: "Spoken menu-bar strip sentence for an account whose grant has lapsed."))
+        case .noReading(.unavailable):
+            .quiet(line: qfLocalized("strip.tooltip.unavailable", defaultValue: "\(name) — no reading", comment: "Menu-bar strip tooltip line for an account the provider answered nothing usable for."),
+                   sentence: qfLocalized("strip.ax.account.unavailable", defaultValue: "\(name) has no reading.", comment: "Spoken menu-bar strip sentence for an account the provider answered nothing usable for."))
+        case .noReading(.setupIssue):
+            .quiet(line: qfLocalized("strip.tooltip.setupIssue", defaultValue: "\(name) — setup issue", comment: "Menu-bar strip tooltip line for an account that cannot be polled until it is repaired."),
+                   sentence: qfLocalized("strip.ax.account.setupIssue", defaultValue: "\(name) has a setup issue.", comment: "Spoken menu-bar strip sentence for an account that cannot be polled until it is repaired."))
+        case .noReading(.waitingForFirstReading), .reading, .low, .spent:
+            .quiet(line: qfLocalized("strip.tooltip.waiting", defaultValue: "\(name) — waiting for its first reading", comment: "Menu-bar strip tooltip line for an account whose first reading has not arrived."),
+                   sentence: qfLocalized("strip.ax.account.waiting", defaultValue: "\(name) has no reading yet.", comment: "Spoken menu-bar strip sentence for an account whose first reading has not arrived."))
+        }
+    }
+
+    /// When the strip's words stop being true without another poll: the soonest reset of a limit
+    /// an account last read, after which Kit says that limit has reset.
+    private func nextReset(of accounts: [AccountConfig], from now: Date) -> Date? {
+        accounts.compactMap { store.readings[$0.id]?.last }
+            .flatMap(\.limits)
+            .compactMap { $0.resets?.instant }
+            .filter { $0 > now }
             .min()
-            .map { now.addingTimeInterval(TimeInterval($0) * 60) }
     }
 
     private func reconcileWake(_ deadline: Date?) {

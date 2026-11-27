@@ -10,7 +10,8 @@ public struct Sentences: Hashable, Sendable {
 
 extension WeekPicture {
     /// The sentences, word for word as the chart page says them on a 24-hour clock. Every time
-    /// carries its day, said as the words say a time.
+    /// carries its day, said as the words say a time. A run-out time at or before the moment the
+    /// words are said is left out, because nothing newer was read to say whether it came.
     public func sentences(in words: TimeWords) -> Sentences {
         let said = Said(time: words, picture: self)
         return Sentences(forecast: said.forecast(), record: said.record())
@@ -36,6 +37,8 @@ private struct Said {
             return "No use yet this week. It resets \(back)."
         case .modelSpent(let week):
             switch week {
+            case .runsOut(let at, _, _) where passed(at):
+                return "\(name) is spent until \(back)."
             case .runsOut(let at, _, let speed):
                 return "\(name) is spent until \(back). \(pace(speed)), other models reach the week’s limit around \(time.quarterDay(at))."
             case .lasts(let landing, _, let speed):
@@ -46,8 +49,13 @@ private struct Said {
         case .silent:
             return "Too early to say — the range is wider than a number would be honest about."
         case .runsOut(let first, let at, let speed, _) where first == .week:
-            let before = countdown(Int(reset - TimeWords.quarterHour(at).timeIntervalSince1970))
-            return "\(pace(speed)), the week reaches its limit around \(time.quarterDay(at)), \(before) before it resets."
+            return passed(at) ? unread() : weekRunsOut(at, speed)
+        case .runsOut(_, let at, _, let week) where passed(at):
+            switch week {
+            case .runsOut(let weekAt, _, let speed)?: return passed(weekAt) ? unread() : weekRunsOut(weekAt, speed)
+            case .lasts(let landing, _, let speed)?: return "\(pace(speed)), the week lasts to its reset \(back) with \(left(landing))."
+            case .spent?, .silent?, nil: return "The week is too close to call."
+            }
         case .runsOut(_, let at, let speed, let week):
             let then = switch week {
             case .runsOut(let weekAt, _, _): "and the week around \(time.quarterDay(weekAt))"
@@ -61,6 +69,17 @@ private struct Said {
         }
     }
 
+    func weekRunsOut(_ at: Date, _ speed: Verdict.Speed) -> String {
+        let before = countdown(Int(reset - TimeWords.quarterHour(at).timeIntervalSince1970))
+        return "\(pace(speed)), the week reaches its limit around \(time.quarterDay(at)), \(before) before it resets."
+    }
+
+    /// Whether a run-out time has come by the moment the words are said.
+    func passed(_ at: Date) -> Bool { at <= time.now }
+
+    /// Every run-out time has passed, and no reading since says whether it came.
+    func unread() -> String { "Nothing has been read since \(time.day(picture.now.at)), so there is no forecast." }
+
     /// The latest of the record's events; at a spent week, how long it has been at the limit.
     func record() -> String? {
         var latest: (at: Double, said: String)?
@@ -71,10 +90,17 @@ private struct Said {
             let before = fall.before.at.timeIntervalSince1970, after = fall.after.at.timeIntervalSince1970
             let unwatched = after - before > WeekPicture.gapSeconds
             let what = "gave back \(points(fall.givenBack[.week] ?? 0))\(unwatched ? " or more" : "")"
-            let kind = fall.kind == .full ? "A full banked reset" : picture.model == nil ? "A banked reset" : "A \(name) banked reset"
-            add(after, unwatched
-                ? "\(kind) fell between \(day(before)) and \(day(after)), while nobody watched; it \(what)."
-                : "\(kind) at \(day(after)) \(what).")
+            switch fall.kind {
+            case .full, .model:
+                let kind = fall.kind == .full ? "A full banked reset" : "A \(name) banked reset"
+                add(after, unwatched
+                    ? "\(kind) fell between \(day(before)) and \(day(after)), while nobody watched; it \(what)."
+                    : "\(kind) at \(day(after)) \(what).")
+            case .unexplained:
+                add(after, unwatched
+                    ? "Between \(day(before)) and \(day(after)), while nobody watched, the week \(what); the readings do not say why."
+                    : "At \(day(after)) the week \(what); the readings do not say why.")
+            }
         }
         for gap in picture.gaps where gap.fall == nil {
             let rose = gap.after.week.work - gap.before.week.work

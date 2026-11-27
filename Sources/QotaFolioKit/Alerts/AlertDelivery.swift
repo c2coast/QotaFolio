@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import UserNotifications
+import Kit
 import QotaFolioCore
 
 /// Where the person stands with the system on notifications from this app.
@@ -63,17 +64,21 @@ public nonisolated enum AlertAuthorization: Equatable, Sendable {
     }
 }
 
-/// Delivers the brain's alerts as the assessment publishes them: one delivery per key, only
-/// for accounts the person wants to hear about, and only after the system has been asked —
-/// the first time an alert is due, never at launch.
+/// Delivers "a spent limit is back": when a new reading of an account finds a limit that had
+/// reached 100 percent back, by its reset or by a banked reset. One delivery per event, only for
+/// accounts the person wants to hear about, and only after the system has been asked — the first
+/// time an alert is due, never at launch.
 ///
-/// The store's review wake re-assesses on the minute a reset lands, so a fresh-window alert
-/// arrives on the minute too, through this same observation.
+/// The event is Kit's `SpentLimitBack`, which the account's newest reading finds, so it is the
+/// account, the limit, the reset it was spent until and how it came back. Its key is
+/// that, so the same event worked out again on the next poll is seen, and a week spent twice is
+/// two events.
 @MainActor @Observable public final class AlertDeliverer {
     /// Where the person stands with the system, as last read. Settings shows it.
     public private(set) var authorization: AlertAuthorization = .unknown
 
     @ObservationIgnored private let store: any AccountsStoring
+    @ObservationIgnored private let catalog: any AccountCataloging
     @ObservationIgnored private let preferences: AlertPreferences
     @ObservationIgnored private let center: any AlertCenter
     @ObservationIgnored private let defaults: UserDefaults
@@ -83,19 +88,21 @@ public nonisolated enum AlertAuthorization: Equatable, Sendable {
     @ObservationIgnored private var seen: Set<String>
     @ObservationIgnored private var started = false
     @ObservationIgnored private var delivering = false
-    @ObservationIgnored private var assessmentWaiting: FleetAssessment?
+    @ObservationIgnored private var readingsWaiting: AccountReadings?
 
     public static let seenKeysKey = "alerts.delivered.v1"
     static let seenKeysCap = 200
 
     public init(
         store: any AccountsStoring,
+        catalog: any AccountCataloging,
         preferences: AlertPreferences,
         center: any AlertCenter,
         defaults: UserDefaults = .standard,
         style: SentenceStyle = SentenceStyle()
     ) {
         self.store = store
+        self.catalog = catalog
         self.preferences = preferences
         self.center = center
         self.defaults = defaults
@@ -112,9 +119,8 @@ public nonisolated enum AlertAuthorization: Equatable, Sendable {
         started = true
         Task { @MainActor in await self.refreshAuthorization() }
         armObservation()
-        if let assessment = store.assessment {
-            Task { @MainActor in await self.deliver(from: assessment) }
-        }
+        let readings = store.readings
+        Task { @MainActor in await self.deliver(from: readings) }
     }
 
     /// Reads the system's answer again — Settings asks when its window opens.
@@ -124,45 +130,47 @@ public nonisolated enum AlertAuthorization: Equatable, Sendable {
 
     private func armObservation() {
         withObservationTracking {
-            _ = store.assessment
+            _ = store.readings
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self else { return }
-                if let assessment = self.store.assessment {
-                    await self.deliver(from: assessment)
-                }
+                await self.deliver(from: self.store.readings)
                 self.armObservation()
             }
         }
     }
 
-    /// Delivers what is due in `assessment`. One pass at a time: a newer assessment arriving
-    /// mid-pass waits and is delivered next, so no key is delivered twice.
-    public func deliver(from assessment: FleetAssessment) async {
+    /// Delivers what is due in `readings`. One pass at a time: newer readings arriving mid-pass
+    /// wait and are delivered next, so no key is delivered twice.
+    public func deliver(from readings: AccountReadings) async {
         if delivering {
-            assessmentWaiting = assessment
+            readingsWaiting = readings
             return
         }
         delivering = true
         defer {
             delivering = false
         }
-        await deliverPass(assessment)
-        while let next = assessmentWaiting {
-            assessmentWaiting = nil
+        await deliverPass(readings)
+        while let next = readingsWaiting {
+            readingsWaiting = nil
             await deliverPass(next)
         }
     }
 
-    private func deliverPass(_ assessment: FleetAssessment) async {
-        let unseen = assessment.alerts.filter { !seen.contains($0.key) }
+    private func deliverPass(_ readings: AccountReadings) async {
+        let unseen = readings.flatMap { id, readings in
+            SpentLimitBack.newest(in: readings).map { (id, $0) }
+        }.filter { !seen.contains(Self.key($1)) }
         guard !unseen.isEmpty else { return }
 
-        // An alert about an account the person switched off is not wanted, and not kept for
-        // later either: switching alerts back on should not replay the past.
-        let wanted = unseen.filter { preferences.isEnabled(for: $0.account) }
-        for alert in unseen where !wanted.contains(where: { $0.key == alert.key }) {
-            markSeen(alert.key)
+        // An alert about an account the person switched off, or one the catalog no longer holds,
+        // is not wanted, and not kept for later either: switching alerts back on should not
+        // replay the past.
+        let names = Dictionary(catalog.accounts.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        let wanted = unseen.filter { id, _ in preferences.isEnabled(for: id) && names[id] != nil }
+        for (_, back) in unseen where !wanted.contains(where: { $0.1 == back }) {
+            markSeen(Self.key(back))
         }
         guard !wanted.isEmpty else { return }
 
@@ -174,18 +182,28 @@ public nonisolated enum AlertAuthorization: Equatable, Sendable {
         authorization = status
         guard status == .authorized else { return }
 
-        for alert in wanted {
-            guard let body = AlertSentences.body(for: alert, in: assessment, style: style) else {
-                markSeen(alert.key)
-                continue
-            }
+        let words = TimeWords(timeZone: style.timeZone, twelveHour: style.locale.clockIsTwelveHour, now: Date())
+        for (id, back) in wanted {
+            let key = Self.key(back)
             do {
-                try await center.deliver(id: alert.key, body: body)
-                markSeen(alert.key)
+                try await center.deliver(id: key, body: back.sentence(account: names[id] ?? "", words: words))
+                markSeen(key)
             } catch {
-                // The system refused this one; the next assessment brings it round again.
+                // The system refused this one; the next readings bring it round again.
             }
         }
+    }
+
+    /// The event as a key: the account, the limit, the reset it was spent until, and how it
+    /// came back.
+    static func key(_ back: SpentLimitBack) -> String {
+        let period = switch back.limit.period {
+        case .week: "week"
+        case .session: "session"
+        case .other(let seconds): "\(Int(seconds))s"
+        }
+        let until = Int(back.spentUntil.instant.timeIntervalSince1970)
+        return "back|\(back.account.rawValue)|\(back.limit.model ?? "")|\(period)|\(until)|\(back.how)"
     }
 
     private func markSeen(_ key: String) {

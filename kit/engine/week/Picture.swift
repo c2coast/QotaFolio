@@ -45,7 +45,7 @@ extension Forecast {
 
     private static func point(_ poll: Poll, _ model: Limit.Kind?) -> WeekPicture.Point {
         func meter(_ kind: Limit.Kind) -> WeekPicture.Meter {
-            WeekPicture.Meter(used: poll.reading.limit(kind)?.used.value ?? 0, givenBack: poll.givenBack[kind] ?? 0)
+            WeekPicture.Meter(used: poll.used[kind]?.value ?? 0, givenBack: poll.givenBack[kind] ?? 0)
         }
         return WeekPicture.Point(at: poll.reading.at, week: meter(.week), model: model.map(meter), polled: true)
     }

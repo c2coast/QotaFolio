@@ -3,16 +3,16 @@ import Kit
 
 /// The rule that places the words inside the plot: each tries its places in order and takes the
 /// first that lies inside the plot, touches no word and no dot placed before it, and covers no line
-/// of the record. A forecast's word tries first only the places that read as its own dot's, clear
-/// of the marks of now, and takes any free place when none does. A word with a shorter form tries
-/// that in each place next. A word with no such place is left out, never drawn over another and
-/// never over the record.
+/// of the record or of a forecast. A forecast's word tries first only the places that read as its
+/// own dot's, clear of the marks of now, and takes any free place when none does, over a forecast's
+/// line if it must. A word with a shorter form tries that in each place next. A word with no such
+/// place is left out, never drawn over another and never over the record.
 struct Placer {
     let width: Double
     let height: Double
     private var taken: [CGRect] = []
-    /// Each piece of the record's lines, with how far its stroke reaches either side of it.
-    private var record: [(a: CGPoint, b: CGPoint, reach: Double)] = []
+    /// Each piece of the lines no word covers, with how far its stroke reaches either side of it.
+    private var lines: [(a: CGPoint, b: CGPoint, reach: Double, forecast: Bool)] = []
     private var nows: [CGPoint] = []
     private(set) var placed: [Ceiling.Label] = []
 
@@ -52,18 +52,20 @@ struct Placer {
         nows.append(center)
     }
 
-    /// The record's lines, stroked this wide. No word covers them.
-    mutating func record(_ lines: [[CGPoint]], width: Double) {
+    /// Lines of the record, or of a forecast, stroked this wide. No word covers the record, and a
+    /// word covers a forecast only where it is let.
+    mutating func keepOff(_ lines: [[CGPoint]], width: Double, forecast: Bool = false) {
         for line in lines {
-            record += zip(line, line.dropFirst()).map { ($0, $1, width / 2) }
+            self.lines += zip(line, line.dropFirst()).map { ($0, $1, width / 2, forecast) }
         }
     }
 
     /// Places a word in the first of its spots that is free, and says whether it found one. Given
-    /// its dot, a forecast's word takes only a spot that reads as that dot's.
+    /// its dot, a forecast's word takes only a spot that reads as that dot's. Let over a forecast,
+    /// it may cover a forecast's line.
     @discardableResult
     mutating func put(_ text: String, or short: String? = nil, _ kind: Ceiling.Label.Kind, _ weight: Weight, _ tone: Tone,
-                      _ spots: [Spot], by dot: CGPoint? = nil) -> Bool {
+                      _ spots: [Spot], by dot: CGPoint? = nil, overForecast: Bool = false) -> Bool {
         for text in [text] + (short.map { [$0] } ?? []) {
             let wide = ChartType.width(text, weight)
             for spot in spots {
@@ -71,7 +73,7 @@ struct Placer {
                 let box = CGRect(x: x0 - 1, y: spot.y - 9, width: wide + 2, height: 11)
                 guard box.minX >= 0, box.maxX <= width, box.minY >= 0, box.maxY <= height,
                       !taken.contains(where: { overlap($0, box) }),
-                      !record.contains(where: { crosses($0.a, $0.b, box.insetBy(dx: -$0.reach, dy: -$0.reach)) }),
+                      !lines.contains(where: { !(overForecast && $0.forecast) && crosses($0.a, $0.b, box.insetBy(dx: -$0.reach, dy: -$0.reach)) }),
                       dot.map({ reads(box, as: $0) }) ?? true else { continue }
                 taken.append(box)
                 placed.append(Ceiling.Label(kind: kind, text: text, weight: weight, tone: tone, box: box))
@@ -154,6 +156,9 @@ struct Ticks {
                                         box: CGRect(x: a, y: h + 4, width: wide, height: 11)))
         }
 
+        if axis.pieces.contains(where: { $0.fold.map { $0 != .atLimit } ?? false }) {
+            put(width, words.day(picture.resets.instant), current: false, .end, kind: .resetTime)
+        }
         if let step = [3, 6, 12].first(where: { Double($0) * hour / axis.secondsPerPoint >= 40 }) {
             for piece in axis.open {
                 if piece.from > picture.start {
@@ -194,7 +199,6 @@ struct Ticks {
             }
             let marks = slashes(piece.x0 + 2) + (fold == .atLimit ? slashes(piece.x1 - 2) : [])
             strokes.append(Ceiling.Stroke(part: .foldBreak, lines: marks, width: 1, dash: [], tone: .chartInk, opacity: 1, round: false))
-            if fold != .atLimit { put(width, words.day(picture.resets.instant), current: false, .end, kind: .resetTime) }
         }
         strokes.removeAll { $0.lines.isEmpty }
     }

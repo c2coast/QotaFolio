@@ -43,13 +43,13 @@ struct MomentsTests {
     /// week. The cumulative is 48 + 50 = 98.
     /// Three hours back, 16:56:41, the cumulative was 97, flat from 15:37:17 to 18:28:38. One point
     /// of rise is under two, so the burn is quiet and the week's pace speaks.
-    /// The week's clock is 111401 seconds. The poll before the week began, Fri 14 12:48:02, read 100,
-    /// so the 917 seconds from 13:00:00 to the next poll at 13:15:17 count as blocked:
-    /// 110484 seconds = 30.69 hours. Pace = 98 / 30.69 = 3.1932 points an hour.
-    /// 52 points to go / 3.1932 = 16.284 hours: Sun 16 Nov 12:13:45, before the reset.
-    /// The step: 47.5 at 3.1932 + 0.5 / 30.69 runs out Sun 12:18; 48.5 at 3.1932 - 0.5 / 30.69 runs
-    /// out Sun 12:09. Both run out, so it speaks.
-    @Test("B, Sat 15 Nov 19:56: 50 points given back, blocked time out, the week's pace says Sun 16 Nov 12:13")
+    /// The week's clock is 111401 seconds = 30.945 hours. The poll before the week began, Fri 14
+    /// 12:48:02, read 100, but the week reset at 13:00:00 and could be spent from then, so none of
+    /// it is blocked. Pace = 98 / 30.945 = 3.1669 points an hour.
+    /// 52 points to go / 3.1669 = 16.420 hours: Sun 16 Nov 12:21:51, before the reset.
+    /// The step: 47.5 at 3.1669 + 0.5 / 30.945 runs out Sun 12:26; 48.5 at 3.1669 - 0.5 / 30.945 runs
+    /// out Sun 12:17. Both run out, so it speaks.
+    @Test("B, Sat 15 Nov 19:56: 50 points given back, the week's pace says Sun 16 Nov 12:21")
     func weekPace() throws {
         let poll = try Record.poll(Record.b, 15, 19, 56)
         #expect(poll.givenBack[.week] == 50)
@@ -57,9 +57,38 @@ struct MomentsTests {
             Issue.record("expected the week to run out, got \(String(describing: poll.verdicts[.week]))")
             return
         }
-        #expect(Record.minute(at) == "Sun 16 Nov 12:13")
-        #expect(abs(rate - 3.1932) < 0.0001)
+        #expect(Record.minute(at) == "Sun 16 Nov 12:21")
+        #expect(abs(rate - 3.1669) < 0.0001)
         #expect(speed == .weekPace)
+    }
+
+    /// B, Fri 14 Nov 13:15:17, the first poll of a week that reset at 13:00:00. The poll before it,
+    /// 12:48:02, read 100 for the week and for Fable; this one reads 5 and 7.
+    ///
+    /// The limit could be spent from the reset on, so the 917 seconds since 13:00:00 are clock, not
+    /// blocked time. Three hours back is before the week began, so the burn's clock is the week's:
+    /// 0.2547 hours, under one hour, and the week's pace speaks.
+    /// Pace = 5 / 0.2547 = 19.629 points an hour; 95 points / 19.629 = 4.840 hours: Fri 18:05:40.
+    /// The step: 4.5 at 19.629 + 0.5 / 0.2547 = 21.592 runs out Fri 17:40; 5.5 at 17.666 runs out
+    /// Fri 18:36. Both run out, so it speaks.
+    /// Fable takes the week's pace at the week's mix, 7 / 5 = 1.4: 27.481 points an hour, and 93
+    /// points run out Fri 16:38:20. The step: 6.5 at 30.229 runs out 16:20, 7.5 at 24.733 runs out
+    /// 16:59. Both run out, so it speaks.
+    ///
+    /// Counted as blocked, those 917 seconds left no clock, and both limits were silent.
+    @Test("B, Fri 14 Nov 13:15: the minutes after a spent week's reset are clock, and both limits run out")
+    func afterSpentReset() throws {
+        let poll = try Record.poll(Record.b, 14, 13, 15)
+        guard case .runsOut(let at, let rate, let speed) = poll.verdicts[.week],
+              case .runsOut(let fableAt, let fableRate, _) = poll.verdicts[Record.fable] else {
+            Issue.record("expected both limits to run out, got \(poll.verdicts)")
+            return
+        }
+        #expect(at == Record.moment(14, 18, 5, 40))
+        #expect(abs(rate - 19.629) < 0.001)
+        #expect(speed == .weekPace)
+        #expect(fableAt == Record.moment(14, 16, 38, 20))
+        #expect(abs(fableRate - 27.481) < 0.001)
     }
 
     /// A, Tue 18 Nov 20:43:36. The week reads 2, half an hour after a full banked reset took it

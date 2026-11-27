@@ -23,6 +23,24 @@ export const walls = [
     calls: [],
   },
   {
+    folder: "app/views/panel/",
+    imports: ["Graph", "Kit", "SwiftUI"],
+    importFix: "The panel's views lay out Kit's value in the design values. The old tree's card hands them the value and the words.",
+    calls: pure("The panel's views"),
+  },
+  {
+    folder: "app/views/menubar/",
+    imports: ["AppKit", "CoreGraphics", "Kit"],
+    importFix: "The menu bar's strip draws Kit's value in the design values. The old tree's controller hands it each account and the words of one with no reading.",
+    calls: pure("The menu bar's strip"),
+  },
+  {
+    folder: "app/views/menubar/tests/",
+    imports: ["Foundation", "Kit", "Testing"],
+    importFix: "The strip's tests run it on made-up readings, and need nothing else.",
+    calls: [],
+  },
+  {
     folder: "app/views/panel/graph/",
     imports: ["Foundation", "Kit", "SwiftUI"],
     importFix: "The graph draws a week picture it is handed. What it needs from the Mac comes in as plain values.",
@@ -100,5 +118,11 @@ export const walls = [
     imports: ["Foundation", "Kit"],
     importFix: "The reader of 1.0.0's history turns the file's bytes into kit's values, and needs nothing else.",
     calls: pure("The reader of 1.0.0's history"),
+  },
+  {
+    folder: "app/recorder/legacy/tests/",
+    imports: ["Foundation", "Kit", "QotaFolioModel", "Testing"],
+    importFix: "The reader's tests fill version 1.0.0's books through QotaFolioModel, as the app does, and read them back.",
+    calls: [],
   },
 ];

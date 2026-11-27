@@ -15,15 +15,15 @@ extension ForecastTool {
         var width = CeilingChart.size.width
     }
 
-    /// Draws each account's week at the moment, prints its sentences and the file's path.
-    static func draw(_ moment: (at: Date, label: String?, account: String?), named text: String, _ forecasts: [Forecast],
+    /// Draws each account's week at the moment, as the account now holds it, prints its sentences
+    /// and the file's path.
+    static func draw(_ moment: (at: Date, label: String?, account: String?), named text: String, _ accounts: [[Reading]],
                      look: Look, out: String?) throws {
-        let pictures = forecasts.compactMap { $0.picture(at: moment.at) }
-        guard !pictures.isEmpty else { fail("no poll at or before \(day(moment.at, .current))\n") }
+        let words = TimeWords(timeZone: .current, twelveHour: look.twelveHour, now: moment.at)
+        let pictures = accounts.compactMap { AccountNow(readings: $0, words: words)?.week.picture }
+        guard !pictures.isEmpty else { fail("no week to draw at \(day(moment.at, .current))\n") }
         if out != nil && pictures.count > 1 { fail("--out names one file. Choose the account with --account.\n") }
-        let calendar = calendar(.current)
         let stem = moment.label == nil ? text.replacingOccurrences(of: " ", with: "-").replacingOccurrences(of: ":", with: "") : text
-        let words = TimeWords(calendar: calendar, twelveHour: look.twelveHour)
         for picture in pictures {
             let sentences = picture.sentences(in: words)
             let name = stem + (pictures.count > 1 ? "-\(picture.account.rawValue)" : "") + (look.appearance.dark ? "-dark" : "-light")

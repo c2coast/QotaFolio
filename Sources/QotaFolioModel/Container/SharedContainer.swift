@@ -1,6 +1,6 @@
 import Foundation
 
-/// The four files this app writes, in the one place everything that reads them can reach.
+/// The three files this app writes, in the one place everything that reads them can reach.
 ///
 /// The app and the `qota` command are separate processes. Version 1.0.0 put the files in the
 /// App Group container so that every one of its processes could reach them, and they are still
@@ -12,9 +12,6 @@ public nonisolated enum SharedFile: String, CaseIterable, Sendable {
     case snapshots
     /// The sample rings and the completed-window ledger.
     case traces
-    /// What the brain decided, and the sentences that say it. Written by the app; read by
-    /// `qota which` without linking a line of the app's policy.
-    case recommendation
 
     /// One spelling per file, and the two history books keep theirs.
     public var leafName: String {
@@ -22,7 +19,6 @@ public nonisolated enum SharedFile: String, CaseIterable, Sendable {
         case .catalog: "catalog.json"
         case .snapshots: UsageHistoryFile.snapshots.leafName
         case .traces: UsageHistoryFile.traces.leafName
-        case .recommendation: "recommendation.json"
         }
     }
 
@@ -33,12 +29,11 @@ public nonisolated enum SharedFile: String, CaseIterable, Sendable {
         case .catalog: AccountCatalogCodec.maximumBytes
         case .snapshots: UsageHistoryFile.snapshots.maximumBytes
         case .traces: UsageHistoryFile.traces.maximumBytes
-        case .recommendation: RecommendationDocument.maximumBytes
         }
     }
 }
 
-/// Where the four files are, resolved once for whoever is asking.
+/// Where the three files are, resolved once for whoever is asking.
 ///
 /// **Two ways to the same directory, and that is the point.** A sandboxed process asks
 /// `containerManagerd` through `containerURL(forSecurityApplicationGroupIdentifier:)`, which
@@ -53,7 +48,7 @@ public nonisolated enum SharedFile: String, CaseIterable, Sendable {
 /// platform, and the plain `group.…` form resolves to a container root the system treats as
 /// protected. `AppIdentity.appGroupIdentifier` spells it, once.
 public nonisolated struct SharedContainer: Equatable, Sendable {
-    /// The directory the four files sit in, under `Library/Application Support`. Not the
+    /// The directory the three files sit in, under `Library/Application Support`. Not the
     /// bundle identifier: the group identifier already carries that, and this is a path a
     /// person types into Terminal.
     public static let ownedDirectoryName = "QotaFolio"
@@ -73,7 +68,7 @@ public nonisolated struct SharedContainer: Equatable, Sendable {
     /// everyone else.
     public let applicationSupportURL: URL
 
-    /// `<group>/Library/Application Support/QotaFolio` — where the four files live.
+    /// `<group>/Library/Application Support/QotaFolio` — where the three files live.
     public let directoryURL: URL
 
     public init(rootURL: URL) {
@@ -150,7 +145,7 @@ public nonisolated struct SharedContainer: Equatable, Sendable {
 }
 
 extension UsageHistoryFile {
-    /// Which of the four shared files this book is. One direction of a pair that has to
+    /// Which of the three shared files this book is. One direction of a pair that has to
     /// agree: `SharedFile.leafName` takes its two history spellings from here.
     public var sharedFile: SharedFile {
         switch self {
@@ -167,9 +162,6 @@ extension UsageHistoryFile {
 /// executor. The production conformance is `UsageHistoryFileIO`; a test supplies its own and
 /// gets to be a filesystem that is absent, obstructed, truncated, or from the future.
 ///
-/// It speaks `SharedFile` rather than `UsageHistoryFile` because `recommendation.json` is
-/// written by the same actor on the same clock as the snapshot book, and a second seam for
-/// one more file in the same directory would be a second thing to keep in step.
 public nonisolated protocol SharedFileAccess: Sendable {
     func read(_ file: SharedFile) -> UsageHistoryBytes
     /// `false` says the bytes did not land. Nothing in the app behaves differently for it —

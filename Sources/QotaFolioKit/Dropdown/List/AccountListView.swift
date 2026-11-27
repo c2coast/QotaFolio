@@ -1,3 +1,4 @@
+import struct Kit.TimeWords
 import SwiftUI
 import QotaFolioCore
 
@@ -17,6 +18,8 @@ public struct AccountListView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.requestPanelResize) private var requestPanelResize
+    @Environment(\.locale) private var locale
+    @Environment(\.timeZone) private var timeZone
     /// The panel's prompt, not this view's.
     ///
     /// `MenuBarPanelController` owns it and clears it whenever the panel leaves the screen. Held
@@ -51,6 +54,9 @@ public struct AccountListView: View {
     /// the first arrow key shows it where focus already is, the next ones move it, and the
     /// pointer's return hides it again.
     @State private var keyboardFocusVisible = false
+    /// Each account's `AccountNow`, built once per minute of the panel's clock and once per change
+    /// of its readings, so a hover or a carry runs no Engine.
+    @State private var nows = AccountNows()
 
     public init(
         catalog: any AccountCataloging,
@@ -86,8 +92,8 @@ public struct AccountListView: View {
                     .accessibilityElement(children: .contain)
                     .accessibilityIdentifier(AXIdentifiers.accountPrompt)
             } else {
-                PanelClock {
-                    rowsContent()
+                PanelClock { moment in
+                    rowsContent(words: TimeWords(locale: locale, timeZone: timeZone, now: moment))
                 }
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier(AXIdentifiers.accountList)
@@ -95,13 +101,11 @@ public struct AccountListView: View {
         }
     }
 
-    private var tone: PanelTone { PanelTone(scheme: colorScheme, contrast: contrast) }
-
-    private func rowsContent() -> some View {
+    private func rowsContent(words: TimeWords) -> some View {
         let accounts = presentedAccounts
         return VStack(spacing: PanelMetrics.cardGap) {
             ForEach(Array(accounts.enumerated()), id: \.element.id) { index, account in
-                card(account: account, index: index, of: accounts)
+                card(account: account, index: index, of: accounts, words: words)
                     .onGeometryChange(for: Double.self) { proxy in
                         Double(proxy.size.height)
                     } action: { rowHeights[account.id] = $0 }
@@ -139,7 +143,7 @@ public struct AccountListView: View {
         #endif
     }
 
-    private func card(account: AccountConfig, index: Int, of accounts: [AccountConfig]) -> some View {
+    private func card(account: AccountConfig, index: Int, of accounts: [AccountConfig], words: TimeWords) -> some View {
         let face = AccountFace.make(
             account: account,
             snapshot: store.snapshots[account.id],
@@ -149,9 +153,10 @@ public struct AccountListView: View {
         return AccountCard(
             account: account,
             face: face,
+            now: nows.now(for: account.id, readings: store.readings[account.id] ?? [], words: words),
+            words: words,
             store: store,
             addFlow: addFlow,
-            tone: tone,
             isExpanded: expanded == account.id,
             isHovered: hovered == account.id,
             toggleExpanded: { toggle(account.id) },

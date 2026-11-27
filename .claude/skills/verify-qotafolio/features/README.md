@@ -35,11 +35,12 @@ Each feature file starts with an H1 title and one paragraph about the user-visib
 | Feature | Covers |
 |---|---|
 | [Usage panel](./usage-panel.md) | Opening the panel, account cards and their states, card details, reorder, footer, reopen, Quit |
-| [Menu-bar batteries](./menu-bar-strip.md) | One battery per account, the spoken sentence, session or week, hidden names |
+| [Menu-bar batteries](./menu-bar-strip.md) | One battery per account, the spoken sentence, week or session, hidden names |
 | [qota command](./qota-cli.md) | `qota status`, `--json`, `--version`, errors, agreement with the panel |
 | [Add an account](./add-account.md) | The naming step, Cancel, the ChatGPT device-code step, the recovery advisory |
 | [Settings](./settings.md) | Opening Settings, the tabs, strip and appearance choices, account visibility, hidden names |
+| [Alerts](./alerts.md) | "A spent limit is back": one alert when a poll finds a spent limit back, shown once |
 
 ## Not covered by this map yet
 
-- The panel shortcut ⌃⌥Q, notifications, Sparkle updates and Remove My Data. Each needs synthetic keyboard input, the notification centre, the network, or real data.
+- The panel shortcut ⌃⌥Q, the notification centre's own banner, Sparkle updates and Remove My Data. Each needs synthetic keyboard input, the notification centre, the network, or real data. The alert's words and its once-only rule are in [Alerts](./alerts.md).

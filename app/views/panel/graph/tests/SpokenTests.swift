@@ -8,7 +8,8 @@ import Testing
 /// the moment after Tuesday's banked resets, in UTC, at the panel's size.
 @Suite("What the graph says aloud")
 struct SpokenTests {
-    static let spoken = SpokenGraph(picture: try! Record.picture("after-banked-reset"), words: TimeWords(calendar: Record.calendar),
+    static let picture = try! Record.picture("after-banked-reset")
+    static let spoken = SpokenGraph(picture: picture, words: TimeWords(timeZone: Record.zone, now: picture.now.at),
                                     size: CGSize(width: 360, height: 146))
 
     @Test("The graph is one element: its name is the caption's, its value the forecast's sentence, then the record's")

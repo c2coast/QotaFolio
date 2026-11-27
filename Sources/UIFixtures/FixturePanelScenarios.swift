@@ -1,22 +1,19 @@
 import Foundation
 import QotaFolioCore
 
-/// A week of polls behind a fixture fleet, replayed through the app's own trace book and
-/// assessed by the app's own brain.
+/// A week of polls behind a fixture fleet, replayed through the app's own trace book.
 ///
-/// Nothing here is typed by hand into the instrument: the staircases below are polls, the
-/// ledger of completed windows is what `UsageTraceBook` closes from them, and the projection
-/// on the open card is `FleetBrain`'s own answer over those books at `now`. A fixture panel
-/// therefore shows the real machinery on a synthetic day, not a picture of it.
+/// Nothing here is typed by hand into the panel: the staircases below are polls, and the
+/// books are what `UsageTraceBook` and `UsageSnapshotBook` keep of them. The fixture store reads
+/// the readings from these books as the app's history reads its own, and the Engine says them.
+/// A fixture panel therefore shows the real machinery on a synthetic week, not a picture of it.
 public nonisolated struct FixtureFleetHistory: Sendable {
     public let traces: UsageTraceBook
     public let snapshots: UsageSnapshotBook
-    public let assessment: FleetAssessment
 
-    public init(traces: UsageTraceBook, snapshots: UsageSnapshotBook, assessment: FleetAssessment) {
+    public init(traces: UsageTraceBook, snapshots: UsageSnapshotBook) {
         self.traces = traces
         self.snapshots = snapshots
-        self.assessment = assessment
     }
 }
 
@@ -70,7 +67,8 @@ public nonisolated extension FixtureUIScenarios {
                     .init(openedAgo: 3 * day + 3 * hour, activeMinutes: 120, close: 47),
                     .init(openedAgo: 1 * day + 4 * hour, activeMinutes: 230, close: 92),
                     .init(openedAgo: 202 * minute, activeMinutes: 202, close: 71),
-                ]
+                ],
+                weeklyOnly: true
             ),
             FixtureReplay.Account(
                 config: work,
@@ -123,10 +121,9 @@ public nonisolated extension FixtureUIScenarios {
 
     /// One account, connected a quarter of an hour ago.
     ///
-    /// A few polls behind it, no completed window behind those, and so no projection: the
-    /// instrument draws the level it has and says it is still learning. Every account is in
-    /// this state on its first day, and it is the only state in which the chart has a line and
-    /// no forecast — which is exactly the state its colours have to hold in.
+    /// A few polls behind it, and so too early for the Engine to say: the card draws the level
+    /// it has. Every account is in this state on its first day, and it is the one state with a
+    /// line and no forecast, which is the state the graph's colours have to hold in.
     static func panelNewAccount(now: Date = .now) -> FixtureUIScenario {
         let fresh = account(index: 1, name: "New account", provider: .anthropic)
         let minute: TimeInterval = 60
@@ -271,7 +268,11 @@ nonisolated struct FixtureReplay {
         let credits: UsageCredits?
         let weekly: Weekly?
         let scoped: [Scoped]
+        /// The five-hour windows. They set when the account is polled, whether or not its
+        /// readings carry them.
         let sessions: [Session]
+        /// Readings that carry the week alone, as the owner's accounts do: no five-hour window.
+        var weeklyOnly = false
     }
 
     struct Result {
@@ -305,7 +306,7 @@ nonisolated struct FixtureReplay {
             polls.sort { $0.at < $1.at }
             var last: Date?
             for poll in polls where last.map({ poll.at > $0 }) ?? true {
-                traces.observe(poll.snapshot, for: account.config.id, at: usageHistoryEpochSeconds(poll.at))
+                traces.observe(poll.snapshot, for: account.config.id)
                 last = poll.at
             }
             if let final = polls.last?.snapshot {
@@ -313,20 +314,12 @@ nonisolated struct FixtureReplay {
             }
         }
 
-        let fleet = accounts.map { FleetAccount(config: $0.config) }
         let snapshots = UsageSnapshotBook(
             accounts: latest.map { PersistedUsageSnapshot(account: $0.key, snapshot: $0.value) }
                 .sorted { $0.account.rawValue.uuidString < $1.account.rawValue.uuidString }
         )
-        let assessment = FleetBrain.assess(
-            fleet: fleet,
-            traces: traces,
-            snapshots: snapshots,
-            now: now,
-            timeZone: .autoupdatingCurrent
-        )
         return Result(
-            history: FixtureFleetHistory(traces: traces, snapshots: snapshots, assessment: assessment),
+            history: FixtureFleetHistory(traces: traces, snapshots: snapshots),
             latestSnapshots: latest
         )
     }
@@ -344,7 +337,7 @@ nonisolated struct FixtureReplay {
     }
 
     private func snapshot(for account: Account, at: Date, sessionUsed: Double, sessionResetsAt: Date) -> UsageSnapshot {
-        var readings = [
+        var readings = account.weeklyOnly ? [] : [
             UsageReading(scope: nil, period: .session, window: UsageWindow(usedPercent: sessionUsed, resetsAt: sessionResetsAt, severity: nil)),
         ]
         if let weekly = account.weekly {

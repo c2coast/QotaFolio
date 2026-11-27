@@ -1,4 +1,6 @@
 import SwiftUI
+import Kit
+import Graph
 import QotaFolioCore
 
 /// The panel's own chrome, and one fact about the panel itself: when its readings were last
@@ -14,6 +16,7 @@ public struct PanelFooterView: View {
 
     @Environment(\.openQotaFolioSettings) private var openSettings
     @Environment(\.sentenceStyle) private var style
+    @Environment(\.locale) private var locale
 
     public init(
         catalog: any AccountCataloging,
@@ -40,20 +43,20 @@ public struct PanelFooterView: View {
     public var body: some View {
         HStack(alignment: .center, spacing: 8) {
             if let updated = lastUpdated {
-                let clock = PanelWords.clock(updated, style: style)
+                let clock = TimeWords(locale: locale, timeZone: style.timeZone, now: .now).day(updated)
                 Text(qfLocalized(
                     "footer.updated",
                     defaultValue: "Updated \(clock)",
-                    comment: "Quiet footer note: the clock time of the newest reading across the accounts."
+                    comment: "Quiet footer note: the day and time of the newest reading across the accounts."
                 ))
-                .font(PanelType.captionFigures)
+                .font(Tokens.Typography.captionFigures.font)
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText())
                 .lineLimit(1)
                 .accessibilityLabel(qfLocalized(
                     "footer.updated.ax",
                     defaultValue: "Readings updated at \(clock)",
-                    comment: "VoiceOver label for the footer's updated time. The argument is a clock time."
+                    comment: "VoiceOver label for the footer's updated time. The argument is a day and a clock time."
                 ))
             }
 
@@ -208,7 +211,7 @@ struct PanelChromeButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(PanelType.glyph)
+                .font(Tokens.Typography.glyph.font)
                 .frame(width: PanelMetrics.glyphWell, height: PanelMetrics.glyphWell)
         }
         .buttonStyle(PanelChromeButtonStyle())
@@ -226,7 +229,7 @@ private struct PanelChromeGlyph: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(PanelType.glyph)
+            .font(Tokens.Typography.glyph.font)
             .foregroundStyle(.secondary)
             .frame(width: PanelMetrics.glyphWell, height: PanelMetrics.glyphWell)
             .background(

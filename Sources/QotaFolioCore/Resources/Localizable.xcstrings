@@ -241,90 +241,6 @@
         }
       }
     },
-    "alert.fresh.scoped": {
-      "comment": "Alert body when a model-scoped window has just turned over. The account, then the scope's name as the provider spells it.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ reset — a fresh %2$@ window."
-          }
-        }
-      }
-    },
-    "alert.fresh.session": {
-      "comment": "Alert body when an account's five-hour window has just turned over. The argument is the account name.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ reset — a fresh five-hour window."
-          }
-        }
-      }
-    },
-    "alert.fresh.weekly": {
-      "comment": "Alert body when an account's weekly window has just turned over. The argument is the account name.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ reset — a fresh week."
-          }
-        }
-      }
-    },
-    "alert.runningOut": {
-      "comment": "Alert body when an account's window runs dry and no reset time is known. The account, the clock time it runs out, then the other-account clause or nothing.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ runs out at %2$@ at this pace.%3$@"
-          }
-        }
-      }
-    },
-    "alert.runningOut.beforeReset": {
-      "comment": "Alert body when an account's window runs dry before its reset. The account, the clock time it runs out, how long before the reset, then the other-account clause or nothing.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ runs out at %2$@ at this pace — %3$@ before its reset.%4$@"
-          }
-        }
-      }
-    },
-    "alert.runningOut.other": {
-      "comment": "Clause appended to a running-out alert, naming another account and what it has left now. Leading space included. An account name, then a percentage.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": " %1$@ has %2$@."
-          }
-        }
-      }
-    },
-    "alert.stranding": {
-      "comment": "Alert body when part of an account's week will expire unused. The account, a percentage, then the weekday it expires.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@: about %2$@ of the week expires %3$@."
-          }
-        }
-      }
-    },
     "announce.addressCopied": {
       "comment": "VoiceOver announcement after copying the device authorization URL.",
       "extractionState": "manual",
@@ -1753,390 +1669,6 @@
         }
       }
     },
-    "instrument.block.untouched": {
-      "comment": "One completed five-hour window nobody worked in, shown on hover and read by VoiceOver. The weekday, then the clock time it opened at.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ %2$@, untouched"
-          }
-        }
-      }
-    },
-    "instrument.block.used": {
-      "comment": "One completed five-hour window, shown on hover and read by VoiceOver. The weekday, the clock time it opened at, then the whole percentage it closed at.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ %2$@, %3$lld percent used"
-          }
-        }
-      }
-    },
-    "instrument.chart.title": {
-      "comment": "Heading over the instrument's chart: the window's name, then the clock time its current occurrence opened.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · since %2$@"
-          }
-        }
-      }
-    },
-    "instrument.credits": {
-      "comment": "Instrument line for prepaid credits when the app has no dollar rate for them.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld credits"
-          }
-        }
-      }
-    },
-    "instrument.credits.value": {
-      "comment": "Instrument line for prepaid credits: the count, then their dollar value.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld credits (%2$@)"
-          }
-        }
-      }
-    },
-    "instrument.extraUsage": {
-      "comment": "Instrument line for overage spend against a monthly cap. The amount spent, then the cap, both in the provider's currency.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Extra usage %1$@ of %2$@ this month"
-          }
-        }
-      }
-    },
-    "instrument.landing.close": {
-      "comment": "Instrument sentence for a window projected to finish with little to spare. The projected percentage used, then the reset time.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cutting it close: lands near %1$@ used at %2$@."
-          }
-        }
-      }
-    },
-    "instrument.landing.close.range": {
-      "comment": "Instrument sentence for a window projected to finish with little to spare. The projected percentage used, the reset time, then the low and high ends of the range.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cutting it close: lands near %1$@ used at %2$@ — between %3$@ and %4$@."
-          }
-        }
-      }
-    },
-    "instrument.landing.onCourse": {
-      "comment": "Instrument sentence for a window on course. The projected percentage used, then the reset time.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On course to land near %1$@ used at %2$@."
-          }
-        }
-      }
-    },
-    "instrument.landing.onCourse.range": {
-      "comment": "Instrument sentence for a window on course. The projected percentage used, the reset time, then the low and high ends of the range.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On course to land near %1$@ used at %2$@ — between %3$@ and %4$@."
-          }
-        }
-      }
-    },
-    "instrument.landing.runningOut": {
-      "comment": "Instrument sentence for a window projected to run dry before its reset, when no instant can be named.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reaches its limit before the reset at this pace."
-          }
-        }
-      }
-    },
-    "instrument.landing.runningOut.at": {
-      "comment": "Instrument sentence for a window projected to run dry before its reset. The clock time it reaches its limit, then the countdown to the reset.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reaches its limit around %1$@ at this pace, with %2$@ still to run before the reset."
-          }
-        }
-      }
-    },
-    "instrument.landing.spent": {
-      "comment": "Instrument sentence for a window with nothing left. The argument is the reset time.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spent. Back at %1$@."
-          }
-        }
-      }
-    },
-    "instrument.noExtraUsage": {
-      "comment": "Instrument line when the account has no overage billing and no prepaid credits.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No extra usage"
-          }
-        }
-      }
-    },
-    "instrument.noProjection": {
-      "comment": "Instrument sentence when the app has not assessed this window.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No projection yet."
-          }
-        }
-      }
-    },
-    "instrument.readout": {
-      "comment": "Instrument readout for the sample under the cursor: its clock time, then the percentage used.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · %2$@ used"
-          }
-        }
-      }
-    },
-    "instrument.readout.flat": {
-      "comment": "Instrument readout for a sample that did not move: its clock time, the percentage used, then the minutes since the previous sample.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · %2$@ used · no change in %3$lld min"
-          }
-        }
-      }
-    },
-    "instrument.readout.step": {
-      "comment": "Instrument readout for a sample that moved: its clock time, the percentage used, the signed step in points, then the minutes it took.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · %2$@ used · %3$@%4$lld pt in %5$lld min"
-          }
-        }
-      }
-    },
-    "instrument.silent.learning": {
-      "comment": "Instrument sentence when there is too little history to project from.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Learning your pattern — a few more windows and the line continues."
-          }
-        }
-      }
-    },
-    "instrument.silent.noReset": {
-      "comment": "Instrument sentence when the provider named no reset instant.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No reset time reported, so there is no end to project to."
-          }
-        }
-      }
-    },
-    "instrument.silent.notStarted": {
-      "comment": "Instrument sentence when nothing has been spent in the window.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nothing spent yet."
-          }
-        }
-      }
-    },
-    "instrument.silent.tooEarly": {
-      "comment": "Instrument sentence when the projected range is too wide to name a number inside.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Too early to say — the range is wider than a number would be honest about."
-          }
-        }
-      }
-    },
-    "instrument.week.exact": {
-      "comment": "Instrument clause when the week funds exactly as many windows as there is time for. The count, then the weekday of the reset.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "About %1$lld more fit before %2$@, and the week funds exactly that."
-          }
-        }
-      }
-    },
-    "instrument.week.funded": {
-      "comment": "Instrument clause counting the windows the week can still pay for.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The week can fund about %1$lld more."
-          }
-        }
-      }
-    },
-    "instrument.week.learning": {
-      "comment": "Instrument clause when the week's cost per window is not yet measured.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Learning your pattern before counting the ones ahead."
-          }
-        }
-      }
-    },
-    "instrument.week.ledger": {
-      "comment": "Instrument sentence counting the completed five-hour windows of the last seven days: how many were worked in, how many nobody touched. Both counts arrive in words.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ worked, %2$@ untouched."
-          }
-        }
-      }
-    },
-    "instrument.week.none": {
-      "comment": "The count zero in the week's ledger: no completed window was worked in, or none was left untouched.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "none"
-          }
-        }
-      }
-    },
-    "instrument.week.runsOut": {
-      "comment": "Instrument clause when the week is projected to run dry before its reset. The weekday it runs out, then the weekday it resets.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The week runs out on %1$@, before it resets %2$@."
-          }
-        }
-      }
-    },
-    "instrument.week.theReset": {
-      "comment": "Stands in for the weekday of a weekly reset the provider did not name.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "the reset"
-          }
-        }
-      }
-    },
-    "instrument.week.timeShort": {
-      "comment": "Instrument clause when there is time for fewer windows than the week funds. The count that fit, the weekday of the reset, then the count the week funds.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "About %1$lld more fit before %2$@; the week could fund %3$lld."
-          }
-        }
-      }
-    },
-    "instrument.week.title": {
-      "comment": "Heading over the instrument's row of completed five-hour windows.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Five-hour windows · last seven days"
-          }
-        }
-      }
-    },
-    "instrument.week.weekShort": {
-      "comment": "Instrument clause when the week funds fewer windows than there is time for. The count the week funds, the count that fit, then the weekday of the reset.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The week funds about %1$lld more; there is time for %2$lld before %3$@."
-          }
-        }
-      }
-    },
     "placement.hidden": {
       "comment": "Panel advisory when macOS refused to place the status item on the menu bar, and where to allow it.",
       "extractionState": "manual",
@@ -2169,6 +1701,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open System Settings → Menu Bar"
+          }
+        }
+      }
+    },
+    "plan.credits": {
+      "comment": "Plan line for prepaid credits when the app has no dollar rate for them.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld credits"
+          }
+        }
+      }
+    },
+    "plan.credits.value": {
+      "comment": "Plan line for prepaid credits: the count, then their dollar value.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld credits (%2$@)"
+          }
+        }
+      }
+    },
+    "plan.extraUsage": {
+      "comment": "Plan line for overage spend against a monthly cap. The amount spent, then the cap, both in the provider's currency.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extra usage %1$@ of %2$@ this month"
+          }
+        }
+      }
+    },
+    "plan.noExtraUsage": {
+      "comment": "Plan line when the account has no overage billing and no prepaid credits.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No extra usage"
           }
         }
       }
@@ -2481,114 +2061,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset time unavailable"
-          }
-        }
-      }
-    },
-    "row.learning": {
-      "comment": "Right-hand text of a quota row with too little history to project from.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Learning your pattern"
-          }
-        }
-      }
-    },
-    "row.leftAtReset": {
-      "comment": "Right-hand text of a quota row projected to finish its window comfortably.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "~%1$lld%% left at reset"
-          }
-        }
-      }
-    },
-    "row.limitAt": {
-      "comment": "Right-hand text of a quota row projected to reach its limit. The argument is a clock time.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Limit at %1$@"
-          }
-        }
-      }
-    },
-    "row.noReset": {
-      "comment": "Right-hand text of a quota row whose provider named no reset instant.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No reset time reported"
-          }
-        }
-      }
-    },
-    "row.notStarted": {
-      "comment": "Right-hand text of a quota row nothing has been spent in. The argument is a countdown.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not started · resets in %1$@"
-          }
-        }
-      }
-    },
-    "row.spare": {
-      "comment": "Right-hand text of a quota row projected to finish its window with little to spare.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "~%1$lld%% spare"
-          }
-        }
-      }
-    },
-    "row.spent": {
-      "comment": "Right-hand text of a quota row whose window is fully used.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spent"
-          }
-        }
-      }
-    },
-    "row.stale": {
-      "comment": "Right-hand text of a quota row whose reading is old. A whole percentage and how long ago it was true.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld%% · %2$@ ago"
-          }
-        }
-      }
-    },
-    "row.tooEarly": {
-      "comment": "Right-hand text of a quota row whose projected range is too wide to name a number inside.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Too early to say"
           }
         }
       }

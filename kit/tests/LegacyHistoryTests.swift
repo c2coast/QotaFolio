@@ -37,13 +37,14 @@ struct LegacyHistoryTests {
               {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100], "sampleUsedBasisPoints": [14000],
                "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800, "lastObservedAt": 100}]}]}
             """
-        #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(from: Data(file.utf8)) }
+        #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(history: Data(file.utf8), snapshots: nil) }
     }
 
-    /// The Engine reads a model's week only where every reading carries it. Read on, this file
-    /// would give a forecast with no Fable, and nobody would be told.
-    @Test("A model's week sampled at other times than the week is refused, by its name")
-    func refusesModelWeekOffTheWeek() {
+    /// Version 1.0.0 spaces each limit's samples on its own: here the week at 100 and 200, Fable at
+    /// 100 and 250. The file reads as one account, with a reading at each time and the limits
+    /// sampled at it.
+    @Test("A model's week sampled at other times than the week reads, each reading with its own limits")
+    func modelWeekOffTheWeek() throws {
         let file = """
             {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 250, "windows": [
               {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100, 200], "sampleUsedBasisPoints": [100, 200],
@@ -52,7 +53,101 @@ struct LegacyHistoryTests {
                "sampleUsedBasisPoints": [100, 300], "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800,
                "lastObservedAt": 250}]}]}
             """
-        let error = #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(from: Data(file.utf8)) }
-        #expect(error?.description.contains("Fable|weekly") == true)
+        let accounts = try LegacyHistory.readings(history: Data(file.utf8), snapshots: nil)
+        #expect(accounts.count == 1)
+        let readings = try #require(accounts.first)
+        #expect(readings.map(\.at.timeIntervalSince1970) == [100, 200, 250])
+        #expect(readings.map { $0.limits.map(\.kind) } == [[.week, Record.fable], [.week], [Record.fable]])
+        #expect(readings[2].limit(Record.fable)?.used == Percent(3))
+    }
+
+    /// A trace of the week and Fable at 100 and 200, and a snapshot of the poll at 250: the week at
+    /// 3.456 percent, which 1.0.0 holds as 346 hundredths, Fable at 120, which it holds as 100, and a
+    /// five-hour window with no session open. The trace's open week resets at 604800; the snapshot
+    /// sends the week's reset a second early, 604799, which is the same minute.
+    static let trace = """
+        {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 200, "windows": [
+          {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100, 200], "sampleUsedBasisPoints": [100, 200],
+           "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800, "lastObservedAt": 200},
+          {"key": "Fable|weekly", "scope": "Fable", "period": {"weekly": {}}, "sampleTimes": [100, 200],
+           "sampleUsedBasisPoints": [100, 300], "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800,
+           "lastObservedAt": 200}]}]}
+        """
+
+    static func snapshots(at fetchedAt: Int, account: String = "A") -> String {
+        """
+        {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "\(account)"}, "provider": "anthropic", "fetchedAt": \(fetchedAt),
+          "readings": [
+            {"period": {"session": {}}, "usedPercent": 0},
+            {"period": {"weekly": {}}, "usedPercent": 3.456, "resetsAt": 604799, "severity": "normal"},
+            {"period": {"weekly": {}}, "scope": "Fable", "usedPercent": 120, "resetsAt": 604800}]}]}
+        """
+    }
+
+    @Test("The snapshot is the last reading, read as the trace would hold it")
+    func snapshotLast() throws {
+        let accounts = try LegacyHistory.readings(history: Data(Self.trace.utf8), snapshots: Data(Self.snapshots(at: 250).utf8))
+        let readings = try #require(accounts.first)
+        #expect(accounts.count == 1)
+        #expect(readings.map(\.at.timeIntervalSince1970) == [100, 200, 250])
+        let last = try #require(readings.last)
+        #expect(last.limits.map(\.kind) == [Limit.Kind(model: nil, period: .session), .week, Record.fable])
+        #expect(last.limit(.week)?.used == Percent(basisPoints: 346))
+        #expect(last.limit(Record.fable)?.used == Percent(100))
+        #expect(last.limit(.week)?.resets == readings[1].limit(.week)?.resets)
+        #expect(last.limit(Limit.Kind(model: nil, period: .session))?.resets == nil)
+    }
+
+    /// The trace kept the poll of 200 itself, so the snapshot of that poll adds no reading. It is
+    /// the reading of 200, because it holds every limit of the poll.
+    @Test("A snapshot of the trace's last second adds no reading, and is that reading")
+    func snapshotHeld() throws {
+        let accounts = try LegacyHistory.readings(history: Data(Self.trace.utf8), snapshots: Data(Self.snapshots(at: 200).utf8))
+        #expect(accounts.map { $0.map(\.at.timeIntervalSince1970) } == [[100, 200]])
+        #expect(accounts[0][1].limits.map(\.kind) == [Limit.Kind(model: nil, period: .session), .week, Record.fable])
+    }
+
+    /// A poll of an account with a five-hour window: the trace keeps its session at 200, and its
+    /// week only a quarter-hour after 100. The reading of 200 is the snapshot's, with the week.
+    @Test("The newest poll keeps the limits the trace spaced out of it")
+    func snapshotWhole() throws {
+        let trace = """
+            {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 200, "windows": [
+              {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100], "sampleUsedBasisPoints": [100],
+               "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800, "lastObservedAt": 200},
+              {"key": "session", "period": {"session": {}}, "sampleTimes": [100, 200], "sampleUsedBasisPoints": [0, 0],
+               "completed": [], "currentOpenedAt": 0, "lastObservedAt": 200}]}]}
+            """
+        let accounts = try LegacyHistory.readings(history: Data(trace.utf8), snapshots: Data(Self.snapshots(at: 200).utf8))
+        let readings = try #require(accounts.first)
+        #expect(readings.map(\.at.timeIntervalSince1970) == [100, 200])
+        #expect(readings[1].limit(.week)?.used == Percent(basisPoints: 346))
+    }
+
+    /// An account added since the trace was last written has its first poll only.
+    @Test("An account only the snapshots hold reads as its one poll")
+    func snapshotOnly() throws {
+        let accounts = try LegacyHistory.readings(history: Data(Self.trace.utf8), snapshots: Data(Self.snapshots(at: 250, account: "C").utf8))
+        #expect(accounts.map { $0[0].account.rawValue } == ["A", "C"])
+        #expect(accounts[1].count == 1)
+    }
+
+    /// A session spent at 100 and 200 that ended at its reset of 18000, and the next one open from
+    /// 18000 to 36000, read at 18100. The samples of the ended session keep its reset, so the poll
+    /// that found the session back is "a spent limit is back".
+    @Test("A sample of an ended session keeps that session's reset")
+    func endedSession() throws {
+        let trace = """
+            {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 18100, "windows": [
+              {"key": "session", "period": {"session": {}}, "sampleTimes": [50, 100, 200, 18100],
+               "sampleUsedBasisPoints": [9000, 10000, 10000, 300],
+               "completed": [{"openedAt": 0, "closedAt": 18000, "usedBasisPointsAtClose": 10000}],
+               "currentOpenedAt": 18000, "currentResetsAt": 36000, "lastObservedAt": 18100}]}]}
+            """
+        let readings = try #require(try LegacyHistory.readings(history: Data(trace.utf8), snapshots: nil).first)
+        let session = Limit.Kind(model: nil, period: .session)
+        #expect(readings.map { $0.limit(session)?.resets?.instant.timeIntervalSince1970 } == [18000, 18000, 18000, 36000])
+        #expect(SpentLimitBack.newest(in: readings)
+            == [SpentLimitBack(account: AccountID("A"), limit: session, spentUntil: ResetTime(Date(timeIntervalSince1970: 18000)), how: .reset)])
     }
 }

@@ -4,7 +4,7 @@ import Foundation
 /// limit, what is spent of it, and when it comes back. Nothing here predicts.
 public nonisolated struct SurfaceWindow: Hashable, Sendable, Identifiable {
     /// `UsageReading.id` — the provider's scope and the window's length. The same key the
-    /// history keeps the window's trace under and `recommendation.json` files its row text by.
+    /// history keeps the window's trace under.
     public let id: String
     /// The provider's display name for a scoped limit; `nil` for an account-wide one.
     public let scope: String?

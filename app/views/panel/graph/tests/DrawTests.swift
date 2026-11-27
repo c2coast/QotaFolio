@@ -11,7 +11,7 @@ struct DrawTests {
     @MainActor
     func draws() throws {
         let picture = try Record.picture("after-banked-reset")
-        let graph = WeekGraph(picture: picture, words: TimeWords(calendar: Record.calendar), palette: Palette(Appearance(dark: false)))
+        let graph = WeekGraph(picture: picture, words: TimeWords(timeZone: Record.zone, now: picture.now.at), palette: Palette(Appearance(dark: false)))
         let renderer = ImageRenderer(content: graph)
         renderer.scale = 2
         let image = try #require(renderer.cgImage)

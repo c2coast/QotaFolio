@@ -47,4 +47,30 @@ struct FallsTests {
         #expect(full.givenBack[.week] == 98)
         #expect(full.givenBack[Record.fable] == 51)
     }
+
+    /// A made-up week that resets Wed 3 Dec 21:00. At Tue 2 Dec 14:00 the week reads 40 and Fable
+    /// 20; at 14:15 the week reads 37 and Fable still 20. The week fell 3 points. Fable did not fall,
+    /// and a full reset would leave the week near zero, or more than five under 40 - 20 / 2 = 30,
+    /// so neither explains it: the fall is unexplained, and the week gets its 3 points back.
+    /// The record has no such fall, and its sentence does not name a reset it cannot see.
+    @Test("A fall the method cannot classify is said as the week giving points back, with no reason")
+    func unexplained() throws {
+        let reset = ResetTime(Self.december(3, 21, 0))
+        func reading(_ hour: Int, _ minute: Int, week: Double, fable: Double) -> Reading {
+            Reading(account: AccountID("M"), at: Self.december(2, hour, minute), limits: [
+                Limit(kind: .week, used: Percent(week)!, resets: reset), Limit(kind: Record.fable, used: Percent(fable)!, resets: reset),
+            ])
+        }
+        let forecast = Forecast(readings: [reading(14, 0, week: 40, fable: 20), reading(14, 15, week: 37, fable: 20)])
+        let fall = try #require(forecast.falls.first)
+        #expect(fall.kind == .unexplained)
+        #expect(fall.givenBack[.week] == 3)
+        let picture = try #require(forecast.picture(at: Self.december(2, 14, 15)))
+        let words = TimeWords(timeZone: Record.zone, now: Self.december(2, 14, 15))
+        #expect(picture.sentences(in: words).record == "At Tue 14:15 the week gave back 3 points; the readings do not say why.")
+    }
+
+    static func december(_ day: Int, _ hour: Int, _ minute: Int) -> Date {
+        Record.calendar.date(from: DateComponents(year: 2025, month: 12, day: day, hour: hour, minute: minute))!
+    }
 }

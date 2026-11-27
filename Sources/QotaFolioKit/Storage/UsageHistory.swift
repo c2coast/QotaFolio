@@ -1,10 +1,16 @@
 import Dispatch
 import Foundation
+import Kit
+import QotaFolioCore
+
+/// Each account's readings, as Kit reads them: the trace and the snapshots, in time order, the
+/// newest poll last. Keyed by the app's account.
+public typealias AccountReadings = [QotaFolioModel.AccountID: [Reading]]
 
 /// One thing that happened, waiting to be written.
 public nonisolated enum UsageHistoryMutation: Sendable {
-    case observed(account: AccountID, snapshot: UsageSnapshot, at: Date)
-    case forgotten(AccountID)
+    case observed(account: QotaFolioModel.AccountID, snapshot: UsageSnapshot)
+    case forgotten(QotaFolioModel.AccountID)
 }
 
 /// The isolation domain that owns history file I/O.
@@ -31,13 +37,10 @@ public nonisolated enum UsageHistoryMutation: Sendable {
 public actor UsageHistoryWriter {
     private let queue: DispatchSerialQueue
     private let files: any SharedFileAccess
-    private let assessor: any FleetAssessing
-    private let sentences: @Sendable (FleetAssessment) -> RecommendationSentences
     private let snapshotWriteDeadline: Duration
     private let traceWriteDeadline: Duration
     private var snapshots: UsageSnapshotBook?
     private var traces: UsageTraceBook?
-    private var assessment: FleetAssessment?
 
     /// Set when a book in memory has moved ahead of its file, cleared when the file catches
     /// up. Derived from an `Equatable` comparison at the moment of the change, so it is never
@@ -46,7 +49,6 @@ public actor UsageHistoryWriter {
     private var snapshotsWrittenAt: Date?
     private var tracesAreUnwritten = false
     private var tracesWrittenAt: Date?
-    private var recommendationIsUnwritten = false
 
     public nonisolated var unownedExecutor: UnownedSerialExecutor {
         queue.asUnownedSerialExecutor()
@@ -54,14 +56,10 @@ public actor UsageHistoryWriter {
 
     public init(
         files: any SharedFileAccess,
-        assessor: any FleetAssessing = SilentFleetAssessor(),
-        sentences: @escaping @Sendable (FleetAssessment) -> RecommendationSentences = { _ in .none },
         snapshotWriteDeadline: Duration = UsageHistoryPolicy.writeDeadline,
         traceWriteDeadline: Duration = UsageHistoryPolicy.traceWriteDeadline
     ) {
         self.files = files
-        self.assessor = assessor
-        self.sentences = sentences
         self.snapshotWriteDeadline = snapshotWriteDeadline
         self.traceWriteDeadline = traceWriteDeadline
         queue = DispatchSerialQueue(
@@ -70,32 +68,27 @@ public actor UsageHistoryWriter {
         )
     }
 
-    /// Applies a batch to the books in memory, then asks the brain what the fleet looks like.
+    /// Applies a batch to the books in memory, then reads each account's readings from them.
     ///
     /// **The books move at once; the files move on their own clocks.** That separation is the
-    /// whole shape of this actor. Every reader — the brain here, the panel through
-    /// `traceBook()`, the strip through the assessment this returns — sees the sample the
-    /// instant it arrives, and the device sees it when its book's deadline says so. Batching
-    /// the *books* would have meant the strip drawing a five-minute-old fleet; batching the
-    /// *writes* costs nothing anyone can observe.
+    /// whole shape of this actor. The readings are read from the books the instant a sample
+    /// arrives, and the device sees it when its book's deadline says so.
+    ///
+    /// The readings are read through the reader `qota` and `tools/forecast` use on the files,
+    /// from the books encoded as the files are, so the three read the same readings. The trace
+    /// file keeps a week's sample a quarter-hour apart at most, and the snapshot book holds the
+    /// newest poll, so the readings end with the poll that just arrived.
     ///
     /// The books are read from the device on the first batch and held afterwards, so the
     /// steady state is no read at all — and no write either for a book the batch left exactly
     /// as it found it. Both book types are `Equatable`, so "did this change anything" is a
-    /// question the data answers rather than one the caller has to promise.
-    ///
-    /// The two books are written on different clocks, and the reason is in
-    /// `UsageHistoryPolicy.traceWriteDeadline`: the snapshot book is small and is read at
-    /// launch, the trace book is large and is read through `flush()`.
+    /// question the data answers rather than one the caller has to promise. An empty batch
+    /// reads the books and changes nothing.
     ///
     /// `nil` says the books could not be read, so nothing was applied and there is nothing
-    /// honest to say about the fleet.
+    /// honest to say about any account.
     @discardableResult
-    func apply(
-        _ mutations: [UsageHistoryMutation],
-        fleet: [FleetAccount],
-        at now: Date
-    ) -> FleetAssessment? {
+    func apply(_ mutations: [UsageHistoryMutation], at now: Date) -> AccountReadings? {
         // An obstructed read is the one case that must not be treated as an empty book.
         // Nothing was learned about the file, so overwriting it would trade eight days of
         // history for a momentary descriptor shortage. The batch is dropped instead — a few
@@ -105,9 +98,9 @@ public actor UsageHistoryWriter {
 
         for mutation in mutations {
             switch mutation {
-            case .observed(let account, let snapshot, let at):
+            case .observed(let account, let snapshot):
                 snapshotBook.record(PersistedUsageSnapshot(account: account, snapshot: snapshot))
-                traceBook.observe(snapshot, for: account, at: usageHistoryEpochSeconds(at))
+                traceBook.observe(snapshot, for: account)
             case .forgotten(let account):
                 snapshotBook.forget(account)
                 traceBook.forget(account)
@@ -119,44 +112,13 @@ public actor UsageHistoryWriter {
         snapshots = snapshotBook
         traces = traceBook
 
-        return assess(fleet: fleet, at: now)
-    }
-
-    /// The brain, over the books as they stand. No sample, no file read, no write.
-    ///
-    /// Called on every poll from `apply`, and on its own when the assessment's own
-    /// `nextReviewAt` comes round — a window that resets, or a verdict that changes, without
-    /// anybody polling anything.
-    @discardableResult
-    func assess(fleet: [FleetAccount], at now: Date) -> FleetAssessment? {
-        guard let traceBook = book(&traces, .traces, { UsageTraceBook() }),
-              let snapshotBook = book(&snapshots, .snapshots, { UsageSnapshotBook() })
-        else { return nil }
-        let next = assessor.assess(
-            FleetAssessmentRequest(
-                traces: traceBook,
-                snapshots: snapshotBook,
-                fleet: fleet,
-                now: now
-            )
-        )
-        if next != assessment {
-            assessment = next
-            recommendationIsUnwritten = true
-        }
-        // The two small files go down NOW, not at the deadline. `qota status` reads these
-        // bytes, and a person who runs it after the panel moved expects the panel's reading.
-        // They are a few kilobytes and the write is an atomic rename into the page cache; the
-        // deadline exists for the trace book, which is forty times larger and keeps its own
+        // The snapshot book goes down NOW, not at the deadline. `qota status` reads these bytes
+        // with the trace, and a person who runs it after the panel moved expects the panel's
+        // reading. It is a few kilobytes and the write is an atomic rename into the page cache;
+        // the deadline exists for the trace book, which is forty times larger and keeps its own
         // clock.
-        publishSmallFiles(at: now)
-        return next
-    }
-
-    /// The snapshot book and the recommendation, written at once when they have changed.
-    private func publishSmallFiles(at now: Date) {
         if snapshotsAreUnwritten { writeSnapshots(at: now) }
-        if recommendationIsUnwritten { writeRecommendation() }
+        return AccountReadings(traces: traceBook, snapshots: snapshotBook)
     }
 
     /// Writes whichever files are past their own deadline. Answers whether anything is still
@@ -166,18 +128,10 @@ public actor UsageHistoryWriter {
         if isDue(snapshotsAreUnwritten, snapshotsWrittenAt, snapshotWriteDeadline, now) {
             writeSnapshots(at: now)
         }
-        // On the snapshot book's clock whether or not the book itself moved. A verdict
-        // changes when a window resets and nobody polled, and an account that needs signing
-        // in again never polls at all — in both cases `recommendation.json` is the only place
-        // `qota which` can learn what the app thinks, so it must not wait for a sample that
-        // is not coming.
-        if isDue(recommendationIsUnwritten, snapshotsWrittenAt, snapshotWriteDeadline, now) {
-            writeRecommendation()
-        }
         if isDue(tracesAreUnwritten, tracesWrittenAt, traceWriteDeadline, now) {
             writeTraces(at: now)
         }
-        return snapshotsAreUnwritten || tracesAreUnwritten || recommendationIsUnwritten
+        return snapshotsAreUnwritten || tracesAreUnwritten
     }
 
     /// Puts everything outstanding on the device now, whatever the deadlines say.
@@ -188,7 +142,6 @@ public actor UsageHistoryWriter {
     func writeEverything(at now: Date) {
         if snapshotsAreUnwritten { writeSnapshots(at: now) }
         if tracesAreUnwritten { writeTraces(at: now) }
-        if recommendationIsUnwritten { writeRecommendation() }
     }
 
     private func isDue(
@@ -207,30 +160,12 @@ public actor UsageHistoryWriter {
         return elapsed < 0 || Duration.seconds(elapsed) >= deadline
     }
 
-    /// The snapshot book, and the recommendation with it.
-    ///
-    /// One clock for both, because they say the same thing about the same moment: the last
-    /// numbers this app saw, and what it decided from them. A `qota which` that answered from
-    /// a recommendation five minutes ahead of the snapshots beside it would be reading two
-    /// different instants and calling them one.
     private func writeSnapshots(at now: Date) {
         guard let snapshots,
               let data = UsageHistoryCodec.encode(snapshots, for: .snapshots) else { return }
         files.write(data, to: .snapshots)
         snapshotsAreUnwritten = false
         snapshotsWrittenAt = now
-        if recommendationIsUnwritten { writeRecommendation() }
-    }
-
-    private func writeRecommendation() {
-        guard let assessment else { return }
-        let document = RecommendationDocument(
-            assessment: assessment,
-            sentences: sentences(assessment)
-        )
-        guard let data = RecommendationCodec.encode(document) else { return }
-        files.write(data, to: .recommendation)
-        recommendationIsUnwritten = false
     }
 
     private func writeTraces(at now: Date) {
@@ -238,14 +173,6 @@ public actor UsageHistoryWriter {
         files.write(data, to: .traces)
         tracesAreUnwritten = false
         tracesWrittenAt = now
-    }
-
-    func trace(for account: AccountID) -> AccountUsageTrace? {
-        book(&traces, .traces, { UsageTraceBook() })?.trace(for: account)
-    }
-
-    func traceBook() -> UsageTraceBook? {
-        book(&traces, .traces, { UsageTraceBook() })
     }
 
     private func book<Book: UsageHistoryBookProtocol>(
@@ -270,7 +197,7 @@ public actor UsageHistoryWriter {
 }
 
 /// What QotaFolio remembers between launches: the last reading for every account, and enough
-/// of the shape of the last few days for the verdict engine to say where a window is going.
+/// of the shape of the last few days for the Engine to say where the week is going.
 ///
 /// ## The two calls
 ///
@@ -279,13 +206,11 @@ public actor UsageHistoryWriter {
 /// let restored = history.restoreSnapshots()
 ///
 /// // After every successful poll. Returns instantly; the write happens later, elsewhere.
-/// history.record(snapshot, for: account.id, fleet: fleet)
+/// history.record(snapshot, for: account.id)
 /// ```
 ///
-/// The `fleet` argument is the catalog rows — names, providers, order, whether each is signed
-/// in — carried in from the main actor so the writer never reads the catalog itself. It is
-/// what turns a sample into an answer: the brain runs on the books the instant they change,
-/// and the assessment it produces arrives at `onAssessment`.
+/// Each account's readings are read from the books the instant they change, and arrive at
+/// `onReadings`.
 ///
 /// `record` is not `async` and returns nothing, on purpose. There is no `await` to write and
 /// no outcome to branch on, so no call site can be made to wait on a history write, and none
@@ -312,12 +237,12 @@ public final class UsageHistory {
     private let clock: @Sendable () -> Date
     private let writeDeadline: Duration
 
-    /// Where each assessment goes. `AccountsStore` sets this and publishes what arrives.
+    /// Where each account's readings go. `AccountsStore` sets this and publishes what arrives.
     ///
     /// A property rather than an initialiser argument because the store owns the history and
     /// the history hands the store back an answer: two objects that are made in one order and
     /// wired in the other.
-    public var onAssessment: (@MainActor (FleetAssessment) -> Void)?
+    public var onReadings: (@MainActor (AccountReadings) -> Void)?
 
     private var deadline: Task<Void, Never>?
 
@@ -331,8 +256,6 @@ public final class UsageHistory {
 
     public init(
         files: any SharedFileAccess,
-        assessor: any FleetAssessing = SilentFleetAssessor(),
-        sentences: @escaping @Sendable (FleetAssessment) -> RecommendationSentences = { _ in .none },
         clock: @escaping @Sendable () -> Date = { Date() },
         writeDeadline: Duration = UsageHistoryPolicy.writeDeadline,
         traceWriteDeadline: Duration = UsageHistoryPolicy.traceWriteDeadline
@@ -342,8 +265,6 @@ public final class UsageHistory {
         self.writeDeadline = writeDeadline
         writer = UsageHistoryWriter(
             files: files,
-            assessor: assessor,
-            sentences: sentences,
             snapshotWriteDeadline: writeDeadline,
             traceWriteDeadline: traceWriteDeadline
         )
@@ -361,7 +282,7 @@ public final class UsageHistory {
     ///
     /// Each snapshot carries the `fetchedAt` it was true at, so the panel ages it. A reading
     /// from four hours ago is worth showing; it is worth showing as four hours old.
-    public func restoreSnapshots() -> [AccountID: UsageSnapshot] {
+    public func restoreSnapshots() -> [QotaFolioModel.AccountID: UsageSnapshot] {
         let read: UsageHistoryRead<UsageSnapshotBook> = UsageHistoryCodec.read(files.read(.snapshots))
         guard let book = read.book else { return [:] }
         return Dictionary(
@@ -373,35 +294,21 @@ public final class UsageHistory {
     /// Records one successful poll. Call it wherever the store applies a fresh snapshot.
     ///
     /// Returns immediately: this posts one value onto the writer's chain and, if no write is
-    /// already scheduled, arms a single timer. Everything else — ring maintenance, the brain,
-    /// encoding, the write — happens later and elsewhere.
-    public func record(
-        _ snapshot: UsageSnapshot,
-        for account: AccountID,
-        fleet: [FleetAccount]
-    ) {
-        post([.observed(account: account, snapshot: snapshot, at: clock())], fleet: fleet)
+    /// already scheduled, arms a single timer. Everything else — ring maintenance, the
+    /// readings, encoding, the write — happens later and elsewhere.
+    public func record(_ snapshot: UsageSnapshot, for account: QotaFolioModel.AccountID) {
+        post([.observed(account: account, snapshot: snapshot)])
     }
 
     /// Drops one account's history. Call it where an account is removed.
-    public func forget(_ account: AccountID, fleet: [FleetAccount] = []) {
-        post([.forgotten(account)], fleet: fleet)
+    public func forget(_ account: QotaFolioModel.AccountID) {
+        post([.forgotten(account)])
     }
 
-    /// Asks the brain again over the books as they stand, without a new sample.
-    ///
-    /// A window resets, or a verdict boundary passes, and the right answer changes with
-    /// nobody having polled anything. The assessment says when that is due through
-    /// `nextReviewAt`; this is what the store calls when it arrives.
-    public func reassess(fleet: [FleetAccount]) {
-        let previous = chain
-        let writer = writer
-        let now = clock()
-        chain = Task { [weak self] in
-            await previous.value
-            guard let assessment = await writer.assess(fleet: fleet, at: now) else { return }
-            self?.publish(assessment)
-        }
+    /// Reads the books and publishes each account's readings, with no sample. Call once, at
+    /// start, so the panel has the week before the first poll lands.
+    public func restoreReadings() {
+        post([])
     }
 
     /// Writes anything buffered, now, and returns when it has been written.
@@ -425,43 +332,18 @@ public final class UsageHistory {
         await chain.value
     }
 
-    /// One account's samples and completed windows — the verdict engine's read.
-    ///
-    /// Deliberately `async` and deliberately not on the launch path: it flushes first, then
-    /// reads the trace book on the history queue. Everything the panel needs at launch is in
-    /// `restoreSnapshots()`.
-    public func trace(for account: AccountID) async -> AccountUsageTrace? {
-        await flush()
-        return await writer.trace(for: account)
-    }
-
-    /// Every account's traces. The verdict engine's fleet-wide read; the panel's card asks for one.
-    public func traceBook() async -> UsageTraceBook? {
-        await flush()
-        return await writer.traceBook()
-    }
-
     // MARK: - Scheduling
 
     /// Posts a change to the writer at once, and arms the file deadline behind it.
-    private func post(_ mutations: [UsageHistoryMutation], fleet: [FleetAccount]) {
+    private func post(_ mutations: [UsageHistoryMutation]) {
         let previous = chain
         let writer = writer
         let now = clock()
         chain = Task { [weak self] in
             await previous.value
-            guard let assessment = await writer.apply(mutations, fleet: fleet, at: now) else {
-                return
-            }
-            self?.publish(assessment)
+            guard let readings = await writer.apply(mutations, at: now) else { return }
+            self?.onReadings?(readings)
         }
-        armDeadline()
-    }
-
-    private func publish(_ assessment: FleetAssessment) {
-        onAssessment?(assessment)
-        // A reassessment can leave `recommendation.json` behind the books, so the timer is
-        // armed for it too rather than only for a sample.
         armDeadline()
     }
 
@@ -496,5 +378,18 @@ public final class UsageHistory {
             let outstanding = await writer.writeDueFiles(at: now)
             if outstanding { self?.armDeadline() }
         }
+    }
+}
+
+extension AccountReadings {
+    /// Each account's readings from the books, encoded as the files are and read by the reader
+    /// the files are read by. A book this build cannot read says nothing of any account.
+    public nonisolated init(traces: UsageTraceBook, snapshots: UsageSnapshotBook) {
+        let history = UsageHistoryCodec.encode(traces, for: .traces)
+        let newest = UsageHistoryCodec.encode(snapshots, for: .snapshots)
+        let accounts = (try? LegacyHistory.readings(history: history, snapshots: newest)) ?? []
+        self = Dictionary(accounts.compactMap { readings in
+            UUID(uuidString: readings[0].account.rawValue).map { (QotaFolioModel.AccountID(rawValue: $0), readings) }
+        }, uniquingKeysWith: { _, later in later })
     }
 }
