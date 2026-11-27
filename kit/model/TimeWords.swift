@@ -56,6 +56,12 @@ public struct TimeWords: Sendable {
     /// three hours, so a minute would be decoration.
     public func quarterDay(_ t: Date) -> String { day(Self.quarterHour(t)) }
 
+    /// A limit's length, "30 days" or "5 hours": whole days from a day on, whole hours below.
+    static func length(_ seconds: Double) -> String {
+        let days = Int((seconds / 86400).rounded()), hours = Int((seconds / 3600).rounded())
+        return days >= 1 ? "\(days) \(days == 1 ? "day" : "days")" : "\(hours) \(hours == 1 ? "hour" : "hours")"
+    }
+
     /// The nearest quarter hour, and at a half the one after, as the page rounds.
     public static func quarterHour(_ t: Date) -> Date {
         let quarters = t.timeIntervalSince1970 / 900

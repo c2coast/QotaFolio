@@ -35,9 +35,7 @@ extension SpentLimitBack {
         switch limit.period {
         case .week: return model + "week"
         case .session: return model + "session"
-        case .other(let seconds):
-            let days = Int((seconds / 86400).rounded()), hours = Int((seconds / 3600).rounded())
-            return model + "limit of " + (days >= 1 ? "\(days) \(days == 1 ? "day" : "days")" : "\(hours) \(hours == 1 ? "hour" : "hours")")
+        case .other(let seconds): return model + "limit of " + TimeWords.length(seconds)
         }
     }
 }

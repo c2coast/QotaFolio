@@ -127,6 +127,24 @@ struct AccountNowTests {
         #expect(now.menuBar.spoken == "53 percent left this week, 62 percent this session")
     }
 
+    /// A made-up account with a limit of thirty days and one of five hours on one model, read Wed 3
+    /// Dec 2025 at 12:00. The row and the alert name each by its length in the same words.
+    @Test("A limit of another length is named by its length, on the row and in the alert")
+    func otherLength() throws {
+        let month = Limit.Kind(model: nil, period: .other(seconds: 30 * 86400))
+        let hours = Limit.Kind(model: "Codex", period: .other(seconds: 5 * 3600))
+        let at = Self.december(3, 12, 0)
+        let reading = Reading(account: AccountID("O"), at: at, limits: [
+            Limit(kind: month, used: Percent(20)!, resets: ResetTime(Self.december(20, 0, 0))),
+            Limit(kind: hours, used: Percent(10)!, resets: nil),
+        ])
+        let words = TimeWords(timeZone: Record.zone, now: at)
+        let now = try #require(AccountNow(readings: [reading], words: words))
+        #expect(now.rows.map(\.title) == ["30 days", "Codex, 5 hours"])
+        let back = SpentLimitBack(account: AccountID("O"), limit: month, spentUntil: ResetTime(at), how: .reset)
+        #expect(back.sentence(account: "Work", words: words) == "Work's limit of 30 days is back. It reset Wed 12:00.")
+    }
+
     @Test("Before the first reading there is nothing to say")
     func beforeTheFirstReading() {
         #expect(AccountNow(readings: Record.accounts[0], words: TimeWords(timeZone: Record.zone, now: Record.moment(12, 14, 0))) == nil)

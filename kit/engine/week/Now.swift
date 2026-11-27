@@ -137,7 +137,7 @@ private struct Said {
         case (let model?, .week): model
         case (nil, .session): "Session"
         case (let model?, .session): "\(model) session"
-        case (let model, .other(let seconds)): (model.map { "\($0), " } ?? "") + length(seconds)
+        case (let model, .other(let seconds)): (model.map { "\($0), " } ?? "") + TimeWords.length(seconds)
         }
     }
 
@@ -147,10 +147,5 @@ private struct Said {
         case .session: "this session"
         case .other: "until it resets"
         }
-    }
-
-    func length(_ seconds: Double) -> String {
-        let days = Int((seconds / 86400).rounded()), hours = Int((seconds / 3600).rounded())
-        return days >= 1 ? "\(days) \(days == 1 ? "day" : "days")" : "\(hours) \(hours == 1 ? "hour" : "hours")"
     }
 }
