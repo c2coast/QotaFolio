@@ -1,18 +1,22 @@
 import Foundation
 
 /// How the product says a time: the day's short name and the clock, in the calendar's time zone,
-/// on a 24-hour or a 12-hour clock. The sentences and the graph both say a time through it, so a
-/// time reads the same in the picture and under it.
+/// on a 24-hour or a 12-hour clock, said at a moment, `now`. The sentences, the rows and the graph
+/// all say a time through it, so a time reads the same in the picture and under it.
 ///
 /// On a 24-hour clock it says what the chart page says, "Wed 21:00". On a 12-hour clock it says
-/// "Wed 9:00 PM". English only.
+/// "Wed 9:00 PM". A day's name tells one day only within six days of today, so a time seven days
+/// or more from today says its date too: "Wed 3 Dec 21:00". English only.
 public struct TimeWords: Sendable {
     public let calendar: Calendar
     public let twelveHour: Bool
+    /// The moment the words are said at. Only its day is read.
+    public let now: Date
 
-    public init(calendar: Calendar, twelveHour: Bool = false) {
+    public init(calendar: Calendar, twelveHour: Bool = false, now: Date) {
         self.calendar = calendar
         self.twelveHour = twelveHour
+        self.now = now
     }
 
     /// "Wed".
@@ -34,8 +38,15 @@ public struct TimeWords: Sendable {
         return "\(hour % 12 == 0 ? 12 : hour % 12) \(hour < 12 ? "AM" : "PM")"
     }
 
-    /// "Wed 21:00": the day and the time to the minute.
-    public func day(_ t: Date) -> String { "\(weekday(t)) \(clock(t))" }
+    /// "Wed 21:00": the day and the time to the minute. Seven days or more from today, the date
+    /// too: "Wed 3 Dec 21:00".
+    public func day(_ t: Date) -> String {
+        let t = Date(timeIntervalSince1970: t.timeIntervalSince1970.rounded(.down))
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: t)).day!
+        guard abs(days) >= 7 else { return "\(weekday(t)) \(clock(t))" }
+        let date = calendar.dateComponents([.day, .month], from: t)
+        return "\(weekday(t)) \(date.day!) \(months[date.month! - 1]) \(clock(t))"
+    }
 
     /// A forecast time to the nearest quarter hour, as the page's `dq`. Its median error is about
     /// three hours, so a minute would be decoration.
@@ -56,5 +67,7 @@ public struct TimeWords: Sendable {
 }
 
 private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+private let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 private func twoDigits(_ n: Int) -> String { n < 10 ? "0\(n)" : "\(n)" }

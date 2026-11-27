@@ -23,7 +23,7 @@ extension ForecastTool {
         if out != nil && pictures.count > 1 { fail("--out names one file. Choose the account with --account.\n") }
         let calendar = calendar(.current)
         let stem = moment.label == nil ? text.replacingOccurrences(of: " ", with: "-").replacingOccurrences(of: ":", with: "") : text
-        let words = TimeWords(calendar: calendar, twelveHour: look.twelveHour)
+        let words = TimeWords(calendar: calendar, twelveHour: look.twelveHour, now: moment.at)
         for picture in pictures {
             let sentences = picture.sentences(in: words)
             let name = stem + (pictures.count > 1 ? "-\(picture.account.rawValue)" : "") + (look.appearance.dark ? "-dark" : "-light")

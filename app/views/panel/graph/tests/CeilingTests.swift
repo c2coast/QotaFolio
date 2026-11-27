@@ -11,7 +11,8 @@ struct CeilingTests {
     static let size = CGSize(width: 360, height: 146)
 
     static func ceiling(_ name: String) throws -> Ceiling {
-        Ceiling(picture: try Record.picture(name), size: size, words: TimeWords(calendar: Record.calendar))
+        let picture = try Record.picture(name)
+        return Ceiling(picture: picture, size: size, words: TimeWords(calendar: Record.calendar, now: picture.now.at))
     }
 
     @Test("Time runs left to right, from the week's start at 0 to the reset at the right edge", arguments: names)

@@ -119,7 +119,7 @@ enum ForecastTool {
                 guard let verdict = poll.verdicts[kind], let used = poll.used[kind] else { continue }
                 print("  \(pad(label(kind), 5))  \(pad(percent(used.value), 6))  \(said(verdict, zone))")
             }
-            let sentences = picture.sentences(in: TimeWords(calendar: calendar(zone)))
+            let sentences = picture.sentences(in: TimeWords(calendar: calendar(zone), now: at))
             print("  says   \(sentences.forecast)")
             if let record = sentences.record { print("  shows  \(record)") }
         }
@@ -142,7 +142,8 @@ enum ForecastTool {
                     print((head + [pad(label(kind), 5), pad(percent(used.value), 6), pad(said(verdict, zone), 54), happened(then, zone), judged(verdict, then)])
                         .joined(separator: "  ").trimmingCharacters(in: .whitespaces))
                 }
-                guard let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: TimeWords(calendar: calendar(zone))) else { continue }
+                let words = TimeWords(calendar: calendar(zone), now: poll.reading.at)
+                guard let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: words) else { continue }
                 print((head + ["says ", sentences.forecast]).joined(separator: "  "))
                 if let record = sentences.record { print((head + ["shows", record]).joined(separator: "  ")) }
             }
@@ -262,7 +263,7 @@ enum ForecastTool {
                     }
                     limits[label(kind)] = said
                 }
-                let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: TimeWords(calendar: calendar(.current)))
+                let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: TimeWords(calendar: calendar(.current), now: poll.reading.at))
                 emit(Line(account: poll.reading.account.rawValue, t: poll.reading.at.timeIntervalSince1970, limits: limits,
                           says: sentences?.forecast, shows: sentences?.record))
             }

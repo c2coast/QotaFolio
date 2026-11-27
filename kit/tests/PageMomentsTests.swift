@@ -5,6 +5,10 @@ import Testing
 /// The chart page's twelve moments, each cut at a fixed minute of the record and named in
 /// `fixtures/moments.json`. The sentences are written out as the page says them on the frozen
 /// record in UTC. The page's moment "Now" is the last reading of the record.
+///
+/// One departs from the page by the date rule of `TimeWords`. At new-week-at-zero, Wed 19 Nov 21:02,
+/// the week resets Wed 26 Nov 21:00: seven days away, so the reset says its date, where the page's
+/// "It resets Wed 21:00" read as two minutes ago.
 @Suite("The page's twelve moments, in words")
 struct PageMomentsTests {
     static let said: [(name: String, forecast: String, record: String?)] = [
@@ -42,7 +46,7 @@ struct PageMomentsTests {
          "At the last three hours’ pace, Fable reaches its limit around Wed 23:00, and the week around Wed 23:45.",
          "Nothing was recorded before Wed 14:16, when the week already read 1%."),
         ("new-week-at-zero",
-         "No use yet this week. It resets Wed 21:00.",
+         "No use yet this week. It resets Wed 26 Nov 21:00.",
          nil),
     ]
 
@@ -55,7 +59,8 @@ struct PageMomentsTests {
     @Test("The sentences at each moment", arguments: Self.said.indices)
     func sentences(_ k: Int) throws {
         let (name, forecast, record) = Self.said[k]
-        let sentences = try Record.picture(name).sentences(in: TimeWords(calendar: Record.calendar))
+        let picture = try Record.picture(name)
+        let sentences = picture.sentences(in: TimeWords(calendar: Record.calendar, now: picture.now.at))
         #expect(sentences.forecast == forecast, "\(name)")
         #expect(sentences.record == record, "\(name)")
     }
@@ -65,11 +70,13 @@ struct PageMomentsTests {
     /// an evening, a time in the hour after midnight, and a reset on the hour.
     @Test("On a 12-hour clock, the sentences say each time with AM or PM")
     func twelveHour() throws {
-        let words = TimeWords(calendar: Record.calendar, twelveHour: true)
-        let said = try ["after-banked-reset", "out-in-15-minutes", "new-week-at-zero"].map { try Record.picture($0).sentences(in: words) }
+        let said = try ["after-banked-reset", "out-in-15-minutes", "new-week-at-zero"].map { name in
+            let picture = try Record.picture(name)
+            return picture.sentences(in: TimeWords(calendar: Record.calendar, twelveHour: true, now: picture.now.at))
+        }
         #expect(said[0].forecast == "At the last three hours’ pace, the week reaches its limit around Wed 7:15 PM, 1h 45m before it resets.")
         #expect(said[0].record == "A full banked reset at Tue 8:13 PM gave back 98 points.")
         #expect(said[1].forecast == "At the last three hours’ pace, the week reaches its limit around Fri 12:45 AM, 5d 20h before it resets.")
-        #expect(said[2].forecast == "No use yet this week. It resets Wed 9:00 PM.")
+        #expect(said[2].forecast == "No use yet this week. It resets Wed 26 Nov 9:00 PM.")
     }
 }

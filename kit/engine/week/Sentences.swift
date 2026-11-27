@@ -71,10 +71,17 @@ private struct Said {
             let before = fall.before.at.timeIntervalSince1970, after = fall.after.at.timeIntervalSince1970
             let unwatched = after - before > WeekPicture.gapSeconds
             let what = "gave back \(points(fall.givenBack[.week] ?? 0))\(unwatched ? " or more" : "")"
-            let kind = fall.kind == .full ? "A full banked reset" : picture.model == nil ? "A banked reset" : "A \(name) banked reset"
-            add(after, unwatched
-                ? "\(kind) fell between \(day(before)) and \(day(after)), while nobody watched; it \(what)."
-                : "\(kind) at \(day(after)) \(what).")
+            switch fall.kind {
+            case .full, .model:
+                let kind = fall.kind == .full ? "A full banked reset" : "A \(name) banked reset"
+                add(after, unwatched
+                    ? "\(kind) fell between \(day(before)) and \(day(after)), while nobody watched; it \(what)."
+                    : "\(kind) at \(day(after)) \(what).")
+            case .unexplained:
+                add(after, unwatched
+                    ? "Between \(day(before)) and \(day(after)), while nobody watched, the week \(what); the readings do not say why."
+                    : "At \(day(after)) the week \(what); the readings do not say why.")
+            }
         }
         for gap in picture.gaps where gap.fall == nil {
             let rose = gap.after.week.work - gap.before.week.work

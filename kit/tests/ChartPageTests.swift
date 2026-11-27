@@ -33,9 +33,9 @@ struct ChartPageTests {
             let at = "\(want.account) \(Record.minute(poll.reading.at))"
             #expect(poll.reading.at.timeIntervalSince1970 == wanted.t, "\(at)")
             let picture = try #require(forecast.picture(at: poll.reading.at))
-            let sentences = picture.sentences(in: TimeWords(calendar: Record.calendar))
-            #expect(sentences.forecast == wanted.forecast, "\(at)")
-            #expect(sentences.record == wanted.record, "\(at)")
+            let sentences = picture.sentences(in: TimeWords(calendar: Record.calendar, now: poll.reading.at))
+            #expect(Self.withoutDates(sentences.forecast) == wanted.forecast, "\(at)")
+            #expect(sentences.record.map(Self.withoutDates) == wanted.record, "\(at)")
             #expect(Week(picture) == wanted.week, "\(at)")
             let called = Called(picture.forecast)
             #expect([called.kind, called.first] == [wanted.kind, wanted.first], "\(at)")
@@ -45,24 +45,61 @@ struct ChartPageTests {
     }
 
     /// A time said without its day is a riddle in the first hours of a week. Every clock time in
-    /// every sentence of the record follows a day's name.
+    /// every sentence of the record follows a day's name, and the date when the day's name alone
+    /// would name another day.
     @Test("Every time in a sentence carries its day")
     func everyTimeHasItsDay() throws {
-        let days = Set(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
-        var times = 0
+        var times = 0, said = 0
         for forecast in [Record.a, Record.b] {
             for poll in forecast.polls {
-                let sentences = try #require(forecast.picture(at: poll.reading.at)).sentences(in: TimeWords(calendar: Record.calendar))
+                let words = TimeWords(calendar: Record.calendar, now: poll.reading.at)
+                let sentences = try #require(forecast.picture(at: poll.reading.at)).sentences(in: words)
                 for sentence in [sentences.forecast, sentences.record].compactMap(\.self) {
-                    for range in sentence.ranges(of: /\d\d:\d\d/) {
-                        times += 1
-                        let before = sentence[..<range.lowerBound]
-                        #expect(before.hasSuffix(" ") && days.contains(String(before.dropLast().suffix(3))), "\(sentence)")
-                    }
+                    times += sentence.ranges(of: /\d\d:\d\d/).count
+                    said += sentence.ranges(of: Self.timeWord).count
                 }
             }
         }
         #expect(times > 500)
+        #expect(said == times)
+    }
+
+    /// The page says a day by its name alone. A day's name tells one day only within six days of
+    /// the poll's, so a time seven days or more away says its date too, "Wed 26 Nov 21:00". On the
+    /// record it happens four times: at A's first three polls after Wed 12 Nov 21:00 and its first
+    /// after Wed 19 Nov 21:00, where the page says "No use yet this week. It resets Wed 21:00." of a
+    /// reset a week away.
+    @Test("A date is said only of a day seven days or more from the poll's")
+    func datesAWeekAway() throws {
+        let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        var dated = 0
+        for forecast in [Record.a, Record.b] {
+            for poll in forecast.polls {
+                let words = TimeWords(calendar: Record.calendar, now: poll.reading.at)
+                let sentences = try #require(forecast.picture(at: poll.reading.at)).sentences(in: words)
+                for sentence in [sentences.forecast, sentences.record].compactMap(\.self) {
+                    for match in sentence.matches(of: Self.timeWord) {
+                        guard let date = match.output.2?.split(separator: " ") else { continue }
+                        dated += 1
+                        let month = try #require(months.firstIndex(of: String(date[1]))) + 1
+                        let day = try #require(Record.calendar.date(from: DateComponents(year: 2025, month: month, day: Int(date[0])!)))
+                        let days = Record.calendar.dateComponents([.day], from: Record.calendar.startOfDay(for: poll.reading.at), to: day).day!
+                        #expect(abs(days) >= 7, "\(Record.minute(poll.reading.at)): \(match.output.0)")
+                    }
+                }
+            }
+        }
+        #expect(dated == 4)
+    }
+
+    /// "Wed 21:00" or "Wed 26 Nov 21:00": a day's name, a date when it is said, and the clock.
+    static var timeWord: Regex<(Substring, Substring, Substring?, Substring, Substring)> {
+        /(Mon|Tue|Wed|Thu|Fri|Sat|Sun)( \d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))? (\d\d):(\d\d)/
+    }
+
+    /// The sentence with each date taken out, as the page says it.
+    static func withoutDates(_ sentence: String) -> String {
+        sentence.replacing(timeWord) { "\($0.output.1) \($0.output.3):\($0.output.4)" }
     }
 
     /// The account's forecast, scored as the page's sentence says it, against the first limit that
