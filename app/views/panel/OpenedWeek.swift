@@ -3,8 +3,8 @@ import Kit
 import SwiftUI
 
 /// What a tapped card shows of its account's week: the Ceiling graph with its two sentences under it,
-/// on the panel's glass, in the look macOS reports. Once the week has reset with nothing read since,
-/// there is no picture, and the sentences stand alone.
+/// on the panel's glass, in the look macOS reports. With no picture, the sentence that says why
+/// stands alone.
 struct OpenedWeek: View {
     let week: AccountNow.Week
     let words: TimeWords

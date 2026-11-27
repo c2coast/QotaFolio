@@ -15,11 +15,11 @@ public struct AccountNow: Sendable {
     /// One for each limit of the newest reading: the week first, then the model's week, then the
     /// rest in the reading's order.
     public let rows: [Row]
-    /// The week and its sentences. None when no reading carries the week and its reset.
-    public let week: Week?
+    /// The week and its sentences, or why there is none.
+    public let week: Week
     public let menuBar: MenuBar
 
-    public init(account: AccountID, read: Date, readWords: String, rows: [Row], week: Week?, menuBar: MenuBar) {
+    public init(account: AccountID, read: Date, readWords: String, rows: [Row], week: Week, menuBar: MenuBar) {
         precondition(!rows.isEmpty, "an account now reads at least one limit")
         self.account = account
         self.read = read
@@ -69,10 +69,12 @@ public struct AccountNow: Sendable {
         }
     }
 
-    /// The week as the graph draws it, and the two sentences under it.
+    /// The week as the graph draws it, and the two sentences under it. With no picture, the first
+    /// sentence says why, and there is no second.
     public struct Week: Sendable {
         /// None once the week has reset with nothing read since: nothing of the new week is known,
-        /// and last week's is no longer true.
+        /// and last week's is no longer true. None too when no reading carries the week with its
+        /// reset.
         public let picture: WeekPicture?
         public let sentences: Sentences
 

@@ -29,10 +29,10 @@ extension AccountNow {
 
         let limits = Self.order(newest.limits)
         let rows = limits.map { said.row($0, verdicts[$0.kind], now: now) }
-        let week: Week? = forecast.picture(at: now).map { picture in
+        let week = forecast.picture(at: now).map { picture in
             reset ? Week(picture: nil, sentences: Sentences(forecast: said.weekReset(picture.resets), record: nil))
                 : Week(picture: picture, sentences: picture.sentences(in: words))
-        }
+        } ?? Week(picture: nil, sentences: Sentences(forecast: Said.noWeek(read: known.contains { $0.limit(.week) != nil }), record: nil))
         self.init(account: newest.account, read: newest.at, readWords: words.day(newest.at), rows: rows, week: week,
                   menuBar: said.menuBar(limits, now: now))
     }
@@ -103,6 +103,12 @@ private struct Said {
 
     func weekReset(_ reset: ResetTime) -> String {
         "The week reset \(words.day(reset.instant)), and has not been read since."
+    }
+
+    /// Why there is no week to draw: no reading carries it, or none carries its reset.
+    static func noWeek(read: Bool) -> String {
+        read ? "The provider gave no reset for the week, so there is no week to draw."
+            : "This account has no weekly limit, so there is no week to draw."
     }
 
     /// The week, or the first limit of an account with no week, and a session beside it while one

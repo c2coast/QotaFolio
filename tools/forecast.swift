@@ -136,7 +136,7 @@ enum ForecastTool {
             }
             print("\(name.map { "\($0). " } ?? "")Account \(now.account.rawValue) at \(day(at, zone)), "
                 + "the reading of \(day(now.read, zone)). Times are \(zone.identifier).")
-            if let picture = now.week?.picture {
+            if let picture = now.week.picture {
                 for (kind, meter) in [(Limit.Kind.week, picture.now.week)] + (picture.model.flatMap { kind in picture.now.model.map { (kind, $0) } }.map { [$0] } ?? []) {
                     guard let verdict = picture.verdicts[kind] else { continue }
                     print("  \(pad(label(kind), 5))  \(pad(percent(meter.used), 6))  \(said(verdict, zone))")
@@ -151,10 +151,8 @@ enum ForecastTool {
                     print("  row    \(row.title) · \(words) · not read since")
                 }
             }
-            if let week = now.week {
-                print("  says   \(week.sentences.forecast)")
-                if let record = week.sentences.record { print("  shows  \(record)") }
-            }
+            print("  says   \(now.week.sentences.forecast)")
+            if let record = now.week.sentences.record { print("  shows  \(record)") }
             print("  menu   \(now.menuBar.text)  (\(level(now.menuBar.level)), fill \(now.menuBar.left)%)  aloud: \(now.menuBar.spoken)")
             for back in SpentLimitBack.newest(in: readings.prefix { $0.at <= at }) {
                 print("  back   \(label(back.limit)), spent until \(day(back.spentUntil.instant, zone)), back by \(back.how == .reset ? "its reset" : "a banked reset")")

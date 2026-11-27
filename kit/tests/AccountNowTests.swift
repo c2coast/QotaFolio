@@ -32,8 +32,8 @@ struct AccountNowTests {
         #expect([fable.percent, fable.resets, fable.verdict] == ["12%", "resets Wed 21:00", nil])
         #expect(week.level == .plenty)
         #expect(now.rows[0].spoken == "Weekly, 15% used, resets Wed 21:00, runs out around Wed 19:15.")
-        #expect(now.week?.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Wed 19:15, 1h 45m before it resets.")
-        #expect(now.week?.sentences.record == "A full banked reset at Tue 20:13 gave back 98 points.")
+        #expect(now.week.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Wed 19:15, 1h 45m before it resets.")
+        #expect(now.week.sentences.record == "A full banked reset at Tue 20:13 gave back 98 points.")
         #expect(now.menuBar == AccountNow.MenuBar(limit: .week, left: 85, level: .plenty, text: "85% left this week", spoken: "85 percent left this week"))
     }
 
@@ -62,7 +62,7 @@ struct AccountNowTests {
         #expect(week.verdict == "runs out around Wed 20:00")
         #expect([fable.percent, fable.resets, fable.verdict] == ["29%", "resets Wed 21:00", "the week runs out first"])
         #expect(now.rows[1].spoken == "Fable, 29% used, resets Wed 21:00, the week runs out first.")
-        #expect(now.week?.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Wed 20:00, 1h 0m before it resets.")
+        #expect(now.week.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Wed 20:00, 1h 0m before it resets.")
     }
 
     /// A, Fri 14 Nov 00:35. The week at 98 runs out around 00:50, and Fable at 89 around 02:07, later:
@@ -83,7 +83,7 @@ struct AccountNowTests {
         let now = try Self.now(0, at: Self.at("new-week-at-zero"))
         let week = try Self.read(now.rows[0])
         #expect([week.percent, week.resets, week.verdict] == ["0%", "resets Wed 26 Nov 21:00", nil])
-        #expect(now.week?.sentences.forecast == "No use yet this week. It resets Wed 26 Nov 21:00.")
+        #expect(now.week.sentences.forecast == "No use yet this week. It resets Wed 26 Nov 21:00.")
         #expect(try Self.now(0, at: Self.at("new-week-at-zero"), twelveHour: true).menuBar.text == "100% left this week")
     }
 
@@ -93,16 +93,16 @@ struct AccountNowTests {
     func staleAfterReset() throws {
         let before = try Self.now(0, at: Record.moment(26, 20, 55))
         #expect(try Self.read(before.rows[0]).verdict == "spent")
-        #expect(before.week?.picture != nil)
-        #expect(before.week?.sentences.forecast == "Spent. Back Wed 21:00. Fable reads 99% and waits on the week.")
+        #expect(before.week.picture != nil)
+        #expect(before.week.sentences.forecast == "Spent. Back Wed 21:00. Fable reads 99% and waits on the week.")
 
         let after = try Self.now(0, at: Record.moment(26, 21, 5))
         let reset = ResetTime(Record.moment(26, 21, 0))
         #expect(after.rows.map(\.state) == [.reset(at: reset, words: "reset Wed 21:00"), .reset(at: reset, words: "reset Wed 21:00")])
         #expect(after.rows[0].spoken == "Weekly, reset Wed 21:00, not read since.")
-        #expect(after.week?.picture == nil)
-        #expect(after.week?.sentences.forecast == "The week reset Wed 21:00, and has not been read since.")
-        #expect(after.week?.sentences.record == nil)
+        #expect(after.week.picture == nil)
+        #expect(after.week.sentences.forecast == "The week reset Wed 21:00, and has not been read since.")
+        #expect(after.week.sentences.record == nil)
         #expect(after.menuBar == AccountNow.MenuBar(limit: .week, left: 100, level: .plenty, text: "week reset Wed 21:00",
                                                     spoken: "week reset Wed 21:00, not read since"))
         #expect(after.readWords == "Fri 14:28")
@@ -118,8 +118,8 @@ struct AccountNowTests {
         let week = try Self.read(now.rows[0])
         #expect([week.percent, week.verdict] == ["15%", nil])
         #expect(now.rows[0].spoken == "Weekly, 15% used, resets Wed 21:00.")
-        #expect(now.week?.sentences.forecast == "Nothing has been read since Tue 23:42, so there is no forecast.")
-        #expect(now.week?.sentences.record == "A full banked reset at Tue 20:13 gave back 98 points.")
+        #expect(now.week.sentences.forecast == "Nothing has been read since Tue 23:42, so there is no forecast.")
+        #expect(now.week.sentences.record == "A full banked reset at Tue 20:13 gave back 98 points.")
     }
 
     /// A, the record up to the poll of Thu 13 Nov 11:10: Fable was to run out around Sun 11:15 and
@@ -131,10 +131,10 @@ struct AccountNowTests {
         let sunday = try #require(AccountNow(readings: readings, words: TimeWords(timeZone: Record.zone, now: Record.moment(16, 12, 0))))
         #expect(try Self.read(sunday.rows[1]).verdict == nil)
         #expect(try Self.read(sunday.rows[0]).verdict == "runs out around Mon 12:15")
-        #expect(sunday.week?.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Mon 12:15, 2d 8h before it resets.")
+        #expect(sunday.week.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Mon 12:15, 2d 8h before it resets.")
         let monday = try #require(AccountNow(readings: readings, words: TimeWords(timeZone: Record.zone, now: Record.moment(17, 13, 0))))
         #expect(try monday.rows.map { try Self.read($0).verdict } == [nil, nil])
-        #expect(monday.week?.sentences.forecast == "Nothing has been read since Thu 11:10, so there is no forecast.")
+        #expect(monday.week.sentences.forecast == "Nothing has been read since Thu 11:10, so there is no forecast.")
     }
 
     /// A made-up account with a five-hour window, read Wed 3 Dec 2025 at 12:00: the session at 38,
@@ -176,6 +176,24 @@ struct AccountNowTests {
         #expect(back.sentence(account: "Work", words: words) == "Work's limit of 30 days is back. It reset Wed 12:00.")
     }
 
+    /// Two made-up accounts read Wed 3 Dec 2025 at 12:00: one whose week came with no reset, as the
+    /// lab's Attilus does, and one with a session alone. Neither has a week to draw, and each says why.
+    @Test("With no week to draw, the week says why")
+    func noWeek() throws {
+        let session = Limit(kind: Limit.Kind(model: nil, period: .session), used: Percent(71)!, resets: ResetTime(Self.december(3, 14, 0)))
+        let at = Self.december(3, 12, 0), words = TimeWords(timeZone: Record.zone, now: at)
+        let unreset = try #require(AccountNow(readings: [Reading(account: AccountID("N"), at: at, limits: [
+            session, Limit(kind: .week, used: Percent(62)!, resets: nil),
+        ])], words: words))
+        #expect(unreset.week.picture == nil)
+        #expect(unreset.week.sentences.forecast == "The provider gave no reset for the week, so there is no week to draw.")
+        #expect(unreset.week.sentences.record == nil)
+        #expect(try Self.read(unreset.rows[0]).resets == nil)
+        let sessionOnly = try #require(AccountNow(readings: [Reading(account: AccountID("N"), at: at, limits: [session])], words: words))
+        #expect(sessionOnly.week.picture == nil)
+        #expect(sessionOnly.week.sentences.forecast == "This account has no weekly limit, so there is no week to draw.")
+    }
+
     @Test("Before the first reading there is nothing to say")
     func beforeTheFirstReading() {
         #expect(AccountNow(readings: Record.accounts[0], words: TimeWords(timeZone: Record.zone, now: Record.moment(12, 14, 0))) == nil)
@@ -190,9 +208,9 @@ struct AccountNowTests {
             let words = TimeWords(timeZone: Record.zone, now: poll.reading.at)
             let now = try #require(AccountNow(readings: Record.accounts[account], words: words))
             let picture = try #require(whole.picture(at: poll.reading.at))
-            #expect(now.week?.sentences == picture.sentences(in: words), "\(Record.minute(poll.reading.at))")
-            #expect(now.week?.picture?.verdicts == picture.verdicts, "\(Record.minute(poll.reading.at))")
-            #expect(now.week?.picture?.points == picture.points, "\(Record.minute(poll.reading.at))")
+            #expect(now.week.sentences == picture.sentences(in: words), "\(Record.minute(poll.reading.at))")
+            #expect(now.week.picture?.verdicts == picture.verdicts, "\(Record.minute(poll.reading.at))")
+            #expect(now.week.picture?.points == picture.points, "\(Record.minute(poll.reading.at))")
         }
     }
 

@@ -51,7 +51,7 @@ struct AccountCard: View {
             stateLine
             if isExpanded {
                 VStack(alignment: .leading, spacing: 12) {
-                    if let week = now?.week { OpenedWeek(week: week, words: words) }
+                    if let now { OpenedWeek(week: now.week, words: words) }
                     PlanLine(face: face, snapshot: store.snapshots[account.id])
                 }
                 .padding(.top, 4)
