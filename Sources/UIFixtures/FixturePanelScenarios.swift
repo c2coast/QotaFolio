@@ -67,7 +67,8 @@ public nonisolated extension FixtureUIScenarios {
                     .init(openedAgo: 3 * day + 3 * hour, activeMinutes: 120, close: 47),
                     .init(openedAgo: 1 * day + 4 * hour, activeMinutes: 230, close: 92),
                     .init(openedAgo: 202 * minute, activeMinutes: 202, close: 71),
-                ]
+                ],
+                weeklyOnly: true
             ),
             FixtureReplay.Account(
                 config: work,
@@ -267,7 +268,11 @@ nonisolated struct FixtureReplay {
         let credits: UsageCredits?
         let weekly: Weekly?
         let scoped: [Scoped]
+        /// The five-hour windows. They set when the account is polled, whether or not its
+        /// readings carry them.
         let sessions: [Session]
+        /// Readings that carry the week alone, as the owner's accounts do: no five-hour window.
+        var weeklyOnly = false
     }
 
     struct Result {
@@ -332,7 +337,7 @@ nonisolated struct FixtureReplay {
     }
 
     private func snapshot(for account: Account, at: Date, sessionUsed: Double, sessionResetsAt: Date) -> UsageSnapshot {
-        var readings = [
+        var readings = account.weeklyOnly ? [] : [
             UsageReading(scope: nil, period: .session, window: UsageWindow(usedPercent: sessionUsed, resetsAt: sessionResetsAt, severity: nil)),
         ]
         if let weekly = account.weekly {

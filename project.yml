@@ -27,8 +27,8 @@ settings:
     # applies to every target in the build, and the tool and the framework need identifiers of
     # their own. This knob fans out into three distinct identifiers instead of one.
     QOTAFOLIO_BUNDLE_ID: net.c2coast.QotaFolio
-    MARKETING_VERSION: "1.2.0"
-    CURRENT_PROJECT_VERSION: "120"
+    MARKETING_VERSION: "1.3.0"
+    CURRENT_PROJECT_VERSION: "130"
     VERSIONING_SYSTEM: apple-generic
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
