@@ -42,7 +42,7 @@ enum ForecastTool {
             }
         }
         let history = URL(fileURLWithPath: path)
-        let all = try LegacyHistory.readings(from: Data(contentsOf: history)).map(Forecast.init(readings:))
+        let all = try LegacyHistory.readings(history: Data(contentsOf: history), snapshots: nil).map(Forecast.init(readings:))
         let recordEnd = all.compactMap { $0.polls.last?.reading.at }.max() ?? .distantPast
         // The week first, then each model's week, as the polls carry them.
         let kinds = [Limit.Kind.week] + Set(all.flatMap { $0.polls.flatMap(\.verdicts.keys) })

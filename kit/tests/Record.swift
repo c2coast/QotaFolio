@@ -13,7 +13,7 @@ enum Record {
 
     static let accounts: [[Reading]] = {
         let data = try! Data(contentsOf: fixtures.appending(path: "usage-history.json"))
-        return try! LegacyHistory.readings(from: data)
+        return try! LegacyHistory.readings(history: data, snapshots: nil)
     }()
 
     static let a = Forecast(readings: accounts[0])

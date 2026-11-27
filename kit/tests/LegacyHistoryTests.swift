@@ -37,7 +37,7 @@ struct LegacyHistoryTests {
               {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100], "sampleUsedBasisPoints": [14000],
                "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800, "lastObservedAt": 100}]}]}
             """
-        #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(from: Data(file.utf8)) }
+        #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(history: Data(file.utf8), snapshots: nil) }
     }
 
     /// Version 1.0.0 spaces each limit's samples on its own: here the week at 100 and 200, Fable at
@@ -53,11 +53,63 @@ struct LegacyHistoryTests {
                "sampleUsedBasisPoints": [100, 300], "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800,
                "lastObservedAt": 250}]}]}
             """
-        let accounts = try LegacyHistory.readings(from: Data(file.utf8))
+        let accounts = try LegacyHistory.readings(history: Data(file.utf8), snapshots: nil)
         #expect(accounts.count == 1)
         let readings = try #require(accounts.first)
         #expect(readings.map(\.at.timeIntervalSince1970) == [100, 200, 250])
         #expect(readings.map { $0.limits.map(\.kind) } == [[.week, Record.fable], [.week], [Record.fable]])
         #expect(readings[2].limit(Record.fable)?.used == Percent(3))
+    }
+
+    /// A trace of the week and Fable at 100 and 200, and a snapshot of the poll at 250: the week at
+    /// 3.456 percent, which 1.0.0 holds as 346 hundredths, Fable at 120, which it holds as 100, and a
+    /// five-hour window with no session open. The trace's open week resets at 604800; the snapshot
+    /// sends the week's reset a second early, 604799, which is the same minute.
+    static let trace = """
+        {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 200, "windows": [
+          {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100, 200], "sampleUsedBasisPoints": [100, 200],
+           "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800, "lastObservedAt": 200},
+          {"key": "Fable|weekly", "scope": "Fable", "period": {"weekly": {}}, "sampleTimes": [100, 200],
+           "sampleUsedBasisPoints": [100, 300], "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800,
+           "lastObservedAt": 200}]}]}
+        """
+
+    static func snapshots(at fetchedAt: Int, account: String = "A") -> String {
+        """
+        {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "\(account)"}, "provider": "anthropic", "fetchedAt": \(fetchedAt),
+          "readings": [
+            {"period": {"session": {}}, "usedPercent": 0},
+            {"period": {"weekly": {}}, "usedPercent": 3.456, "resetsAt": 604799, "severity": "normal"},
+            {"period": {"weekly": {}}, "scope": "Fable", "usedPercent": 120, "resetsAt": 604800}]}]}
+        """
+    }
+
+    @Test("The snapshot is the last reading, read as the trace would hold it")
+    func snapshotLast() throws {
+        let accounts = try LegacyHistory.readings(history: Data(Self.trace.utf8), snapshots: Data(Self.snapshots(at: 250).utf8))
+        let readings = try #require(accounts.first)
+        #expect(accounts.count == 1)
+        #expect(readings.map(\.at.timeIntervalSince1970) == [100, 200, 250])
+        let last = try #require(readings.last)
+        #expect(last.limits.map(\.kind) == [Limit.Kind(model: nil, period: .session), .week, Record.fable])
+        #expect(last.limit(.week)?.used == Percent(basisPoints: 346))
+        #expect(last.limit(Record.fable)?.used == Percent(100))
+        #expect(last.limit(.week)?.resets == readings[1].limit(.week)?.resets)
+        #expect(last.limit(Limit.Kind(model: nil, period: .session))?.resets == nil)
+    }
+
+    /// The trace kept the poll of 200 itself, so the snapshot of that poll adds nothing.
+    @Test("A snapshot the trace already holds adds no reading")
+    func snapshotHeld() throws {
+        let accounts = try LegacyHistory.readings(history: Data(Self.trace.utf8), snapshots: Data(Self.snapshots(at: 200).utf8))
+        #expect(accounts.map { $0.map(\.at.timeIntervalSince1970) } == [[100, 200]])
+    }
+
+    /// An account added since the trace was last written has its first poll only.
+    @Test("An account only the snapshots hold reads as its one poll")
+    func snapshotOnly() throws {
+        let accounts = try LegacyHistory.readings(history: Data(Self.trace.utf8), snapshots: Data(Self.snapshots(at: 250, account: "C").utf8))
+        #expect(accounts.map { $0[0].account.rawValue } == ["A", "C"])
+        #expect(accounts[1].count == 1)
     }
 }
