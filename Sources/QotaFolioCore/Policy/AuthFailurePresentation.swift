@@ -3,7 +3,7 @@ import Foundation
 // The sign-in failure taxonomy. Every AccountFlowFailure — including the `.deadlineExpired` provider branch and the
 // DeviceCodeStartFailure.rateLimited retry gate — is projected here, as a pure function of (failure, provider, now).
 //
-// Every comparable projection in this app (StatusStripModel, AccountAccessibilityPresentation, AccountFace,
+// Every comparable projection in this app (AccountAccessibilityPresentation, AccountFace,
 // RetryCountdown) is a pure nonisolated function in Policy, and so is this one.
 //
 // The retry gate's deadline is not held here. AddFlowView renders every `.failed` phase from ONE ViewBuilder branch, so
