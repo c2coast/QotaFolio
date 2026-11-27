@@ -353,12 +353,18 @@ final class FixtureAppRuntime: AppRuntime {
             alerts.start()
             // The fixture week has a spent limit, and no poll that finds it back, so one arrives
             // here: the first spent limit read again at nothing before its reset, as a banked
-            // reset gives it back.
-            // Everything after that — the readings, the condition, the sentence, the once-per-key
-            // rule, the permission ask — is the app's own, ending at the recording centre
-            // instead of macOS.
+            // reset gives it back. The next poll a second later reads the same, so the event is
+            // worked out twice and shown once. Everything after the polls — the readings, the
+            // condition, the sentence, the once-per-key rule, the permission ask — is the app's
+            // own, ending at the recording centre instead of macOS.
             if let (id, poll) = Self.pollBringingBackASpentLimit(scenario, at: Date()) {
                 store.record(poll, for: id, at: poll.fetchedAt)
+                let next = UsageSnapshot(provider: poll.provider, readings: poll.readings, planName: poll.planName,
+                                         extraUsage: poll.extraUsage, credits: poll.credits, fetchedAt: poll.fetchedAt + 1)
+                Task { @MainActor [store] in
+                    try? await Task.sleep(for: .seconds(1))
+                    store.record(next, for: id, at: next.fetchedAt)
+                }
             }
         }
         if let tab = options.settingsTab {
