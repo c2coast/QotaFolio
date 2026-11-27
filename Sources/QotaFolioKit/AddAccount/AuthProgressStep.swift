@@ -50,7 +50,7 @@ public struct AuthProgressStep: View {
                     action: cancel
                 )
                 .keyboardShortcut(.cancelAction)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.authCancel)
             }
         }

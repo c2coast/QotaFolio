@@ -55,7 +55,7 @@ public struct EmptyStateView: View {
                     qfLocalized("empty.primaryAction", defaultValue: "Add your first account…", comment: "Primary first-run add-account button."),
                     systemImage: "plus.circle.fill"
                 )
-                .frame(maxWidth: .infinity, minHeight: 40)
+                .frame(maxWidth: .infinity, minHeight: PanelMetrics.hitTarget)
             }
             .buttonStyle(.borderedProminent)
             .keyboardShortcut("n", modifiers: .command)

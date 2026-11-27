@@ -72,7 +72,7 @@ public struct CatalogUnreadableView: View {
                             )
                         }
                         .buttonStyle(.borderedProminent)
-                        .frame(minWidth: 40, minHeight: 40)
+                        .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                         .accessibilityIdentifier("qotafolio.catalog.unreadable.retry")
                     }
 
@@ -84,7 +84,7 @@ public struct CatalogUnreadableView: View {
                             systemImage: "gearshape"
                         )
                     }
-                    .frame(minWidth: 40, minHeight: 40)
+                    .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                     .accessibilityIdentifier(AXIdentifiers.footerSettings)
 
                     Spacer()
@@ -97,7 +97,7 @@ public struct CatalogUnreadableView: View {
                             systemImage: "power"
                         )
                     }
-                    .frame(minWidth: 40, minHeight: 40)
+                    .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                     .accessibilityIdentifier(AXIdentifiers.footerQuit)
                 }
             }

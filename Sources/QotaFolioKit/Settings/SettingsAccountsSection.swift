@@ -113,7 +113,7 @@ public struct SettingsAccountsSection: View {
                         systemImage: "plus"
                     )
                 }
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .disabled(addBlocked)
                 .accessibilityIdentifier(AXIdentifiers.settingsAccountsAdd)
             }
@@ -197,7 +197,7 @@ public struct SettingsAccountsSection: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
-            .frame(minWidth: 40, minHeight: 40)
+            .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
             .disabled(catalog.loadState == .unreadable)
             .help(qfLocalized("settings.accounts.actions", defaultValue: "Rename, reconnect, remove", comment: "Tooltip for an account row's actions menu in Settings."))
             .accessibilityLabel(qfLocalized(
@@ -223,7 +223,7 @@ public struct SettingsAccountsSection: View {
             } label: {
                 Image(systemName: "arrow.up")
             }
-            .frame(minWidth: 40, minHeight: 40)
+            .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
             .disabled(index == 0 || catalog.loadState == .unreadable)
             .help(qfLocalized("action.moveUp", defaultValue: "Move Up", comment: "Move an account earlier in display order."))
 
@@ -232,7 +232,7 @@ public struct SettingsAccountsSection: View {
             } label: {
                 Image(systemName: "arrow.down")
             }
-            .frame(minWidth: 40, minHeight: 40)
+            .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
             .disabled(index == catalog.accounts.count - 1 || catalog.loadState == .unreadable)
             .help(qfLocalized("action.moveDown", defaultValue: "Move Down", comment: "Move an account later in display order."))
         }

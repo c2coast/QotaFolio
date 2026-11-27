@@ -67,7 +67,7 @@ public struct RenamePrompt: View {
                     action: cancel
                 )
                 .keyboardShortcut(.cancelAction)
-                .frame(minHeight: 40)
+                .frame(minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.renameCancel)
 
                 Button(
@@ -76,7 +76,7 @@ public struct RenamePrompt: View {
                 )
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
-                .frame(minHeight: 40)
+                .frame(minHeight: PanelMetrics.hitTarget)
                 .disabled(trimmedName.isEmpty || blockedReason != nil)
                 // A refused press outranks a closed admission here, the way it does on the card's
                 // Reconnect: both can be true at once, and the refusal is the newer fact and the

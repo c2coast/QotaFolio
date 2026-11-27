@@ -116,7 +116,7 @@ public struct DeviceCodeStep: View {
                             systemImage: "doc.on.doc"
                         )
                     }
-                    .frame(minWidth: 40, minHeight: 40)
+                    .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                     .accessibilityIdentifier(AXIdentifiers.chatGPTCopyCode)
                 }
                 .padding(12)
@@ -156,7 +156,7 @@ public struct DeviceCodeStep: View {
                     action: cancel
                 )
                 .keyboardShortcut(.cancelAction)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
 
                 Spacer()
 
@@ -168,7 +168,7 @@ public struct DeviceCodeStep: View {
                         )
                     }
                     .buttonStyle(.borderedProminent)
-                    .frame(minWidth: 40, minHeight: 40)
+                    .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                     .accessibilityIdentifier(AXIdentifiers.chatGPTGetNewCode)
                 }
             }
@@ -185,7 +185,7 @@ public struct DeviceCodeStep: View {
             )
         }
         .buttonStyle(.borderedProminent)
-        .frame(minWidth: 40, minHeight: 40)
+        .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
         .accessibilityIdentifier(AXIdentifiers.chatGPTOpenVerification)
     }
 
@@ -201,7 +201,7 @@ public struct DeviceCodeStep: View {
                 systemImage: "link"
             )
         }
-        .frame(minWidth: 40, minHeight: 40)
+        .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
         .accessibilityIdentifier(AXIdentifiers.chatGPTCopyVerificationURL)
     }
 
