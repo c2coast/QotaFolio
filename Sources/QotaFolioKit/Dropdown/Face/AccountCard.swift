@@ -40,7 +40,7 @@ struct AccountCard: View {
     /// The words at the panel's moment, on the person's clock. A host that runs no clock reads the
     /// wall clock once.
     private var words: TimeWords {
-        TimeWords(locale: locale, calendar: style.calendar, timeZone: style.timeZone, now: panelNow ?? .now)
+        TimeWords(locale: locale, timeZone: style.timeZone, now: panelNow ?? .now)
     }
 
     var body: some View {

@@ -22,7 +22,7 @@ struct Week: Sendable, CustomTestStringConvertible {
         Ceiling(picture: picture, size: CGSize(width: width, height: 146), words: words(twelveHour))
     }
 
-    func words(_ twelveHour: Bool) -> TimeWords { TimeWords(calendar: calendar, twelveHour: twelveHour, now: picture.now.at) }
+    func words(_ twelveHour: Bool) -> TimeWords { TimeWords(timeZone: calendar.timeZone, twelveHour: twelveHour, now: picture.now.at) }
 }
 
 /// The labels' rule, over every week the tests know, on both clocks and at three widths: each

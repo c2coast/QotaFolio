@@ -7,7 +7,7 @@ import Testing
 @Suite("The account now")
 struct AccountNowTests {
     static func now(_ account: Int, at moment: Date, twelveHour: Bool = false) throws -> AccountNow {
-        try #require(AccountNow(readings: Record.accounts[account], words: TimeWords(calendar: Record.calendar, twelveHour: twelveHour, now: moment)))
+        try #require(AccountNow(readings: Record.accounts[account], words: TimeWords(timeZone: Record.zone, twelveHour: twelveHour, now: moment)))
     }
 
     static func at(_ name: String) -> Date { Date(timeIntervalSince1970: Record.moments[name]!.at) }
@@ -117,7 +117,7 @@ struct AccountNowTests {
             Limit(kind: session, used: Percent(38)!, resets: ResetTime(Self.december(3, 14, 0))),
             Limit(kind: .week, used: Percent(47)!, resets: ResetTime(Self.december(5, 13, 0))),
         ])
-        let now = try #require(AccountNow(readings: [reading], words: TimeWords(calendar: Record.calendar, now: at)))
+        let now = try #require(AccountNow(readings: [reading], words: TimeWords(timeZone: Record.zone, now: at)))
         #expect(now.rows.map(\.title) == ["Week", "Session"])
         let row = try Self.read(now.rows[1])
         #expect([row.percent, row.resets] == ["38%", "resets Wed 14:00"])
@@ -129,7 +129,7 @@ struct AccountNowTests {
 
     @Test("Before the first reading there is nothing to say")
     func beforeTheFirstReading() {
-        #expect(AccountNow(readings: Record.accounts[0], words: TimeWords(calendar: Record.calendar, now: Record.moment(12, 14, 0))) == nil)
+        #expect(AccountNow(readings: Record.accounts[0], words: TimeWords(timeZone: Record.zone, now: Record.moment(12, 14, 0))) == nil)
     }
 
     /// The account now runs the Engine on the week in force and the poll before it. At every poll
@@ -138,7 +138,7 @@ struct AccountNowTests {
     func lastWeekIsTheWhole(account: Int) throws {
         let whole = [Record.a, Record.b][account]
         for poll in whole.polls {
-            let words = TimeWords(calendar: Record.calendar, now: poll.reading.at)
+            let words = TimeWords(timeZone: Record.zone, now: poll.reading.at)
             let now = try #require(AccountNow(readings: Record.accounts[account], words: words))
             let picture = try #require(whole.picture(at: poll.reading.at))
             #expect(now.week?.sentences == picture.sentences(in: words), "\(Record.minute(poll.reading.at))")

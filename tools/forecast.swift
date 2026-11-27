@@ -101,13 +101,6 @@ enum ForecastTool {
         return (history, try LegacyHistory.readings(history: Data(contentsOf: history), snapshots: book))
     }
 
-    /// The sentences' calendar: Gregorian, in the zone given.
-    static func calendar(_ zone: TimeZone) -> Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = zone
-        return calendar
-    }
-
     // MARK: - A moment
 
     struct Moment: Decodable {
@@ -135,7 +128,7 @@ enum ForecastTool {
     /// sentences, its menu bar and any spent limit that is back, word for word.
     static func printMoment(_ at: Date, _ name: String?, _ accounts: [[Reading]]) {
         let zone = TimeZone.current
-        let words = TimeWords(calendar: calendar(zone), now: at)
+        let words = TimeWords(timeZone: zone, now: at)
         for readings in accounts {
             guard let now = AccountNow(readings: readings, words: words) else {
                 print("\(readings[0].account.rawValue): no reading at or before \(day(at, zone))")
@@ -195,7 +188,7 @@ enum ForecastTool {
                     print((head + [pad(label(kind), 5), pad(percent(used.value), 6), pad(said(verdict, zone), 54), happened(then, zone), judged(verdict, then)])
                         .joined(separator: "  ").trimmingCharacters(in: .whitespaces))
                 }
-                let words = TimeWords(calendar: calendar(zone), now: poll.reading.at)
+                let words = TimeWords(timeZone: zone, now: poll.reading.at)
                 guard let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: words) else { continue }
                 print((head + ["says ", sentences.forecast]).joined(separator: "  "))
                 if let record = sentences.record { print((head + ["shows", record]).joined(separator: "  ")) }
@@ -317,7 +310,7 @@ enum ForecastTool {
                     }
                     limits[label(kind)] = said
                 }
-                let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: TimeWords(calendar: calendar(.current), now: poll.reading.at))
+                let sentences = forecast.picture(at: poll.reading.at)?.sentences(in: TimeWords(timeZone: .current, now: poll.reading.at))
                 emit(Line(account: poll.reading.account.rawValue, t: poll.reading.at.timeIntervalSince1970, limits: limits,
                           says: sentences?.forecast, shows: sentences?.record))
             }

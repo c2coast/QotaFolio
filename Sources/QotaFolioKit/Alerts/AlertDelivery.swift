@@ -182,9 +182,7 @@ public nonisolated enum AlertAuthorization: Equatable, Sendable {
         authorization = status
         guard status == .authorized else { return }
 
-        var calendar = style.calendar
-        calendar.timeZone = style.timeZone
-        let words = TimeWords(calendar: calendar, twelveHour: style.locale.clockIsTwelveHour, now: Date())
+        let words = TimeWords(timeZone: style.timeZone, twelveHour: style.locale.clockIsTwelveHour, now: Date())
         for (id, back) in wanted {
             let key = Self.key(back)
             do {

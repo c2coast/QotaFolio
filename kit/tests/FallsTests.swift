@@ -66,7 +66,7 @@ struct FallsTests {
         #expect(fall.kind == .unexplained)
         #expect(fall.givenBack[.week] == 3)
         let picture = try #require(forecast.picture(at: Self.december(2, 14, 15)))
-        let words = TimeWords(calendar: Record.calendar, now: Self.december(2, 14, 15))
+        let words = TimeWords(timeZone: Record.zone, now: Self.december(2, 14, 15))
         #expect(picture.sentences(in: words).record == "At Tue 14:15 the week gave back 3 points; the readings do not say why.")
     }
 

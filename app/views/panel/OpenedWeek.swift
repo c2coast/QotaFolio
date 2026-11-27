@@ -27,10 +27,8 @@ struct OpenedWeek: View {
 
 extension TimeWords {
     /// The words of the panel at a moment, on the clock the person's locale keeps.
-    init(locale: Locale, calendar: Calendar, timeZone: TimeZone, now: Date) {
-        var calendar = calendar
-        calendar.timeZone = timeZone
+    init(locale: Locale, timeZone: TimeZone, now: Date) {
         let hours = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: locale) ?? ""
-        self.init(calendar: calendar, twelveHour: hours.contains("a"), now: now)
+        self.init(timeZone: timeZone, twelveHour: hours.contains("a"), now: now)
     }
 }

@@ -12,7 +12,7 @@ struct CeilingTests {
 
     static func ceiling(_ name: String) throws -> Ceiling {
         let picture = try Record.picture(name)
-        return Ceiling(picture: picture, size: size, words: TimeWords(calendar: Record.calendar, now: picture.now.at))
+        return Ceiling(picture: picture, size: size, words: TimeWords(timeZone: Record.zone, now: picture.now.at))
     }
 
     @Test("Time runs left to right, from the week's start at 0 to the reset at the right edge", arguments: names)

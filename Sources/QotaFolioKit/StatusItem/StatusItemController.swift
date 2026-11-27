@@ -229,7 +229,7 @@ import QotaFolioCore
         guard !accounts.isEmpty else {
             return Strip(saying: qfLocalized("strip.noAccounts", defaultValue: "No accounts configured. Open QotaFolio to add one.", comment: "Menu-bar strip words when no account has been added yet."))
         }
-        let words = TimeWords(locale: .autoupdatingCurrent, calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, now: now)
+        let words = TimeWords(locale: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, now: now)
         return Strip(accounts.map { account in
             let name = presentedAccountName(account, namesHidden: namesHidden)
             let level = AccountLevel.make(account: account, snapshot: store.snapshots[account.id], status: store.pollStatus[account.id])

@@ -43,7 +43,7 @@ public struct PanelFooterView: View {
     public var body: some View {
         HStack(alignment: .center, spacing: 8) {
             if let updated = lastUpdated {
-                let clock = TimeWords(locale: locale, calendar: style.calendar, timeZone: style.timeZone, now: .now).day(updated)
+                let clock = TimeWords(locale: locale, timeZone: style.timeZone, now: .now).day(updated)
                 Text(qfLocalized(
                     "footer.updated",
                     defaultValue: "Updated \(clock)",

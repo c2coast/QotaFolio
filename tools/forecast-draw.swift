@@ -19,7 +19,7 @@ extension ForecastTool {
     /// and the file's path.
     static func draw(_ moment: (at: Date, label: String?, account: String?), named text: String, _ accounts: [[Reading]],
                      look: Look, out: String?) throws {
-        let words = TimeWords(calendar: calendar(.current), twelveHour: look.twelveHour, now: moment.at)
+        let words = TimeWords(timeZone: .current, twelveHour: look.twelveHour, now: moment.at)
         let pictures = accounts.compactMap { AccountNow(readings: $0, words: words)?.week?.picture }
         guard !pictures.isEmpty else { fail("no week to draw at \(day(moment.at, .current))\n") }
         if out != nil && pictures.count > 1 { fail("--out names one file. Choose the account with --account.\n") }

@@ -1,19 +1,23 @@
 import Foundation
 
-/// How the product says a time: the day's short name and the clock, in the calendar's time zone,
+/// How the product says a time: the day's short name and the clock, in the person's time zone,
 /// on a 24-hour or a 12-hour clock, said at a moment, `now`. The sentences, the rows and the graph
 /// all say a time through it, so a time reads the same in the picture and under it.
 ///
 /// On a 24-hour clock it says what the chart page says, "Wed 21:00". On a 12-hour clock it says
 /// "Wed 9:00 PM". A day's name tells one day only within six days of today, so a time seven days
-/// or more from today says its date too: "Wed 3 Dec 21:00". English only.
+/// or more from today says its date too: "Wed 3 Dec 21:00". The words are English, so their days
+/// and months are the Gregorian calendar's, whatever calendar the person keeps.
 public struct TimeWords: Sendable {
+    /// The Gregorian calendar in the person's time zone.
     public let calendar: Calendar
     public let twelveHour: Bool
     /// The moment the words are said at. Only its day is read.
     public let now: Date
 
-    public init(calendar: Calendar, twelveHour: Bool = false, now: Date) {
+    public init(timeZone: TimeZone, twelveHour: Bool = false, now: Date) {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
         self.calendar = calendar
         self.twelveHour = twelveHour
         self.now = now

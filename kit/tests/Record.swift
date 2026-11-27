@@ -43,9 +43,11 @@ enum Record {
         return try #require(forecast.picture(at: Date(timeIntervalSince1970: moment.at)))
     }
 
+    static let zone = TimeZone(identifier: "UTC")!
+
     static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.timeZone = zone
         return calendar
     }()
 

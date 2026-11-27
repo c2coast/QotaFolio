@@ -112,9 +112,7 @@ nonisolated func run(arguments: [String]) -> Never {
         }
     }
 
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = .current
-    let words = TimeWords(calendar: calendar, twelveHour: Locale.current.clockIsTwelveHour, now: now)
+    let words = TimeWords(timeZone: .current, twelveHour: Locale.current.clockIsTwelveHour, now: now)
     let accounts = StatusReport.said(reading, readings, words: words)
 
     if wantsJSON {

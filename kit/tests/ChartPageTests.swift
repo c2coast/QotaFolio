@@ -33,7 +33,7 @@ struct ChartPageTests {
             let at = "\(want.account) \(Record.minute(poll.reading.at))"
             #expect(poll.reading.at.timeIntervalSince1970 == wanted.t, "\(at)")
             let picture = try #require(forecast.picture(at: poll.reading.at))
-            let sentences = picture.sentences(in: TimeWords(calendar: Record.calendar, now: poll.reading.at))
+            let sentences = picture.sentences(in: TimeWords(timeZone: Record.zone, now: poll.reading.at))
             #expect(Self.withoutDates(sentences.forecast) == wanted.forecast, "\(at)")
             #expect(sentences.record.map(Self.withoutDates) == wanted.record, "\(at)")
             #expect(Week(picture) == wanted.week, "\(at)")
@@ -52,7 +52,7 @@ struct ChartPageTests {
         var times = 0, said = 0
         for forecast in [Record.a, Record.b] {
             for poll in forecast.polls {
-                let words = TimeWords(calendar: Record.calendar, now: poll.reading.at)
+                let words = TimeWords(timeZone: Record.zone, now: poll.reading.at)
                 let sentences = try #require(forecast.picture(at: poll.reading.at)).sentences(in: words)
                 for sentence in [sentences.forecast, sentences.record].compactMap(\.self) {
                     times += sentence.ranges(of: /\d\d:\d\d/).count
@@ -75,7 +75,7 @@ struct ChartPageTests {
         var dated = 0
         for forecast in [Record.a, Record.b] {
             for poll in forecast.polls {
-                let words = TimeWords(calendar: Record.calendar, now: poll.reading.at)
+                let words = TimeWords(timeZone: Record.zone, now: poll.reading.at)
                 let sentences = try #require(forecast.picture(at: poll.reading.at)).sentences(in: words)
                 for sentence in [sentences.forecast, sentences.record].compactMap(\.self) {
                     for match in sentence.matches(of: Self.timeWord) {

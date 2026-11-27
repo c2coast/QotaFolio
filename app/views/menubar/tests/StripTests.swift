@@ -15,7 +15,7 @@ struct StripTests {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "UTC")!
         let now = try #require(AccountNow(readings: [Reading(account: AccountID(name), at: noon, limits: limits)],
-                                          words: TimeWords(calendar: calendar, now: noon + 60)))
+                                          words: TimeWords(timeZone: calendar.timeZone, now: noon + 60)))
         return .now(name: name, now)
     }
 

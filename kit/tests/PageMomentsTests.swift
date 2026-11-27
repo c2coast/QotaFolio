@@ -60,7 +60,7 @@ struct PageMomentsTests {
     func sentences(_ k: Int) throws {
         let (name, forecast, record) = Self.said[k]
         let picture = try Record.picture(name)
-        let sentences = picture.sentences(in: TimeWords(calendar: Record.calendar, now: picture.now.at))
+        let sentences = picture.sentences(in: TimeWords(timeZone: Record.zone, now: picture.now.at))
         #expect(sentences.forecast == forecast, "\(name)")
         #expect(sentences.record == record, "\(name)")
     }
@@ -72,7 +72,7 @@ struct PageMomentsTests {
     func twelveHour() throws {
         let said = try ["after-banked-reset", "out-in-15-minutes", "new-week-at-zero"].map { name in
             let picture = try Record.picture(name)
-            return picture.sentences(in: TimeWords(calendar: Record.calendar, twelveHour: true, now: picture.now.at))
+            return picture.sentences(in: TimeWords(timeZone: Record.zone, twelveHour: true, now: picture.now.at))
         }
         #expect(said[0].forecast == "At the last three hours’ pace, the week reaches its limit around Wed 7:15 PM, 1h 45m before it resets.")
         #expect(said[0].record == "A full banked reset at Tue 8:13 PM gave back 98 points.")

@@ -6,7 +6,7 @@ import Testing
 @Suite("The time words")
 struct TimeWordsTests {
     static let now = Record.moment(26, 21, 2)
-    static let words = TimeWords(calendar: Record.calendar, now: now)
+    static let words = TimeWords(timeZone: Record.zone, now: now)
 
     /// Within six days of today, a day's name tells the day. A week on, "Wed 21:00" would read as
     /// two minutes ago, so the next reset says its date.
@@ -24,7 +24,7 @@ struct TimeWordsTests {
 
     @Test("On a 12-hour clock the date stands before the hour")
     func twelveHour() {
-        let words = TimeWords(calendar: Record.calendar, twelveHour: true, now: Self.now)
+        let words = TimeWords(timeZone: Record.zone, twelveHour: true, now: Self.now)
         #expect(words.day(Record.moment(33, 21, 0)) == "Wed 3 Dec 9:00 PM")
         #expect(words.day(Record.moment(27, 0, 5)) == "Thu 12:05 AM")
     }
@@ -33,9 +33,7 @@ struct TimeWordsTests {
     /// 3 Dec 02:00 UTC is Tue 2 Dec 21:00 there, six days on.
     @Test("Today is the day in the calendar's zone")
     func zone() {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "America/New_York")!
-        let words = TimeWords(calendar: calendar, now: Self.now)
+        let words = TimeWords(timeZone: TimeZone(identifier: "America/New_York")!, now: Self.now)
         #expect(words.day(Record.moment(33, 2, 0)) == "Tue 21:00")
         #expect(words.day(Record.moment(33, 5, 0)) == "Wed 3 Dec 00:00")
     }
