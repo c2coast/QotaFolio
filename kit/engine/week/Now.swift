@@ -6,7 +6,9 @@ extension AccountNow {
     ///
     /// The Engine reads the week of the poll in force and the poll before it, and nothing older,
     /// so the cost is one week's whatever the history holds. A forecast for a week whose reset has
-    /// passed is not said: the rows say the reset, and the week has no picture.
+    /// passed is not said: the rows say the reset, and the week has no picture. Nor is a run-out
+    /// time that has passed with no newer reading: the polls have stopped, and the card's "As of"
+    /// says how old the numbers are.
     public init?(readings: [Reading], words: TimeWords) {
         let now = words.now
         var end = readings.startIndex, high = readings.endIndex
@@ -19,7 +21,10 @@ extension AccountNow {
         let forecast = Forecast(readings: Array(Self.lastWeek(of: known)))
         let poll = forecast.poll(at: now)
         let reset = poll.map { now >= $0.resets.instant } ?? false
-        let verdicts = poll.flatMap { !reset && $0.reading.at == newest.at ? $0.verdicts : nil } ?? [:]
+        let verdicts = (poll.flatMap { !reset && $0.reading.at == newest.at ? $0.verdicts : nil } ?? [:]).filter { _, verdict in
+            if case .runsOut(let at, _, _) = verdict { return at > now }
+            return true
+        }
         let said = Said(words: words, weekSpent: (newest.limit(.week)?.used.value ?? 0) >= 100, week: verdicts[.week])
 
         let limits = Self.order(newest.limits)

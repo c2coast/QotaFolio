@@ -108,6 +108,35 @@ struct AccountNowTests {
         #expect(after.readWords == "Fri 14:28")
     }
 
+    /// A, the record up to the poll of Tue 18 Nov 23:42, said Wed 19 Nov at 19:30: the week was to
+    /// run out around 19:15, and nothing was read after 23:42. Its row gives no verdict, and the
+    /// sentence says no forecast; the record's sentence still holds.
+    @Test("A run-out time that has passed with no newer reading is not said")
+    func staleRunOut() throws {
+        let readings = Record.accounts[0].prefix { $0.at <= Self.at("after-banked-reset") }
+        let now = try #require(AccountNow(readings: Array(readings), words: TimeWords(timeZone: Record.zone, now: Record.moment(19, 19, 30))))
+        let week = try Self.read(now.rows[0])
+        #expect([week.percent, week.verdict] == ["15%", nil])
+        #expect(now.rows[0].spoken == "Weekly, 15% used, resets Wed 21:00.")
+        #expect(now.week?.sentences.forecast == "Nothing has been read since Tue 23:42, so there is no forecast.")
+        #expect(now.week?.sentences.record == "A full banked reset at Tue 20:13 gave back 98 points.")
+    }
+
+    /// A, the record up to the poll of Thu 13 Nov 11:10: Fable was to run out around Sun 11:15 and
+    /// the week around Mon 12:15. Said Sun 16 Nov at 12:00, Fable's time has passed, and the
+    /// sentence keeps the week's alone; said Mon 17 Nov at 13:00, neither is said.
+    @Test("A model's week's run-out time that has passed leaves the week's")
+    func staleModelRunOut() throws {
+        let readings = Array(Record.accounts[0].prefix { $0.at <= Date(timeIntervalSince1970: 1_763_032_253) })
+        let sunday = try #require(AccountNow(readings: readings, words: TimeWords(timeZone: Record.zone, now: Record.moment(16, 12, 0))))
+        #expect(try Self.read(sunday.rows[1]).verdict == nil)
+        #expect(try Self.read(sunday.rows[0]).verdict == "runs out around Mon 12:15")
+        #expect(sunday.week?.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Mon 12:15, 2d 8h before it resets.")
+        let monday = try #require(AccountNow(readings: readings, words: TimeWords(timeZone: Record.zone, now: Record.moment(17, 13, 0))))
+        #expect(try monday.rows.map { try Self.read($0).verdict } == [nil, nil])
+        #expect(monday.week?.sentences.forecast == "Nothing has been read since Thu 11:10, so there is no forecast.")
+    }
+
     /// A made-up account with a five-hour window, read Wed 3 Dec 2025 at 12:00: the session at 38,
     /// resetting Wed 14:00, and the week at 47, resetting Fri 13:00. The session gets its reading
     /// and its reset, and no forecast. The menu bar shows the week, with the session beside it.
