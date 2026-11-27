@@ -1,8 +1,10 @@
+import Kit
+
 public nonisolated enum PanelLayout {
-    public static let width: Double = 408
-    public static let preferredMaxHeight: Double = 704
+    public static let width: Double = Tokens.Panel.width
+    public static let preferredMaxHeight: Double = Tokens.Panel.maxHeight
     /// The glass slab's corner.
-    public static let cornerRadius: Double = 24
+    public static let cornerRadius: Double = Tokens.Panel.radius
     /// The room the window keeps around the slab, for the glass's own shadow to fall into.
     ///
     /// Liquid Glass draws a shadow of its own when it is in a panel, and the panel draws none.
@@ -21,10 +23,10 @@ public nonisolated enum PanelLayout {
     ///
     /// The window's own shadow stays off. It is traced on the window, and the window stands
     /// still at the full height the panel is allowed while the glass moves inside it.
-    public static let shadowRoom = (top: 24.0, side: 32.0, bottom: 40.0)
+    public static let shadowRoom = (top: Tokens.Panel.shadowRoomTop, side: Tokens.Panel.shadowRoomSide, bottom: Tokens.Panel.shadowRoomBottom)
     /// The window's width: the slab, and the room its shadow needs either side of it.
     public static var windowWidth: Double { width + shadowRoom.side * 2 }
-    public static let cardGap: Double = 10
-    public static let panelPadding: Double = 12
-    public static let anchorGap: Double = 6
+    public static let cardGap: Double = Tokens.Panel.cardGap
+    public static let panelPadding: Double = Tokens.Panel.padding
+    public static let anchorGap: Double = Tokens.Panel.anchorGap
 }

@@ -47,7 +47,7 @@ public struct AnthropicBrowserStep: View {
                     action: cancel
                 )
                 .keyboardShortcut(.cancelAction)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
 
                 Spacer()
 
@@ -58,7 +58,7 @@ public struct AnthropicBrowserStep: View {
                     )
                 }
                 .buttonStyle(.borderedProminent)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.anthropicOpenBrowser)
             }
         }

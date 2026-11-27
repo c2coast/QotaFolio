@@ -94,7 +94,7 @@ public struct SettingsGeneralSection: View {
                                 systemImage: "gearshape"
                             )
                         }
-                        .frame(minWidth: 40, minHeight: 40)
+                        .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                         .accessibilityIdentifier("qotafolio.settings.launchAtLogin.openLoginItems")
                     }
                 }
@@ -201,7 +201,7 @@ public struct SettingsGeneralSection: View {
                         systemImage: "trash"
                     )
                 }
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.settingsUninstall)
             }
         }
@@ -262,7 +262,7 @@ public struct SettingsGeneralSection: View {
                     Text(qfLocalized("action.cancel", defaultValue: "Cancel", comment: "Cancel an in-progress operation."))
                 }
                 .keyboardShortcut(.cancelAction)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.uninstallCancel)
 
                 Spacer()
@@ -273,7 +273,7 @@ public struct SettingsGeneralSection: View {
                     Text(qfLocalized("uninstall.confirm", defaultValue: "Remove My Data", comment: "Confirm local data removal."))
                 }
                 .keyboardShortcut(.defaultAction)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.uninstallConfirm)
             }
         }
@@ -338,7 +338,7 @@ public struct SettingsGeneralSection: View {
                         systemImage: "folder"
                     )
                 }
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.uninstallShowInFinder)
 
                 Spacer()
@@ -353,7 +353,7 @@ public struct SettingsGeneralSection: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier("qotafolio.uninstall.quit")
             }
         }

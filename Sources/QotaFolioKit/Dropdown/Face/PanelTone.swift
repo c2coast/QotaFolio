@@ -1,32 +1,20 @@
-import SwiftUI
+import Kit
 import QotaFolioCore
+import SwiftUI
 
-/// The panel's fixed numbers.
-///
-/// The panel's corner is 24 and the cards sit 12 inside it, so their corner is 12: outer
-/// radius = inner radius + padding, the concentric rule. The bar is the strip's fill height.
 nonisolated enum PanelMetrics {
     static let panelRadius: CGFloat = PanelLayout.cornerRadius
     static let panelPadding: CGFloat = PanelLayout.panelPadding
     static let cardRadius: CGFloat = panelRadius - panelPadding
-    static let cardPadding: CGFloat = 12
+    static let cardPadding: CGFloat = Tokens.Panel.cardPadding
     static let cardGap: CGFloat = PanelLayout.cardGap
-    /// The bar's height. The strip's fill box is 15 × 6, and the row's bar is the same shape at
-    /// panel size — chosen against 5 and 8.
-    static let barHeight: CGFloat = 6
-    /// The window-name column. "Session", "Weekly" and a model scope like "Fable" all fit;
-    /// fixing it is what lines the percentages up down every card.
-    static let nameColumn: CGFloat = 64
-    /// The percentage column, right-aligned so "8%" sits under "38%" and "100%".
-    static let percentColumn: CGFloat = 38
-    static let markSize: CGFloat = 22
-    /// Every control on the panel is reachable inside at least this square.
-    static let hitTarget: CGFloat = 40
-    /// A control's glyph sits in this square inside its hit target.
-    static let glyphWell: CGFloat = 28
-    /// The header's height, so the `…` that floats beside it lands on its centre whether or
-    /// not the account has a plan line.
-    static let headerHeight: CGFloat = 30
+    static let barHeight: CGFloat = Tokens.Panel.barHeight
+    static let nameColumn: CGFloat = Tokens.Panel.nameColumn
+    static let percentColumn: CGFloat = Tokens.Panel.percentColumn
+    static let markSize: CGFloat = Tokens.Panel.markSize
+    static let hitTarget: CGFloat = Tokens.Panel.hitTarget
+    static let glyphWell: CGFloat = Tokens.Panel.glyphWell
+    static let headerHeight: CGFloat = Tokens.Panel.headerHeight
 }
 
 /// The panel's colour language.
@@ -40,13 +28,12 @@ struct PanelTone {
     let contrast: ColorSchemeContrast
 
     var increased: Bool { contrast == .increased }
+    private var dark: Bool { scheme == .dark }
 
     // MARK: The level, in three steps
 
-    /// One band's colour on this panel, in the appearance and contrast it is drawn under.
-    func colour(_ band: LevelPalette.Band) -> Color {
-        let ink = LevelPalette.ink(band, onDark: scheme == .dark, increasedContrast: increased)
-        return Color(.sRGB, red: ink.red, green: ink.green, blue: ink.blue)
+    func colour(_ level: Level) -> Color {
+        level.colour(dark: dark, increased: increased).color()
     }
 
     /// A window's own level, from the share of it already spent: green under half used, amber
@@ -57,7 +44,7 @@ struct PanelTone {
     /// here instead would put this bar one step away from the battery drawn above it for the
     /// same window, on the fractions the providers actually send.
     func level(_ usedPercent: Double) -> Color {
-        colour(LevelPalette.band(remainingPercent: remainingPercent(fromUsedPercent: usedPercent) ?? 0))
+        colour(Level(remainingPercent: remainingPercent(fromUsedPercent: usedPercent) ?? 0))
     }
 
     // MARK: The instrument's verdicts (nothing on the resting card)
@@ -82,7 +69,7 @@ struct PanelTone {
     // MARK: Weights
 
     /// The instrument's band — how far the window could reach.
-    var range: Double { increased ? 0.32 : 0.16 }
+    var range: Double { Tokens.Chart.range(dark: dark, increased: increased) }
 
     /// The bar's neutral track: the whole window, unspent.
     ///
@@ -91,12 +78,10 @@ struct PanelTone {
     /// the track TOWARD the bright fill lying in it, and Increase Contrast then moves it further,
     /// which is how the accessibility form ended up the least readable one in the app. A recess
     /// is also the ordinary reading of a meter — the track is the groove, the fill sits in it.
-    var track: Color {
-        Color.black.opacity(scheme == .dark ? (increased ? 0.28 : 0.16) : (increased ? 0.16 : 0.08))
-    }
+    var track: Color { Tokens.Surface.track(dark: dark, increased: increased).color() }
     /// Spent: the full red bar sits back — there is nothing to do about a window until it
     /// returns. A window merely nearly gone keeps full weight.
-    var spent: Double { increased ? 0.85 : 0.6 }
+    var spent: Double { Tokens.Surface.spent(dark: dark, increased: increased) }
 
     // MARK: The instrument's chrome
 
@@ -122,14 +107,14 @@ struct PanelTone {
 
     /// The ruled ground: the guide lines at half and full, and the hours under them. The
     /// faintest thing on the plate — it is there to be measured against, not read.
-    var chartGrid: Color { chrome(light: 0.14, lightIncreased: 0.26, dark: 0.14, darkIncreased: 0.28) }
+    var chartGrid: Color { Tokens.Chart.grid(dark: dark, increased: increased).color() }
 
     /// A landmark across the plot: the reset, where the window ends.
-    var chartRule: Color { chrome(light: 0.30, lightIncreased: 0.45, dark: 0.32, darkIncreased: 0.48) }
+    var chartRule: Color { Tokens.Chart.rule(dark: dark, increased: increased).color() }
 
     /// The chart's own words — the hour labels and the reset's clock — and the line under the
     /// cursor, which is read as closely as they are.
-    var chartInk: Color { chrome(light: 0.62, lightIncreased: 0.82, dark: 0.72, darkIncreased: 0.90) }
+    var chartInk: Color { Tokens.Chart.smallPrint(dark: dark, increased: increased).color() }
 
     /// The hole through the point under the cursor, which is what makes that point a ring.
     ///
@@ -139,17 +124,7 @@ struct PanelTone {
     /// so it has a chroma nothing can predict, and a grey of exactly the right lightness still
     /// reads as a smudge in the middle of the dot rather than a hole through it. A weight leans
     /// the way the plate leans and can never arrive as a foreign colour.
-    var chartHole: Color {
-        scheme == .dark
-            ? Color.black.opacity(increased ? 0.72 : 0.60)
-            : Color.white.opacity(increased ? 0.92 : 0.86)
-    }
-
-    private func chrome(light: Double, lightIncreased: Double, dark: Double, darkIncreased: Double) -> Color {
-        scheme == .dark
-            ? Color.white.opacity(increased ? darkIncreased : dark)
-            : Color.black.opacity(increased ? lightIncreased : light)
-    }
+    var chartHole: Color { Tokens.Chart.hole(dark: dark, increased: increased).color() }
 }
 
 /// The panel's own chrome, outside a card: the footer's buttons and the cards' actions menu.
@@ -157,7 +132,7 @@ enum PanelChrome {
     /// The wash under a hovered control. One number, so every control on the panel lifts by
     /// the same amount.
     static func hoverWash(_ contrast: ColorSchemeContrast) -> Double {
-        contrast == .increased ? 0.14 : 0.08
+        Tokens.Surface.hoverWash(dark: false, increased: contrast == .increased)
     }
 }
 
@@ -171,7 +146,7 @@ enum PanelSlab {
     /// 0.61; in dark, 0.39 against 0.38. Not a preference — the number the material next to
     /// ours already holds.
     static func tint(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(white: 0.16).opacity(0.52) : Color(white: 0.92).opacity(0.52)
+        Tokens.Surface.slabTint(dark: scheme == .dark, increased: false).color()
     }
 }
 
@@ -200,7 +175,7 @@ struct PanelPlate: View {
         shape
             .fill(fill)
             .overlay { shape.strokeBorder(edge, lineWidth: 1) }
-            .animation(.easeOut(duration: 0.15), value: isHovered)
+            .animation(PanelMotion.hover, value: isHovered)
     }
 
     private var increased: Bool { contrast == .increased }
@@ -211,13 +186,8 @@ struct PanelPlate: View {
     /// Under Reduce Transparency the slab has gone opaque and a white plate would vanish into
     /// it, so the plate turns to the surface's own ink and separates by depth instead.
     private var fill: AnyShapeStyle {
-        if reduceTransparency {
-            return AnyShapeStyle(Color.primary.opacity(hovered(increased ? 0.16 : 0.07)))
-        }
-        if dark {
-            return AnyShapeStyle(Color.white.opacity(hovered(increased ? 0.26 : 0.13)))
-        }
-        return AnyShapeStyle(Color.white.opacity(hovered(increased ? 0.72 : 0.42)))
+        let lift = isHovered ? Tokens.Surface.plateHoverLift(dark: dark, increased: increased) : 0
+        return AnyShapeStyle(look(Tokens.Surface.plateFill).color(lift: lift))
     }
 
     /// The plate's one edge: lit along the top where the material's own light comes from,
@@ -225,24 +195,12 @@ struct PanelPlate: View {
     /// light half disappears and the shadow is what holds the plate off the glass; over a dark
     /// one it is the other way round.
     private var edge: LinearGradient {
-        let top: Color
-        let bottom: Color
-        if reduceTransparency {
-            let ink = Color.primary.opacity(increased ? 0.40 : 0.16)
-            top = ink
-            bottom = ink
-        } else if dark {
-            top = Color.white.opacity(increased ? 0.45 : 0.20)
-            bottom = Color.black.opacity(increased ? 0.30 : 0.14)
-        } else {
-            top = Color.white.opacity(increased ? 0.60 : 0.38)
-            bottom = Color.black.opacity(increased ? 0.18 : 0.07)
-        }
+        let top = look(Tokens.Surface.plateEdgeTop).color()
+        let bottom = look(Tokens.Surface.plateEdgeBottom).color()
         return LinearGradient(colors: [top, bottom], startPoint: .top, endPoint: .bottom)
     }
 
-    /// A hovered plate lifts a step; nothing moves.
-    private func hovered(_ base: Double) -> Double {
-        isHovered ? base + (increased ? 0.08 : 0.06) : base
+    private func look(_ value: Translucent<Colour>) -> Colour {
+        value(dark: dark, increased: increased, reduceTransparency: reduceTransparency)
     }
 }

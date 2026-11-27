@@ -7,7 +7,7 @@ public struct AboutView: View {
     public var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "hourglass")
-                .font(.system(size: 44, weight: .semibold))
+                .font(PanelType.aboutGlyph)
                 .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
 

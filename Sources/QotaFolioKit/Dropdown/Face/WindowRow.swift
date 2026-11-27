@@ -21,16 +21,15 @@ struct WindowRow: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text(level.title)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(PanelType.label)
                     .lineLimit(1)
                     .frame(width: PanelMetrics.nameColumn, alignment: .leading)
                 Text(PanelWords.percent(level.wholePercentUsed, style: style))
-                    .font(.system(size: 12, weight: .semibold))
-                    .monospacedDigit()
+                    .font(PanelType.figure)
                     .contentTransition(.numericText())
                     .frame(width: PanelMetrics.percentColumn, alignment: .trailing)
                 Text(qfLocalized("face.used", defaultValue: "used", comment: "The word after a window's percentage on the panel: 38% used."))
-                    .font(.system(size: 12))
+                    .font(PanelType.body)
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
                 Spacer(minLength: 8)
@@ -73,8 +72,7 @@ struct ResetLabel: View {
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText(countsDown: true))
         }
-        .font(.system(size: 11))
-        .monospacedDigit()
+        .font(PanelType.captionFigures)
         .lineLimit(1)
     }
 }
@@ -115,7 +113,7 @@ struct LevelBar: View {
             }
             .clipShape(Capsule())
             .animation(
-                reduceMotion ? .easeInOut(duration: PanelMotion.reducedDuration) : .smooth(duration: 0.6),
+                reduceMotion ? PanelMotion.dissolve : .smooth(duration: 0.6),
                 value: usedPercent
             )
         }

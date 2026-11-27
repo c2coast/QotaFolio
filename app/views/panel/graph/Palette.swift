@@ -1,13 +1,8 @@
 import Foundation
+import Kit
 
-/// The graph's colours in one appearance: light or dark, each plain or with Increase Contrast.
-///
-/// Every neutral is a weight of black on a light plate and of white on a dark one, so it leans
-/// with whatever is under the plate. The numbers are the app's: `PanelTone` for the chart's
-/// neutrals, the plate and the band, which is the app's recess, and `LevelPalette` for the three
-/// levels. Two are the graph's own, each the least weight that meets its contrast in every form,
-/// on the plate and on the band: the ceiling, a line that carries the picture's meaning, at 3 to
-/// 1, and the secondary words at 4.5 to 1.
+/// The graph's colours in one look: light or dark, each plain or with Increase Contrast, and with
+/// Reduce Transparency or without.
 public struct Palette: Hashable, Sendable {
     public let appearance: Appearance
 
@@ -20,80 +15,52 @@ public struct Palette: Hashable, Sendable {
         public init(_ red: Double, _ green: Double, _ blue: Double, _ alpha: Double = 1) {
             (self.red, self.green, self.blue, self.alpha) = (red, green, blue, alpha)
         }
-
-        init(hex: UInt32) {
-            self.init(Double(hex >> 16 & 0xFF) / 255, Double(hex >> 8 & 0xFF) / 255, Double(hex & 0xFF) / 255)
-        }
     }
 
     public func colour(_ tone: Tone) -> RGBA {
         switch tone {
-        case .level(let level): self.level(level)
-        case .ink: weight(light: 0.85, lightIncreased: 0.95, dark: 0.85, darkIncreased: 0.95)
-        case .chartInk: weight(light: 0.62, lightIncreased: 0.82, dark: 0.72, darkIncreased: 0.90)
-        case .ceiling: weight(light: 0.48, lightIncreased: 0.62, dark: 0.46, darkIncreased: 0.62)
-        case .rule: weight(light: 0.30, lightIncreased: 0.45, dark: 0.32, darkIncreased: 0.48)
-        case .grid: weight(light: 0.14, lightIncreased: 0.26, dark: 0.14, darkIncreased: 0.28)
+        case .level(let level): rgba(level.colour)
+        case .ink: rgba(Tokens.Chart.words)
+        case .chartInk: rgba(Tokens.Chart.smallPrint)
+        case .ceiling: rgba(Tokens.Chart.ceiling)
+        case .rule: rgba(Tokens.Chart.rule)
+        case .grid: rgba(Tokens.Chart.grid)
         }
     }
 
     /// The words that come second: the record's sentence and the caption over the chart.
-    public var secondaryInk: RGBA { weight(light: 0.60, lightIncreased: 0.70, dark: 0.62, darkIncreased: 0.80) }
+    public var secondaryInk: RGBA { rgba(Tokens.Chart.secondaryWords) }
 
     /// What shows through the hole of the week's dot: the plate's own lean, lighter on a light
     /// plate and darker on a dark one.
-    public var hole: RGBA {
-        appearance.dark ? RGBA(0, 0, 0, appearance.increasedContrast ? 0.72 : 0.60)
-                        : RGBA(1, 1, 1, appearance.increasedContrast ? 0.92 : 0.86)
-    }
+    public var hole: RGBA { rgba(Tokens.Chart.hole) }
 
-    /// The faint band over a stretch nobody watched: the app's recess, the track under a bar, which
-    /// is a weight of black in both appearances, so white words on it keep their contrast.
-    public var band: RGBA { RGBA(0, 0, 0, pick(0.08, 0.16, 0.16, 0.28)) }
+    /// The faint band over a stretch nobody watched.
+    public var band: RGBA { rgba(Tokens.Surface.track) }
 
     /// The card's plate: white at a weight on glass, or a weight of ink with Reduce Transparency.
-    public var plate: RGBA {
-        let (dark, increased) = (appearance.dark, appearance.increasedContrast)
-        if appearance.reduceTransparency { return weight(light: 0.07, lightIncreased: 0.16, dark: 0.07, darkIncreased: 0.16) }
-        return RGBA(1, 1, 1, dark ? (increased ? 0.26 : 0.13) : (increased ? 0.72 : 0.42))
-    }
+    public var plate: RGBA { rgba(Tokens.Surface.plateFill) }
 
     /// The plate's one-point edge, lit at the top and shadowed at the bottom.
     public var plateEdge: (top: RGBA, bottom: RGBA) {
-        let (dark, increased) = (appearance.dark, appearance.increasedContrast)
-        if appearance.reduceTransparency {
-            let edge = weight(light: 0.16, lightIncreased: 0.40, dark: 0.16, darkIncreased: 0.40)
-            return (edge, edge)
-        }
-        return (RGBA(1, 1, 1, dark ? (increased ? 0.45 : 0.20) : (increased ? 0.60 : 0.38)),
-                RGBA(0, 0, 0, dark ? (increased ? 0.30 : 0.14) : (increased ? 0.18 : 0.07)))
+        (rgba(Tokens.Surface.plateEdgeTop), rgba(Tokens.Surface.plateEdgeBottom))
     }
 
     /// A flat stand-in for the panel's glass, for a picture drawn with no window, where glass and
     /// materials do not render.
-    public var standIn: RGBA { RGBA(hex: appearance.dark ? 0x292929 : 0xEBEBEB) }
+    public var standIn: RGBA { rgba(Tokens.Surface.standIn) }
 
-    private func level(_ level: Level) -> RGBA {
-        let hex: (UInt32, UInt32, UInt32, UInt32) = switch level {
-        case .plenty: (0x39955E, 0x1E7C48, 0x59D389, 0x52EC93)
-        case .low: (0xA97500, 0x8B6000, 0xEBAA2E, 0xFDBE54)
-        case .nearlyGone: (0xB0263A, 0x93142B, 0xF65C69, 0xFB8085)
-        }
-        return RGBA(hex: pick(hex.0, hex.1, hex.2, hex.3))
+    private func rgba(_ looks: Looks<Colour>) -> RGBA {
+        rgba(looks(dark: appearance.dark, increased: appearance.increasedContrast))
     }
 
-    private func weight(light: Double, lightIncreased: Double, dark: Double, darkIncreased: Double) -> RGBA {
-        let ink = appearance.dark ? 1.0 : 0.0
-        return RGBA(ink, ink, ink, pick(light, lightIncreased, dark, darkIncreased))
+    private func rgba(_ looks: Translucent<Colour>) -> RGBA {
+        rgba(looks(dark: appearance.dark, increased: appearance.increasedContrast, reduceTransparency: appearance.reduceTransparency))
     }
 
-    private func pick<T>(_ light: T, _ lightIncreased: T, _ dark: T, _ darkIncreased: T) -> T {
-        switch (appearance.dark, appearance.increasedContrast) {
-        case (false, false): light
-        case (false, true): lightIncreased
-        case (true, false): dark
-        case (true, true): darkIncreased
-        }
+    private func rgba(_ colour: Colour) -> RGBA {
+        let parts = colour.parts(dark: appearance.dark)
+        return RGBA(parts.red, parts.green, parts.blue, parts.alpha)
     }
 }
 

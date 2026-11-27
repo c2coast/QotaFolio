@@ -1,5 +1,6 @@
 import AppKit
 import CoreGraphics
+import Kit
 
 import QotaFolioCore
 
@@ -28,11 +29,9 @@ nonisolated struct BatteryTheme: Hashable, Sendable {
     var increasedContrast: Bool
 
     static func make(darkBar: Bool, contrast: Bool = false) -> BatteryTheme {
-        let w: CGFloat = darkBar ? 1 : 0
-        let ink = CGColor(red: w, green: w, blue: w, alpha: contrast ? 1.0 : (darkBar ? 1.0 : 0.90))
-        return BatteryTheme(
-            ink: ink,
-            dim: contrast ? 0.80 : 0.55,
+        BatteryTheme(
+            ink: Tokens.MenuBar.ink(dark: darkBar, increased: contrast).cgColor(darkBar: darkBar),
+            dim: Tokens.MenuBar.dim(dark: darkBar, increased: contrast),
             darkBar: darkBar,
             increasedContrast: contrast
         )
@@ -41,15 +40,7 @@ nonisolated struct BatteryTheme: Hashable, Sendable {
     /// What a battery with this share of its quantity left is drawn in: green with plenty of
     /// it, amber as it gets low, red at a fifth or less. One palette for every surface.
     func level(_ remainingPercent: Int) -> CGColor {
-        colour(LevelPalette.ink(
-            LevelPalette.band(remainingPercent: remainingPercent),
-            onDark: darkBar,
-            increasedContrast: increasedContrast
-        ))
-    }
-
-    private func colour(_ ink: LevelPalette.Ink) -> CGColor {
-        CGColor(red: ink.red, green: ink.green, blue: ink.blue, alpha: 1)
+        Level(remainingPercent: remainingPercent).colour(dark: darkBar, increased: increasedContrast).cgColor(darkBar: darkBar)
     }
 
     /// Nothing left of the quantity being shown — the red a level runs out in.
@@ -64,8 +55,8 @@ nonisolated func batteryFade(_ colour: CGColor, _ alpha: CGFloat) -> CGColor {
 nonisolated struct BatteryOptions: Hashable, Sendable {
     /// Apple's small menu-bar battery, 19 x 10.
     var body: BatteryBody = .small
-    var inset: CGFloat = 2.0
-    var fillRadius: CGFloat = 1.0
+    var inset: CGFloat = Tokens.MenuBar.fillInset
+    var fillRadius: CGFloat = Tokens.MenuBar.fillRadius
     /// Differentiate Without Colour: every hue becomes the ink.
     var mono = false
     /// Which quantity the fill is drawn to — the person's own choice, from Settings.
@@ -74,9 +65,7 @@ nonisolated struct BatteryOptions: Hashable, Sendable {
 
 /// Where the batteries sit relative to each other.
 nonisolated struct BatteryLayout: Hashable, Sendable {
-    /// Ink edge to ink edge, the same between every pair. Six points was chosen over four and
-    /// five by looking at all three on a real menu bar.
-    var gap: CGFloat = 6.0
+    var gap: CGFloat = Tokens.MenuBar.gap
 }
 
 /// How strongly one battery is drawn.
@@ -147,9 +136,7 @@ nonisolated func drawBattery(
         return
     }
 
-    // A length floor of 1.2 pt: a bar the eye cannot see is not a reading, and a battery still
-    // holding one per cent is not the same picture as one holding none.
-    let width = min(box.width, max(1.2, box.width * figure.fraction))
+    let width = min(box.width, max(Tokens.MenuBar.smallestFill, box.width * figure.fraction))
     let rect = CGRect(x: box.minX, y: box.minY, width: width, height: box.height)
     ctx.addPath(
         CGPath(

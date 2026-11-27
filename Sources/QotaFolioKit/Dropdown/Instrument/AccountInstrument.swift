@@ -41,7 +41,7 @@ struct AccountInstrument: View {
                 chartHeader(level, windowTrace)
                 chart(level, windowTrace)
                 Text(forecast.map { InstrumentSentences.landing($0, now: now, style: style) } ?? InstrumentSentences.noProjection())
-                    .font(.system(size: 12))
+                    .font(PanelType.body)
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -83,13 +83,12 @@ struct AccountInstrument: View {
     private func chartHeader(_ level: UsageWindowLevel, _ windowTrace: UsageWindowTrace) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(InstrumentSentences.chartTitle(windowTitle: level.title, since: occurrenceStart(windowTrace), style: style))
-                .font(.system(size: 11, weight: .medium))
+                .font(PanelType.chartTitle)
                 .foregroundStyle(.secondary)
             Spacer()
             if let readout = readout(samples(windowTrace)) {
                 Text(readout)
-                    .font(.system(size: 11))
-                    .monospacedDigit()
+                    .font(PanelType.captionFigures)
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
             }
@@ -179,8 +178,7 @@ struct AccountInstrument: View {
                 .lineStyle(StrokeStyle(lineWidth: 1))
                 .annotation(position: .leading, alignment: .top, spacing: 10) {
                     Text(PanelWords.clock(reset, style: style))
-                        .font(.system(size: 10, weight: .medium))
-                        .monospacedDigit()
+                        .font(PanelType.axisMedium)
                         .foregroundStyle(tone.chartInk)
                 }
 
@@ -210,8 +208,7 @@ struct AccountInstrument: View {
                 AxisValueLabel {
                     if let hour = mark.as(Date.self) {
                         Text(PanelWords.clock(hour, style: style))
-                            .font(.system(size: 10))
-                            .monospacedDigit()
+                            .font(PanelType.axis)
                             .foregroundStyle(tone.chartInk)
                     }
                 }
@@ -261,13 +258,13 @@ struct AccountInstrument: View {
         let windows = completed
         return VStack(alignment: .leading, spacing: 8) {
             Text(InstrumentSentences.weekTitle())
-                .font(.system(size: 11, weight: .medium))
+                .font(PanelType.chartTitle)
                 .foregroundStyle(.secondary)
             if !windows.isEmpty {
                 weekRow(windows)
             }
             Text(weekSentence(windows))
-                .font(.system(size: 12))
+                .font(PanelType.body)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -348,12 +345,11 @@ struct AccountInstrument: View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             if let plan = face.planName {
                 Text(plan)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(PanelType.label)
                 Text("·").foregroundStyle(.tertiary).accessibilityHidden(true)
             }
             Text(spendLine)
-                .font(.system(size: 12))
-                .monospacedDigit()
+                .font(PanelType.bodyFigures)
                 .foregroundStyle(.secondary)
             Spacer()
         }

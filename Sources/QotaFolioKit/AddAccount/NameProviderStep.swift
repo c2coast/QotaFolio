@@ -132,7 +132,7 @@ public struct NameProviderStep: View {
                     action: cancel
                 )
                 .keyboardShortcut(.cancelAction)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.authCancel)
 
                 Spacer()
@@ -143,7 +143,7 @@ public struct NameProviderStep: View {
                 )
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .disabled(trimmedName.isEmpty)
                 // The sentence, on the element VoiceOver is still focused on after the press.
                 // The announcement is heard once, at the moment of the press; this is how the

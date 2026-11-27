@@ -219,7 +219,7 @@ public struct PanelContentView: View {
                         ),
                         systemImage: "gearshape"
                     )
-                    .frame(minWidth: 160, minHeight: 40)
+                    .frame(minWidth: 160, minHeight: PanelMetrics.hitTarget)
                 }
                 .buttonStyle(.borderedProminent)
             }

@@ -4,8 +4,8 @@ import SwiftUI
 /// The Ceiling graph of a week picture: a canvas that works out the geometry at its own size and
 /// strokes it. It holds no state, and nothing moves.
 public struct CeilingChart: View {
-    /// The chart's size in the panel: the plot, 360 by 128 points, and the axis's words under it.
-    public nonisolated static let size = CGSize(width: 360, height: 128 + Ceiling.axisBand)
+    public nonisolated static let size = CGSize(
+        width: Tokens.Panel.width - 2 * Tokens.Panel.padding - 2 * Tokens.Panel.cardPadding, height: 128 + Ceiling.axisBand)
 
     let picture: WeekPicture
     let words: TimeWords
@@ -83,13 +83,12 @@ public struct WeekGraph: View {
         let spoken = SpokenGraph(picture: picture, words: words, size: CGSize(width: width, height: CeilingChart.size.height))
         VStack(alignment: .leading, spacing: 10) {
             Text("Points used this week · to \(words.day(picture.resets.instant))")
-                .font(.system(size: 11, weight: .medium))
+                .font(Tokens.Typography.chartTitle.font)
                 .foregroundStyle(Color(palette.secondaryInk))
             CeilingChart(picture: picture, words: words, palette: palette)
                 .frame(width: width, height: CeilingChart.size.height)
             Text("\(Text(sentences.forecast).foregroundStyle(Color(palette.colour(.ink))))\(Text(sentences.record.map { " " + $0 } ?? "").foregroundStyle(Color(palette.secondaryInk)))")
-                .font(.system(size: 12))
-                .monospacedDigit()
+                .font(Tokens.Typography.bodyFigures.font)
                 .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
         }

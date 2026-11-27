@@ -62,7 +62,7 @@ public struct RemoveConfirmation: View {
                     action: cancel
                 )
                 .keyboardShortcut(.cancelAction)
-                .frame(minHeight: 40)
+                .frame(minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.removeCancel)
 
                 Button(
@@ -76,7 +76,7 @@ public struct RemoveConfirmation: View {
                 // button the user presses by reflex.
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
-                .frame(minHeight: 40)
+                .frame(minHeight: PanelMetrics.hitTarget)
                 // The sentence, on the element VoiceOver is still focused on after the press.
                 // The refusal is announced once, at the moment of the press. This is how the user
                 // hears it again — on the button itself — instead of having to go and find the

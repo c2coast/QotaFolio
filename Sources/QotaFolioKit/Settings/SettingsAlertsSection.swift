@@ -81,7 +81,7 @@ public struct SettingsAlertsSection: View {
                             systemImage: "gearshape"
                         )
                     }
-                    .frame(minWidth: 40, minHeight: 40)
+                    .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 }
             } header: {
                 Text(qfLocalized("settings.alerts.permission", defaultValue: "Permission", comment: "Settings Alerts section about the system's notification permission."))

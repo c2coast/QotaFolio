@@ -46,10 +46,7 @@ public nonisolated struct AccountLevel: Hashable, Sendable {
         case noReading(NoReading)
     }
 
-    /// A fifth. Apple turns a battery red under a fifth of its charge, and one number serves
-    /// both readings of that here: `state` calls an account low when a fifth or less can be
-    /// spent right now, and `LevelPalette` turns whatever is drawn red at the same fifth of
-    /// itself. So a battery that goes red and an account the app calls low can never drift.
+    /// The same fifth as `nearlyGoneAtOrBelow` in `design/tokens.json`, which this package cannot read.
     public static let lowRemainingPercent = 20
 
     /// The share of the week still held, 0…100.

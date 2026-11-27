@@ -44,7 +44,7 @@ public struct SettingsUpdatesSection: View {
                 )
             }
             .disabled(updater.updateCheckAvailability != .ready)
-            .frame(minWidth: 40, minHeight: 40)
+            .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
             .accessibilityIdentifier("qotafolio.settings.updates.checkNow")
         }
     }

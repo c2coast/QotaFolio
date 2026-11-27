@@ -122,7 +122,7 @@ public struct AuthFailureStep: View {
                     action: dismiss
                 )
                 .keyboardShortcut(.cancelAction)
-                .frame(minWidth: 40, minHeight: 40)
+                .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
                 .accessibilityIdentifier(AXIdentifiers.authDismissFailure)
 
                 Spacer()
@@ -157,7 +157,7 @@ public struct AuthFailureStep: View {
             Label(title, systemImage: "arrow.clockwise")
         }
         .buttonStyle(.borderedProminent)
-        .frame(minWidth: 40, minHeight: 40)
+        .frame(minWidth: PanelMetrics.hitTarget, minHeight: PanelMetrics.hitTarget)
         .accessibilityIdentifier(accessibilityIdentifier)
     }
 }

@@ -41,12 +41,13 @@ extension ForecastTool {
     @MainActor static func write(_ picture: WeekPicture, words: TimeWords, _ appearance: Appearance, width: Double, to file: URL) throws {
         let palette = Palette(appearance)
         let edge = palette.plateEdge
-        let plate = RoundedRectangle(cornerRadius: 12, style: .continuous)
+        // The card as the panel lays it out: its corner is the slab's less the slab's padding.
+        let plate = RoundedRectangle(cornerRadius: Tokens.Panel.radius - Tokens.Panel.padding, style: .continuous)
         let card = WeekGraph(picture: picture, words: words, palette: palette, width: width)
-            .padding(12)
+            .padding(Tokens.Panel.cardPadding)
             .background(plate.fill(Color(palette.plate)))
             .overlay(plate.strokeBorder(LinearGradient(colors: [Color(edge.top), Color(edge.bottom)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
-            .padding(12)
+            .padding(Tokens.Panel.padding)
             .background(Color(palette.standIn))
             .environment(\.colorScheme, appearance.dark ? .dark : .light)
         let renderer = ImageRenderer(content: card)
