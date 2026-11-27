@@ -98,11 +98,30 @@ struct LegacyHistoryTests {
         #expect(last.limit(Limit.Kind(model: nil, period: .session))?.resets == nil)
     }
 
-    /// The trace kept the poll of 200 itself, so the snapshot of that poll adds nothing.
-    @Test("A snapshot the trace already holds adds no reading")
+    /// The trace kept the poll of 200 itself, so the snapshot of that poll adds no reading. It is
+    /// the reading of 200, because it holds every limit of the poll.
+    @Test("A snapshot of the trace's last second adds no reading, and is that reading")
     func snapshotHeld() throws {
         let accounts = try LegacyHistory.readings(history: Data(Self.trace.utf8), snapshots: Data(Self.snapshots(at: 200).utf8))
         #expect(accounts.map { $0.map(\.at.timeIntervalSince1970) } == [[100, 200]])
+        #expect(accounts[0][1].limits.map(\.kind) == [Limit.Kind(model: nil, period: .session), .week, Record.fable])
+    }
+
+    /// A poll of an account with a five-hour window: the trace keeps its session at 200, and its
+    /// week only a quarter-hour after 100. The reading of 200 is the snapshot's, with the week.
+    @Test("The newest poll keeps the limits the trace spaced out of it")
+    func snapshotWhole() throws {
+        let trace = """
+            {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 200, "windows": [
+              {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100], "sampleUsedBasisPoints": [100],
+               "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800, "lastObservedAt": 200},
+              {"key": "session", "period": {"session": {}}, "sampleTimes": [100, 200], "sampleUsedBasisPoints": [0, 0],
+               "completed": [], "currentOpenedAt": 0, "lastObservedAt": 200}]}]}
+            """
+        let accounts = try LegacyHistory.readings(history: Data(trace.utf8), snapshots: Data(Self.snapshots(at: 200).utf8))
+        let readings = try #require(accounts.first)
+        #expect(readings.map(\.at.timeIntervalSince1970) == [100, 200])
+        #expect(readings[1].limit(.week)?.used == Percent(basisPoints: 346))
     }
 
     /// An account added since the trace was last written has its first poll only.

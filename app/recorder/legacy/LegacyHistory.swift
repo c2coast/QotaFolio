@@ -18,10 +18,13 @@ import Kit
 /// Each reading keeps the limits sampled at its time, and the Engine reads the model's week from
 /// the readings that carry it.
 ///
-/// The trace keeps a sample a quarter-hour after the last at most, so it usually lacks the newest
-/// poll. The snapshot is that poll, with each reset as the provider sent it, and it is the last
-/// reading when it is newer than the trace.
-public enum LegacyHistory {
+/// The trace keeps a week's sample a quarter-hour after the last at most, so it usually lacks the
+/// newest poll, or keeps only the limits of shorter periods from it. The snapshot is that poll whole,
+/// with each reset as the provider sent it. It is the last reading when it is newer than the trace,
+/// and it takes the place of the trace's last reading when the two are of the same second.
+///
+/// Nonisolated, because the app's history writer reads its books through it off the main actor.
+public nonisolated enum LegacyHistory {
     public struct Unreadable: Error, CustomStringConvertible {
         public let description: String
     }
@@ -34,7 +37,9 @@ public enum LegacyHistory {
         for snapshot in try decode(SnapshotBook.self, snapshots, "a snapshot book").accounts {
             let newest = try snapshot.reading()
             if let k = accounts.firstIndex(where: { $0[0].account == newest.account }) {
-                if newest.at > accounts[k][accounts[k].count - 1].at { accounts[k].append(newest) }
+                let last = accounts[k].count - 1
+                if newest.at > accounts[k][last].at { accounts[k].append(newest) }
+                if newest.at == accounts[k][last].at { accounts[k][last] = newest }
             } else {
                 accounts.append([newest])
             }
@@ -75,17 +80,17 @@ public enum LegacyHistory {
     }
 }
 
-private let week: TimeInterval = 7 * 86400
+private nonisolated let week: TimeInterval = 7 * 86400
 
-private protocol Versioned {
+private nonisolated protocol Versioned {
     var schemaVersion: Int { get }
 }
 
-private struct ID: Decodable { let rawValue: String }
+private nonisolated struct ID: Decodable { let rawValue: String }
 
 /// A limit's period as version 1.0.0 encodes it: `{"weekly":{}}`, `{"session":{}}` or
 /// `{"other":{"seconds":n}}`.
-private enum Period: Decodable {
+private nonisolated enum Period: Decodable {
     case weekly
     case session
     case other(seconds: Double)
@@ -99,7 +104,7 @@ private enum Period: Decodable {
     }
 }
 
-private struct TraceBook: Decodable, Versioned {
+private nonisolated struct TraceBook: Decodable, Versioned {
     let schemaVersion: Int
     let accounts: [Account]
 
@@ -129,7 +134,7 @@ private struct TraceBook: Decodable, Versioned {
     }
 }
 
-private struct SnapshotBook: Decodable, Versioned {
+private nonisolated struct SnapshotBook: Decodable, Versioned {
     let schemaVersion: Int
     let accounts: [Snapshot]
 
