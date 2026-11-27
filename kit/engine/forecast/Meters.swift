@@ -34,7 +34,6 @@ struct Meters {
     init(_ all: [Reading]) {
         // A reading the Engine can place in a week carries the week and the week's reset.
         let readings = all.filter { $0.limit(.week)?.resets != nil }
-        // The model's week is the first limit on one model's week that any reading carries.
         let modelKind = all.lazy.flatMap(\.limits).map(\.kind).first { $0.model != nil && $0.period == .week }
         var modelRead: [Percent?] = []
         var latest: (at: Date, used: Percent)?

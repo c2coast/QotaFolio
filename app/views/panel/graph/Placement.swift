@@ -154,8 +154,6 @@ struct Ticks {
                                         box: CGRect(x: a, y: h + 4, width: wide, height: 11)))
         }
 
-        // The reset's time goes first where the axis ends in a fold: it names where the limit ends,
-        // and an hour beside it is the word that can go.
         if axis.pieces.contains(where: { $0.fold.map { $0 != .atLimit } ?? false }) {
             put(width, words.day(picture.resets.instant), current: false, .end, kind: .resetTime)
         }

@@ -181,9 +181,6 @@ public struct Ceiling: Sendable {
         var dots: [Dot] = []
         var ends: [(point: CGPoint, name: String, said: String, strong: Bool, kind: Limit.Kind)] = []
         let nowWeek = now.week.work, nowModel = modelWork(now)
-        // A forecast whose dot would touch the mark of now, a limit out within minutes, would read
-        // as one smudge with it. Then the mark of now is the forecast's mark too, and its word
-        // sits by it.
         func apart(_ end: CGPoint, _ from: CGPoint, _ dot: Double, _ mark: Double) -> Bool {
             hypot(end.x - from.x, end.y - from.y) >= dot + mark + 1
         }

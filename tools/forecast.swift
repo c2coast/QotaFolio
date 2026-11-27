@@ -70,8 +70,6 @@ enum ForecastTool {
             from = moment.at
         }
         let forecasts = all.filter { only == nil || $0.polls.first?.reading.account.rawValue == only }
-        // The verdicts were read on the whole history, and an outcome reads only the polls after its
-        // own, so dropping the polls before `from` changes neither.
         let scored = forecasts.map { Forecast(polls: $0.polls.filter { $0.reading.at >= from }, falls: $0.falls) }
         let scores = kinds.map { Score(of: scored, limit: $0, recordEnd: recordEnd) }
         let account = Score(accountsOf: scored, recordEnd: recordEnd)

@@ -97,8 +97,6 @@ nonisolated func run(arguments: [String]) -> Never {
         reading = value.hiding(hidden)
     }
 
-    // The readings the app's card reads, from the same two books through the same reader. A book
-    // that is absent is no history; one this build cannot read is said so.
     let readings: [[Reading]]
     switch (container.readBytes(.traces), container.readBytes(.snapshots)) {
     case (.unreadable, _), (_, .unreadable):

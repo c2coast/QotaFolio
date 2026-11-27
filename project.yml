@@ -51,18 +51,13 @@ targets:
     platform: macOS
     sources:
       - Sources/QotaFolioKit
-      # The reader of version 1.0.0's books. The history writer reads each account's readings
-      # through it, as qota and tools/forecast read the files.
       - app/recorder/legacy
-      # The panel's views on Kit's value: the rows and the tapped part. The graph is its own target.
       - path: app/views/panel
         excludes: ["graph/**", "tests/**"]
-      # The menu bar's strip on Kit's value: the batteries and their words.
       - path: app/views/menubar
         excludes: ["tests/**"]
     dependencies:
-      # XcodeGen does not link a static library into a framework unless it is asked. Kit and the
-      # graph are linked here once, and the app links them through this framework.
+      # XcodeGen does not link a static library into a framework unless it is asked.
       - { target: Kit, link: true }
       - { target: Graph, link: true }
       - { package: QotaFolioCore, product: QotaFolioCoreXcode }
