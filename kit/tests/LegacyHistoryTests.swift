@@ -147,7 +147,7 @@ struct LegacyHistoryTests {
         let readings = try #require(try LegacyHistory.readings(history: Data(trace.utf8), snapshots: nil).first)
         let session = Limit.Kind(model: nil, period: .session)
         #expect(readings.map { $0.limit(session)?.resets?.instant.timeIntervalSince1970 } == [18000, 18000, 18000, 36000])
-        #expect(SpentLimitBack.between(readings[2], readings[3])
+        #expect(SpentLimitBack.newest(in: readings)
             == [SpentLimitBack(account: AccountID("A"), limit: session, spentUntil: ResetTime(Date(timeIntervalSince1970: 18000)), how: .reset)])
     }
 }

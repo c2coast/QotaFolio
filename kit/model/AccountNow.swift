@@ -1,8 +1,7 @@
 import Foundation
 
 /// Everything the app says of one account at one moment: a row for each limit of the newest
-/// reading, the week as the graph draws it with its two sentences, the menu bar's week, and each
-/// spent limit that is back. The card, the menu bar, VoiceOver and `qota status` lay it out, and
+/// reading, the week as the graph draws it with its two sentences, and the menu bar's week. The card, the menu bar, VoiceOver and `qota status` lay it out, and
 /// none of them words a limit, a number or a time of its own.
 ///
 /// Kit builds it from the account's readings and the time words, which carry the moment. The
@@ -19,11 +18,8 @@ public struct AccountNow: Sendable {
     /// The week and its sentences. None when no reading carries the week and its reset.
     public let week: Week?
     public let menuBar: MenuBar
-    /// The limits the newest reading finds back from 100 percent, against the reading before it.
-    public let back: [SpentLimitBack]
 
-    public init(account: AccountID, read: Date, readWords: String, rows: [Row], week: Week?, menuBar: MenuBar,
-                back: [SpentLimitBack]) {
+    public init(account: AccountID, read: Date, readWords: String, rows: [Row], week: Week?, menuBar: MenuBar) {
         precondition(!rows.isEmpty, "an account now reads at least one limit")
         self.account = account
         self.read = read
@@ -31,7 +27,6 @@ public struct AccountNow: Sendable {
         self.rows = rows
         self.week = week
         self.menuBar = menuBar
-        self.back = back
     }
 
     /// One limit of the newest reading.

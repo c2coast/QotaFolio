@@ -163,7 +163,7 @@ enum ForecastTool {
                 if let record = week.sentences.record { print("  shows  \(record)") }
             }
             print("  menu   \(now.menuBar.text)  (\(level(now.menuBar.level)), fill \(now.menuBar.left)%)  aloud: \(now.menuBar.spoken)")
-            for back in now.back {
+            for back in SpentLimitBack.newest(in: readings.prefix { $0.at <= at }) {
                 print("  back   \(label(back.limit)), spent until \(day(back.spentUntil.instant, zone)), back by \(back.how == .reset ? "its reset" : "a banked reset")")
             }
         }

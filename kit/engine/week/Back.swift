@@ -1,17 +1,18 @@
-import Foundation
-
 extension SpentLimitBack {
-    /// Every limit that `before` read at 100 percent with a reset and `after` finds back: read
-    /// below 100, or, when `after` does not read it, past its reset. A limit that was not spent is
-    /// never back.
-    public static func between(_ before: Reading, _ after: Reading) -> [SpentLimitBack] {
-        before.limits.compactMap { spent in
-            guard spent.used.value >= 100, let until = spent.resets else { return nil }
-            let now = after.limit(spent.kind)
-            let reset = after.at >= until.instant || (now.map { $0.resets != until } ?? false)
-            if let now, now.used.value >= 100 { return nil }
-            if now == nil && !reset { return nil }
-            return SpentLimitBack(account: before.account, limit: spent.kind, spentUntil: until, how: reset ? .reset : .banked)
+    /// Every limit the newest of an account's readings, in time order, finds back: a limit it reads
+    /// below 100 that the latest earlier reading carrying that limit read at 100 with a reset. The
+    /// trace samples each limit on its own spacing, so the reading just before the newest may not
+    /// carry the limit at all. A limit that was not spent is never back, and a limit the newest
+    /// reading does not carry is found when a reading carries it again.
+    public static func newest(in readings: some BidirectionalCollection<Reading>) -> [SpentLimitBack] {
+        guard let newest = readings.last else { return [] }
+        let earlier = readings.dropLast()
+        return newest.limits.compactMap { now in
+            guard now.used.value < 100,
+                  let spent = earlier.last(where: { $0.limit(now.kind) != nil })?.limit(now.kind),
+                  spent.used.value >= 100, let until = spent.resets else { return nil }
+            let reset = newest.at >= until.instant || now.resets != until
+            return SpentLimitBack(account: newest.account, limit: now.kind, spentUntil: until, how: reset ? .reset : .banked)
         }
     }
 }

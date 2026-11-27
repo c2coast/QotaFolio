@@ -1,8 +1,8 @@
 import Foundation
 
 /// That a limit which had reached 100 percent is back: the condition of the alert "a spent limit
-/// is back". Between two consecutive readings of one account the limit read 100, then less, or
-/// its reset passed.
+/// is back". The newest reading of one account reads the limit below 100, and the latest earlier
+/// reading that carries the limit read it at 100.
 ///
 /// It is the account, the limit, the reset of the occurrence it was spent in, and how it came
 /// back, so one event is one value however often it is worked out, and two events are two: a

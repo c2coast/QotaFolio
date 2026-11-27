@@ -28,9 +28,8 @@ extension AccountNow {
             reset ? Week(picture: nil, sentences: Sentences(forecast: said.weekReset(picture.resets), record: nil))
                 : Week(picture: picture, sentences: picture.sentences(in: words))
         }
-        let back = known.count < 2 ? [] : SpentLimitBack.between(known[known.endIndex - 2], newest)
         self.init(account: newest.account, read: newest.at, readWords: words.day(newest.at), rows: rows, week: week,
-                  menuBar: said.menuBar(limits, now: now), back: back)
+                  menuBar: said.menuBar(limits, now: now))
     }
 
     /// The readings of the week in force at the last of them, with the reading of the week before

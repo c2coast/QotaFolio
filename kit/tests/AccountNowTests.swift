@@ -34,7 +34,6 @@ struct AccountNowTests {
         #expect(now.week?.sentences.forecast == "At the last three hours’ pace, the week reaches its limit around Wed 19:15, 1h 45m before it resets.")
         #expect(now.week?.sentences.record == "A full banked reset at Tue 20:13 gave back 98 points.")
         #expect(now.menuBar == AccountNow.MenuBar(limit: .week, left: 85, level: .plenty, text: "85% left this week", spoken: "85 percent left this week"))
-        #expect(now.back.isEmpty)
     }
 
     /// B, Thu 20 Nov 13:40: the week has read 100 since Tue 13:56 and resets Fri 21 Nov 13:00, and

@@ -5,13 +5,13 @@ import Testing
 /// "A spent limit is back", the alert's condition, on the owner's readings in UTC.
 @Suite("A spent limit is back")
 struct SpentLimitBackTests {
-    /// Every pair of consecutive readings of the record where a limit read 100 and then less, read
-    /// off the raw file: three weeks back at their resets, two weeks a banked reset brought back,
-    /// and Fable back once at its reset and once by a banked reset.
+    /// Every reading of the record that found a limit back from 100, read off the raw file: three
+    /// weeks back at their resets, two weeks a banked reset brought back, and Fable back once at its
+    /// reset and once by a banked reset.
     @Test("The record's seven, each once, and none for a limit that was not spent")
     func theRecord() {
         let seen = Record.accounts.flatMap { readings in
-            zip(readings, readings.dropFirst()).flatMap { SpentLimitBack.between($0, $1) }
+            readings.indices.flatMap { SpentLimitBack.newest(in: readings[...$0]) }
         }.map { "\($0.account.rawValue) \($0.limit.model ?? "week") \(Record.minute($0.spentUntil.instant)) \($0.how)" }
         #expect(seen == [
             "A week Wed 12 Nov 21:00 reset",
@@ -24,37 +24,39 @@ struct SpentLimitBackTests {
         ])
     }
 
-    /// B's week came back at Fri 14 Nov 13:15:17. The account now carries the event from that
-    /// reading until the next, the same value each time, so the app shows it once; at the next
-    /// reading, 13:30:20, it is gone.
-    @Test("The account now carries one event, the same value until the next reading")
+    /// B's week and Fable came back at Fri 14 Nov 13:15:17. The reading after it, 13:30:20, finds
+    /// nothing back.
+    @Test("The reading that finds a limit back, and not the one after it")
     func oneEvent() throws {
-        let words = { (at: Date) in TimeWords(calendar: Record.calendar, now: at) }
-        let at = try #require(AccountNow(readings: Record.accounts[1], words: words(Record.moment(14, 13, 15, 17))))
-        let later = try #require(AccountNow(readings: Record.accounts[1], words: words(Record.moment(14, 13, 29))))
-        let next = try #require(AccountNow(readings: Record.accounts[1], words: words(Record.moment(14, 13, 30, 20))))
+        let readings = Record.accounts[1]
+        let k = try #require(readings.firstIndex { $0.at == Record.moment(14, 13, 15, 17) })
         let reset = ResetTime(Record.moment(14, 13, 0))
-        #expect(at.back == [SpentLimitBack(account: AccountID("B"), limit: .week, spentUntil: reset, how: .reset),
-                            SpentLimitBack(account: AccountID("B"), limit: Record.fable, spentUntil: reset, how: .reset)])
-        #expect(later.back == at.back)
-        #expect(next.back.isEmpty)
+        #expect(SpentLimitBack.newest(in: readings[...k])
+            == [SpentLimitBack(account: AccountID("B"), limit: .week, spentUntil: reset, how: .reset),
+                SpentLimitBack(account: AccountID("B"), limit: Record.fable, spentUntil: reset, how: .reset)])
+        #expect(SpentLimitBack.newest(in: readings[...(k + 1)]).isEmpty)
     }
 
-    /// A five-hour window spent at 100 and resetting at 14:00. A reading at 13:30 that does not
-    /// carry it says nothing; one at 14:10 that does not carry it finds it back at its reset. One at
-    /// 99 is not spent, and its reset brings nothing back.
-    @Test("A spent window the next reading does not carry is back once its reset has passed")
-    func absentAfterItsReset() {
-        let session = Limit.Kind(model: nil, period: .session), reset = ResetTime(Record.moment(26, 14, 0))
+    /// The week spent at 100 and resetting Wed 21:00, read at 20:57 with the session. The trace
+    /// samples the week every quarter-hour and the session at every poll, so the poll of 21:00
+    /// keeps the session alone, and the poll of 21:03 reads the week again, at 0 with next week's
+    /// reset. That poll finds the week back at its reset; the session-only reading finds nothing.
+    @Test("A spent week is back at the next reading that carries it, past a reading without it")
+    func pastAReadingWithoutIt() {
+        let session = Limit.Kind(model: nil, period: .session), reset = ResetTime(Record.moment(26, 21, 0))
         func reading(_ hour: Int, _ minute: Int, _ limits: [Limit]) -> Reading {
             Reading(account: AccountID("S"), at: Record.moment(26, hour, minute), limits: limits)
         }
-        let week = Limit(kind: .week, used: Percent(40)!, resets: ResetTime(Record.moment(28, 13, 0)))
-        let spent = reading(13, 0, [week, Limit(kind: session, used: Percent(100)!, resets: reset)])
-        #expect(SpentLimitBack.between(spent, reading(13, 30, [week])).isEmpty)
-        #expect(SpentLimitBack.between(spent, reading(14, 10, [week])) == [SpentLimitBack(account: AccountID("S"), limit: session, spentUntil: reset, how: .reset)])
-        let nearly = reading(13, 0, [week, Limit(kind: session, used: Percent(99)!, resets: reset)])
-        #expect(SpentLimitBack.between(nearly, reading(14, 10, [week, Limit(kind: session, used: Percent(0)!, resets: nil)])).isEmpty)
+        let open = Limit(kind: session, used: Percent(0)!, resets: ResetTime(Record.moment(27, 1, 0)))
+        let readings = [
+            reading(20, 57, [Limit(kind: .week, used: Percent(100)!, resets: reset), open]),
+            reading(21, 0, [open]),
+            reading(21, 3, [Limit(kind: .week, used: Percent(0)!, resets: ResetTime(Record.moment(33, 21, 0))), open]),
+        ]
+        #expect(SpentLimitBack.newest(in: readings[...1]).isEmpty)
+        #expect(SpentLimitBack.newest(in: readings) == [SpentLimitBack(account: AccountID("S"), limit: .week, spentUntil: reset, how: .reset)])
+        let nearly = [Reading(account: AccountID("S"), at: Record.moment(26, 20, 57), limits: [Limit(kind: .week, used: Percent(99)!, resets: reset)])]
+        #expect(SpentLimitBack.newest(in: nearly + readings[1...]).isEmpty)
     }
 
     /// Two of the record's events in words, said at the reading that found them, worked by hand: B's

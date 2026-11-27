@@ -69,8 +69,8 @@ public nonisolated enum AlertAuthorization: Equatable, Sendable {
 /// accounts the person wants to hear about, and only after the system has been asked — the first
 /// time an alert is due, never at launch.
 ///
-/// The event is Kit's `SpentLimitBack`, between the account's reading before and its newest, so
-/// it is the account, the limit, the reset it was spent until and how it came back. Its key is
+/// The event is Kit's `SpentLimitBack`, which the account's newest reading finds, so it is the
+/// account, the limit, the reset it was spent until and how it came back. Its key is
 /// that, so the same event worked out again on the next poll is seen, and a week spent twice is
 /// two events.
 @MainActor @Observable public final class AlertDeliverer {
@@ -160,7 +160,7 @@ public nonisolated enum AlertAuthorization: Equatable, Sendable {
 
     private func deliverPass(_ readings: AccountReadings) async {
         let unseen = readings.flatMap { id, readings in
-            readings.count < 2 ? [] : SpentLimitBack.between(readings[readings.count - 2], readings[readings.count - 1]).map { (id, $0) }
+            SpentLimitBack.newest(in: readings).map { (id, $0) }
         }.filter { !seen.contains(Self.key($1)) }
         guard !unseen.isEmpty else { return }
 
