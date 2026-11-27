@@ -16,13 +16,14 @@ QotaFolio shows one kind of alert: a spent limit is back. When a poll finds that
 
 Preconditions:
 
+- `"$Q" launch face QOTAFOLIO_UI_ALERTS=1`, and `"$Q" doctor` reports `"ok":true`.
 - The lab replaces macOS's notification centre with a recording one, so nothing appears on screen and nothing is asked. Each delivered alert is a `QF_ALERT` line in `qfv log`.
 
-- **One alert.** Run `"$Q" launch face QOTAFOLIO_UI_ALERTS=1`, wait three seconds, then `"$Q" log`. One poll arrives that reads `Spare`'s spent session at nothing. The log holds one line `QF_ALERT id=back|00000000-0000-4000-8000-000000000004||session|<seconds>|reset body=Spare's session is back. It reset <day> <time>.`
+- **One alert.** Three seconds after the launch, run `"$Q" log`. One poll arrives that reads `Spare`'s spent session at nothing. The log holds one line `QF_ALERT id=back|00000000-0000-4000-8000-000000000004||session|<seconds>|reset body=Spare's session is back. It reset <day> <time>.`
 - **Once.** A second poll a second later reads the same. The log still holds one `QF_ALERT` line.
 - **Proof.** The `app.log` in the run folder, and `"$Q" clean` after.
 
 ## Gotchas
 
-- The face scenario has no poll that brings a limit back, so `QOTAFOLIO_UI_ALERTS=1` makes one. The fixture reads the session back at nothing with its reset unchanged; the books close that session at the poll, so the alert says it reset at the poll's minute.
+- The face scenario has no poll that brings a limit back, so `QOTAFOLIO_UI_ALERTS=1` makes one. The alert then says the session reset at that poll's minute, not at the reset time the card showed.
 - The fixture's settings are emptied at every launch, so a second launch shows the alert again. Within one run it shows once.

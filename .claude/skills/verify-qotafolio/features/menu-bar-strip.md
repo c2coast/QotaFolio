@@ -1,6 +1,6 @@
 # Menu-bar batteries
 
-The status item draws one battery per visible account, in the panel's order. Each battery shows how much of the session (or, by choice, the week) is left, and a spent account says when it comes back. VoiceOver reads the whole strip as one sentence, which is also the item's accessibility label. With names hidden, each account is called by its provider.
+The status item draws one battery per visible account, in the panel's order. Each battery shows how much of the week is left, or, by choice, the session, and a spent account says when it comes back. VoiceOver reads the whole strip as one sentence, which is also the item's accessibility label. With names hidden, each account is called by its provider.
 
 ## Sub-features
 
@@ -8,7 +8,7 @@ The status item draws one battery per visible account, in the panel's order. Eac
 - `strip-sentence` speaks every account's session and week in one sentence, in panel order.
 - `strip-states` speaks spent, waiting, signed-out and setup-issue accounts in words.
 - `strip-empty` says no account is configured.
-- `strip-week-picture` draws the batteries to the week instead of the session.
+- `strip-session-picture` draws the batteries to the session instead of the week.
 - `strip-hidden-names` replaces account names with their providers.
 
 ## How to get to it (user POV)
@@ -34,7 +34,7 @@ Preconditions:
 
 ## Gotchas
 
-- The sentence names both the week and an open session whichever one the batteries are drawn to. `strip-week-picture` can only be proven by the picture.
+- The sentence names both the week and an open session whichever one the batteries are drawn to. `strip-session-picture` can only be proven by the picture.
 - On macOS 27 the system draws menu extras, so the item has no window of its own. A window shot fails; use `--frame`.
 - A `--frame` shot is a screen capture of that rectangle. If the menu bar is hidden or another menu is open over the item, it captures that instead. Look at the PNG.
 - The order follows the panel. A reorder in the panel (`../usage-panel.md`, `panel-reorder`) is the way to prove it.
