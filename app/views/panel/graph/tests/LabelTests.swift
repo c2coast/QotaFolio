@@ -81,14 +81,9 @@ struct LabelTests {
                 guard case .record = stroke.part else { continue }
                 for line in stroke.lines {
                     for (a, b) in zip(line, line.dropFirst()) {
-                        let steps = max(1, Int(hypot(b.x - a.x, b.y - a.y) * 2))
                         for label in ceiling.labels {
                             let box = label.box.insetBy(dx: -stroke.width / 2, dy: -stroke.width / 2).insetBy(dx: 0.01, dy: 0.01)
-                            let covered = (0...steps).contains { k in
-                                let t = Double(k) / Double(steps)
-                                return box.contains(CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t))
-                            }
-                            #expect(!covered, "\(at): \(label.text) at \(label.box) covers the record from \(a) to \(b)")
+                            #expect(!crossing(a, b, box), "\(at): \(label.text) at \(label.box) covers the record from \(a) to \(b)")
                         }
                     }
                 }
@@ -157,6 +152,41 @@ struct LabelTests {
         }
     }
 
+    /// A forecast that lasts ends at the reset, a week near its reset has now there, and a new week
+    /// has it at the start. The plot's side cut such a dot in half, and its label then seemed to run
+    /// into it. Every dot lies whole between the plot's sides; one at zero sits on the baseline.
+    @Test("Every dot lies whole between the plot's sides", arguments: Week.all)
+    func dotsInside(_ week: Week) {
+        for width in Week.widths {
+            let ceiling = week.ceiling(width: width, twelveHour: false)
+            for dot in ceiling.dots {
+                #expect(dot.center.x - dot.radius >= 0 && dot.center.x + dot.radius <= ceiling.plot.width,
+                        "\(week.name) at \(Int(width)) points: a dot at \(dot.center)")
+            }
+        }
+    }
+
+    /// A ceiling's name sat where a forecast's line ran into the corner beside its end. A limit's
+    /// name takes a place clear of every forecast's line, as of the record's.
+    @Test("No limit's name covers a forecast's line", arguments: Week.all, [false, true])
+    func limitsOffForecasts(_ week: Week, twelveHour: Bool) {
+        for width in Week.widths {
+            let ceiling = week.ceiling(width: width, twelveHour: twelveHour)
+            for stroke in ceiling.strokes {
+                guard case .forecast = stroke.part else { continue }
+                for line in stroke.lines {
+                    for (a, b) in zip(line, line.dropFirst()) {
+                        for label in ceiling.labels {
+                            guard case .limit = label.kind else { continue }
+                            let box = label.box.insetBy(dx: -stroke.width / 2, dy: -stroke.width / 2).insetBy(dx: 0.01, dy: 0.01)
+                            #expect(!crossing(a, b, box), "\(week.name) at \(Int(width)) points: \(label.text) covers a forecast")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// A forecast's label that says when its limit runs out, "Weekly · Wed 7:15 PM" or the time
     /// alone, and the sentence under the graph say the same time in the same words, on either clock.
     @Test("The forecast's label and its sentence say the time the same way", arguments: Week.all, [false, true])
@@ -183,5 +213,14 @@ struct LabelTests {
             // In order, the steps from one name to the next go once round the week at most.
             #expect(steps.reduce(0, +) <= 6, "\(week.name) at \(Int(width)) points: \(names)")
         }
+    }
+}
+
+/// Whether the line from a to b passes inside the box, walked half a point at a time.
+func crossing(_ a: CGPoint, _ b: CGPoint, _ box: CGRect) -> Bool {
+    let steps = max(1, Int(hypot(b.x - a.x, b.y - a.y) * 2))
+    return (0...steps).contains { k in
+        let t = Double(k) / Double(steps)
+        return box.contains(CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t))
     }
 }

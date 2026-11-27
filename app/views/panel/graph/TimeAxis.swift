@@ -33,13 +33,13 @@ public struct TimeAxis: Hashable, Sendable {
         public let fold: Fold?
     }
 
-    /// The pieces in time order. The first starts at the week's start and x 0, the last ends at
-    /// the reset and the axis's width.
+    /// The pieces in time order. The first starts at the week's start and the span's left end, the
+    /// last ends at the reset and its right end.
     public let pieces: [Piece]
     /// Seconds of open time for each point of width.
     public let secondsPerPoint: Double
 
-    init(picture: WeekPicture, width: Double) {
+    init(picture: WeekPicture, span: ClosedRange<Double>) {
         let start = picture.start.timeIntervalSince1970
         let reset = picture.resets.instant.timeIntervalSince1970
         let now = picture.now.at
@@ -59,9 +59,9 @@ public struct TimeAxis: Hashable, Sendable {
         folds.sort { $0.from < $1.from }
 
         let open = (reset - start) - folds.reduce(0) { $0 + $1.to - $1.from }
-        let room = width - folds.reduce(0) { $0 + $1.fold.width }
+        let room = span.upperBound - span.lowerBound - folds.reduce(0) { $0 + $1.fold.width }
         var pieces: [Piece] = []
-        var t = start, x = 0.0
+        var t = start, x = span.lowerBound
         func piece(_ from: Double, _ to: Double, _ x1: Double, _ fold: Fold?) {
             pieces.append(Piece(from: Date(timeIntervalSince1970: from), to: Date(timeIntervalSince1970: to), x0: x, x1: x1, fold: fold))
             x = x1
@@ -71,7 +71,7 @@ public struct TimeAxis: Hashable, Sendable {
             piece(fold.from, fold.to, x + fold.fold.width, fold.fold)
             t = fold.to
         }
-        if t < reset { piece(t, reset, width, nil) }
+        if t < reset { piece(t, reset, span.upperBound, nil) }
         self.pieces = pieces
         secondsPerPoint = open / room
     }
@@ -84,8 +84,10 @@ public struct TimeAxis: Hashable, Sendable {
         return s == b ? p.x1 : p.x0 + (s - a) / (b - a) * (p.x1 - p.x0)
     }
 
-    /// The time at a point from the left: the inverse of `x`, for a cursor.
+    /// The time at a point from the left: the inverse of `x`, for a cursor. Left of the axis it is
+    /// the week's start, and right of it the reset.
     public func time(at x: Double) -> Date {
+        let x = min(max(x, pieces[0].x0), pieces[pieces.count - 1].x1)
         let p = pieces.first { x <= $0.x1 } ?? pieces[pieces.count - 1]
         let a = p.from.timeIntervalSince1970, b = p.to.timeIntervalSince1970
         return Date(timeIntervalSince1970: a + (x - p.x0) / (p.x1 - p.x0) * (b - a))

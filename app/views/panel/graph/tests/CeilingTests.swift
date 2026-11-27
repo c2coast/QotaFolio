@@ -15,12 +15,12 @@ struct CeilingTests {
         return Ceiling(picture: picture, size: size, words: TimeWords(timeZone: Record.zone, now: picture.now.at))
     }
 
-    @Test("Time runs left to right, from the week's start at 0 to the reset at the right edge", arguments: names)
+    @Test("Time runs left to right, from the week's start to the reset, a mark's width inside each edge", arguments: names)
     func order(_ name: String) throws {
         let picture = try Record.picture(name)
         let axis = try Self.ceiling(name).axis
-        #expect(axis.x(picture.start) == 0)
-        #expect(axis.x(picture.resets.instant) == Double(Self.size.width))
+        #expect(axis.x(picture.start) == Ceiling.edge)
+        #expect(axis.x(picture.resets.instant) == Double(Self.size.width) - Ceiling.edge)
         #expect(axis.pieces.first?.from == picture.start && axis.pieces.last?.to == picture.resets.instant)
         for (a, b) in zip(axis.pieces, axis.pieces.dropFirst()) {
             #expect(a.to == b.from && a.x1 == b.x0, "\(name): the pieces touch, in order")

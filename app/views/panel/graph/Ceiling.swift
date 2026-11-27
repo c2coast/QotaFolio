@@ -12,6 +12,9 @@ import Kit
 /// The chart is the plot and, under it, a band of 18 points for the axis's words.
 public struct Ceiling: Sendable {
     public static let axisBand = 18.0
+    /// The time axis keeps this far inside each side of the plot, so a mark at the week's start or
+    /// its reset, the ring of now or a forecast's end, is drawn whole.
+    public static let edge = 5.0
 
     /// The plot's size. Its top left is the chart's top left.
     public let plot: CGSize
@@ -88,7 +91,7 @@ public struct Ceiling: Sendable {
 
     public init(picture: WeekPicture, size: CGSize, words: TimeWords) {
         let w = size.width, h = size.height - Self.axisBand
-        let axis = TimeAxis(picture: picture, width: w)
+        let axis = TimeAxis(picture: picture, span: Self.edge...(w - Self.edge))
         let x = axis.x
         let model = picture.model, now = picture.now
         let reset = picture.resets.instant
@@ -162,7 +165,7 @@ public struct Ceiling: Sendable {
             }
             stroke(.record(kind), dotted, max(1.25, width - 0.5), tone, dash: [1, 3.5], opacity: opacity, round: true)
             stroke(.record(kind), solid, width, tone, opacity: opacity, round: true)
-            placer.record(dotted + solid, width: width)
+            placer.keepOff(dotted + solid, width: width)
         }
         let modelTone = Tone.level(Level(used: now.model?.used ?? 0)), weekTone = Tone.level(Level(used: now.week.used))
         if let model { record(model, modelWork, 1.5, modelTone, picture.spent ? 0.45 : 1) }
@@ -193,6 +196,7 @@ public struct Ceiling: Sendable {
                 if let first, first.kind == .week {
                     let end = at(first.at, nowModel + path.rate / 2 * first.at.timeIntervalSince(now.at) / hour)
                     stroke(.forecast(model), [[at(now.at, nowModel), end]], 1.25, .chartInk, dash: [3, 3], round: true)
+                    placer.keepOff([[at(now.at, nowModel), end]], width: 1.25, forecast: true)
                 } else {
                     let end = path.out ?? reset
                     let value = path.out != nil ? modelCeiling(now) : nowModel + (path.landing - (now.model?.used ?? 0)) / 2
@@ -200,6 +204,7 @@ public struct Ceiling: Sendable {
                     let point = at(end, value), from = at(now.at, nowModel)
                     if apart(point, from, 2.5, 2.5) {
                         stroke(.forecast(model), [[from, point]], 1.25, tone, dash: [3, 3], round: true)
+                        placer.keepOff([[from, point]], width: 1.25, forecast: true)
                         dots.append(Dot(center: point, radius: 2.5, tone: tone, ring: false))
                     }
                     ends.append((point, name, said(path), first?.kind == model, model))
@@ -212,6 +217,7 @@ public struct Ceiling: Sendable {
                 let point = at(end, value), from = at(now.at, nowWeek)
                 if apart(point, from, 3, 4.5) {
                     stroke(.forecast(.week), [[from, point]], 1.5, tone, dash: [3, 3], round: true)
+                    placer.keepOff([[from, point]], width: 1.5, forecast: true)
                     dots.append(Dot(center: point, radius: 3, tone: tone, ring: false))
                 }
                 ends.append((point, "Weekly", said(path), first?.kind == .week, .week))
@@ -236,8 +242,9 @@ public struct Ceiling: Sendable {
                 || placer.put(end.said, .forecast(end.kind), weight, tone, [Placer.Spot(w - 1, end.point.y + 13, .end)], by: end.point) {
                 continue
             }
-            // Where no place reads as the dot's, the word takes the first free place, so it is kept.
-            placer.put(text, or: end.said, .forecast(end.kind), weight, tone, around(end.point))
+            // Where no place reads as the dot's, the word takes the first free place, so it is kept,
+            // over a forecast's line if it must: the line stops short of the word.
+            placer.put(text, or: end.said, .forecast(end.kind), weight, tone, around(end.point), overForecast: true)
         }
         for (kind, value, text) in [(Limit.Kind.week, weekCeiling, "Weekly limit")] + (model.map { [($0, modelCeiling, "\(name) limit")] } ?? []) {
             let yr = y(value(now)), y0 = y(value(picture.points[0]))
