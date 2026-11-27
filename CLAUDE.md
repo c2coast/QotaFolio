@@ -20,7 +20,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | `app/settings/hidden/` | The hidden accounts: the key under which the app keeps the list in its preferences domain, and the filter that leaves them out of `qota status`. `tests/` holds its tests, in `AppTests`. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
 | `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in every look from the design values, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
-| `design/` | `tokens.json`: the design values, every value that carries a decision of the look, each with its reason. |
+| `design/` | `tokens.json`: the design values, every value that carries a decision of the look, each with its why. |
 | `Assets/` | The app icon. |
 | `project.yml` | The XcodeGen spec. XcodeGen writes `QotaFolio.xcodeproj` from it, and git ignores that project. |
 | `Package.swift` | The Swift package of `QotaFolioModel` and `QotaFolioCore`, whose code is in `Sources/`. |
@@ -64,7 +64,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - **A look** is light or dark, with Increase Contrast or without, and with Reduce Transparency or without.
 - **The contrast** is measured in every look, on the plate and on the band: 3 to 1 for the ceiling, 4.5 to 1 for every word. `ContrastTests` holds it.
 - **A worst week** is a made-up week the record does not hold, run through the Engine. The header of `app/views/panel/graph/tests/WorstWeeks.swift` lists them.
-- **A design value** is one entry of `design/tokens.json`: one value, or a value in each look it varies over, with its why. Kit's `Tokens` holds them in Swift. The panel turns them into colours, fonts and animations in `Sources/QotaFolioKit/Panel/PanelDesign.swift`, the graph in its `Palette` and `ChartType`, each keeping the construction it draws with.
+- **A design value** is one entry of `design/tokens.json`: one value, or a value in each look it varies over, with its why. Kit's `Tokens` holds them in Swift. The app turns them into colours, fonts and animations in `Sources/QotaFolioKit/Panel/PanelDesign.swift`. The graph turns them in `Palette.swift` and `ChartType.swift`. Each side builds a colour the way it drew it before the values had a home, because two ways of writing the same numbers can give different pixels.
 - **A type role** is a size, a weight, and whether the digits are monospaced, such as `title` or `captionFigures`.
 - **A generated file** is written by `tools/gen` from its source and committed. `kit/design/Tokens.swift` is one.
 - **What the graph says aloud** is `SpokenGraph`: one VoiceOver element with the two sentences, and an audio graph of the week and the model's week.
@@ -78,7 +78,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - The build number in `project.yml` is a whole number above 100, the build of version 1.0.0. Version 1.0.0 updates only to such a number.
 - A hand-written code file in the new tree has 400 lines at most. A generated file does not count.
 - A generated file holds exactly what `tools/gen` makes of its source.
-- Outside tests and generated files, the new tree's code writes no font size and no colour as numbers. It reads `Tokens`.
+- Outside tests and generated files, the new tree's Swift writes no font size and no colour as numbers. It reads `Tokens`.
 
 ## Proving a change
 
@@ -94,9 +94,9 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 
 1. Change the value, or add one with its why, in `design/tokens.json`.
 2. Run `tools/gen`. It writes `kit/design/Tokens.swift`. Commit both.
-3. Run `make check` and `make test`. A graph change shows in `tools/forecast --draw`.
+3. Run `make check` and `make test`. A graph change shows in `tools/forecast --draw`. A change the app shows is proved on the app, as step 5 of "Proving a change" says.
 
-Never edit `Tokens.swift` by hand: `make check` refuses it and names the command. A new kind of value, such as a new shape of colour, is a case in `kit/design/Design.swift`, a form `tools/gen.mjs` reads, and a case in each side's turning.
+Never edit `Tokens.swift` by hand: `make check` refuses it and names the command. A new kind of value, such as a new shape of colour, is a case in `kit/design/Design.swift`, a form `tools/gen.mjs` reads, and a case where each side turns it into what it draws: `PanelDesign.swift` for the app, and `Palette.swift` or `ChartType.swift` for the graph.
 
 ## Adding to the tree
 

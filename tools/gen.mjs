@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
@@ -115,7 +114,7 @@ function tokensSwift(json) {
   return out.join("\n");
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (import.meta.main) {
   for (const { path, make } of generated) {
     writeFileSync(new URL(path, root), make());
     console.log(path);

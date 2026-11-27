@@ -46,6 +46,7 @@ public nonisolated struct AccountLevel: Hashable, Sendable {
         case noReading(NoReading)
     }
 
+    /// The same fifth as `nearlyGoneAtOrBelow` in `design/tokens.json`, which this package cannot read.
     public static let lowRemainingPercent = 20
 
     /// The share of the week still held, 0…100.
