@@ -119,4 +119,10 @@ export const walls = [
     importFix: "The reader of 1.0.0's history turns the file's bytes into kit's values, and needs nothing else.",
     calls: pure("The reader of 1.0.0's history"),
   },
+  {
+    folder: "app/recorder/legacy/tests/",
+    imports: ["Foundation", "Kit", "QotaFolioModel", "Testing"],
+    importFix: "The reader's tests fill version 1.0.0's books through QotaFolioModel, as the app does, and read them back.",
+    calls: [],
+  },
 ];

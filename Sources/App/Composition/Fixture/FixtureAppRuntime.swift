@@ -352,12 +352,12 @@ final class FixtureAppRuntime: AppRuntime {
         if options.deliversAlerts {
             alerts.start()
             if let (id, poll) = Self.pollBringingBackASpentLimit(scenario, at: Date()) {
-                store.record(poll, for: id, at: poll.fetchedAt)
+                store.record(poll, for: id)
                 let next = UsageSnapshot(provider: poll.provider, readings: poll.readings, planName: poll.planName,
                                          extraUsage: poll.extraUsage, credits: poll.credits, fetchedAt: poll.fetchedAt + 1)
                 Task { @MainActor [store] in
                     try? await Task.sleep(for: .seconds(1))
-                    store.record(next, for: id, at: next.fetchedAt)
+                    store.record(next, for: id)
                 }
             }
         }

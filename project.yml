@@ -51,7 +51,8 @@ targets:
     platform: macOS
     sources:
       - Sources/QotaFolioKit
-      - app/recorder/legacy
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
       - path: app/views/panel
         excludes: ["graph/**", "tests/**"]
       - path: app/views/menubar
@@ -105,7 +106,8 @@ targets:
       - Sources/Qota
       - path: app/settings/hidden
         excludes: ["tests/**"]
-      - app/recorder/legacy
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
     dependencies:
       - { package: QotaFolioCore, product: QotaFolioModel }
       - { target: Kit }
@@ -493,7 +495,8 @@ targets:
     sources:
       - path: kit/tests
         excludes: ["fixtures/**"]
-      - app/recorder/legacy
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
     dependencies:
       - { target: Kit }
     settings:
@@ -525,7 +528,8 @@ targets:
     sources:
       - app/views/panel/graph/tests
       - kit/tests/Record.swift
-      - app/recorder/legacy
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
     dependencies:
       - { target: Graph }
       - { target: Kit }
@@ -544,6 +548,7 @@ targets:
       - app/settings/legacy
       - app/settings/hidden
       - app/main/tests
+      - app/recorder/legacy
       - app/views/menubar/Strip.swift
       - app/views/menubar/tests
     dependencies:
@@ -562,7 +567,8 @@ targets:
     sources:
       - tools/forecast.swift
       - tools/forecast-draw.swift
-      - app/recorder/legacy
+      - path: app/recorder/legacy
+        excludes: ["tests/**"]
     dependencies:
       - { target: Kit }
       - { target: Graph }

@@ -722,7 +722,11 @@ public nonisolated struct UsageTraceBook: UsageHistoryBookProtocol {
         accounts.first { $0.account == account }
     }
 
-    public mutating func observe(_ snapshot: UsageSnapshot, for account: AccountID, at observedAt: Int) {
+    /// Samples one poll at the time it was read, its `fetchedAt`, the time the snapshot book keeps
+    /// for it too. The reader joins the two books by that second, so a trace stamped at any other
+    /// time would leave the poll in two halves.
+    public mutating func observe(_ snapshot: UsageSnapshot, for account: AccountID) {
+        let observedAt = usageHistoryEpochSeconds(snapshot.fetchedAt)
         if let index = accounts.firstIndex(where: { $0.account == account }) {
             accounts[index].observe(snapshot, at: observedAt)
         } else {

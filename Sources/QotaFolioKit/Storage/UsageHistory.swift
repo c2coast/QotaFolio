@@ -9,7 +9,7 @@ public typealias AccountReadings = [QotaFolioModel.AccountID: [Reading]]
 
 /// One thing that happened, waiting to be written.
 public nonisolated enum UsageHistoryMutation: Sendable {
-    case observed(account: QotaFolioModel.AccountID, snapshot: UsageSnapshot, at: Date)
+    case observed(account: QotaFolioModel.AccountID, snapshot: UsageSnapshot)
     case forgotten(QotaFolioModel.AccountID)
 }
 
@@ -98,9 +98,9 @@ public actor UsageHistoryWriter {
 
         for mutation in mutations {
             switch mutation {
-            case .observed(let account, let snapshot, let at):
+            case .observed(let account, let snapshot):
                 snapshotBook.record(PersistedUsageSnapshot(account: account, snapshot: snapshot))
-                traceBook.observe(snapshot, for: account, at: usageHistoryEpochSeconds(at))
+                traceBook.observe(snapshot, for: account)
             case .forgotten(let account):
                 snapshotBook.forget(account)
                 traceBook.forget(account)
@@ -297,7 +297,7 @@ public final class UsageHistory {
     /// already scheduled, arms a single timer. Everything else — ring maintenance, the
     /// readings, encoding, the write — happens later and elsewhere.
     public func record(_ snapshot: UsageSnapshot, for account: QotaFolioModel.AccountID) {
-        post([.observed(account: account, snapshot: snapshot, at: clock())])
+        post([.observed(account: account, snapshot: snapshot)])
     }
 
     /// Drops one account's history. Call it where an account is removed.

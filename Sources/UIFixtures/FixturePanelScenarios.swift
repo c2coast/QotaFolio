@@ -306,7 +306,7 @@ nonisolated struct FixtureReplay {
             polls.sort { $0.at < $1.at }
             var last: Date?
             for poll in polls where last.map({ poll.at > $0 }) ?? true {
-                traces.observe(poll.snapshot, for: account.config.id, at: usageHistoryEpochSeconds(poll.at))
+                traces.observe(poll.snapshot, for: account.config.id)
                 last = poll.at
             }
             if let final = polls.last?.snapshot {

@@ -85,9 +85,9 @@ import QotaFolioKit
 
     /// One poll arriving, as the app's history records it: into the books, then the readings and
     /// the snapshot published.
-    public func record(_ snapshot: UsageSnapshot, for id: AccountID, at time: Date) {
+    public func record(_ snapshot: UsageSnapshot, for id: AccountID) {
         books.record(PersistedUsageSnapshot(account: id, snapshot: snapshot))
-        traces.observe(snapshot, for: id, at: usageHistoryEpochSeconds(time))
+        traces.observe(snapshot, for: id)
         snapshots[id] = snapshot
         readings = AccountReadings(traces: traces, snapshots: books)
     }
