@@ -177,7 +177,8 @@ struct AccountCard: View {
             guard let back = face.returnsAt else {
                 return (qfLocalized("face.spent", defaultValue: "Spent", comment: "Header note on an account with nothing spendable now and no return time reported."), nil, nil)
             }
-            let day = words.day(back)
+            // A reset as Kit makes it, on the minute, so the header says the time the rows say.
+            let day = words.day(ResetTime(back).instant)
             return (qfLocalized("face.backAt", defaultValue: "Back at \(day)", comment: "Header note on an account with nothing spendable now: the day and time it comes back."), day, nil)
         }
         if face.isLastKnown, let read = now?.readWords ?? face.observedAt.map(words.day) {
