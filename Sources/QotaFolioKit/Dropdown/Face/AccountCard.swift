@@ -14,6 +14,11 @@ import SwiftUI
 struct AccountCard: View {
     let account: AccountConfig
     let face: AccountFace
+    /// What Kit says of the account at the panel's minute, built by the list. None before its first
+    /// reading.
+    let now: AccountNow?
+    /// The words at the panel's minute, on the person's clock.
+    let words: TimeWords
     let store: any AccountsStoring
     let addFlow: any AddFlowPresenting
     let isExpanded: Bool
@@ -31,21 +36,10 @@ struct AccountCard: View {
 
     @Environment(AccountPromptState.self) private var panelQuestions: AccountPromptState?
     @Environment(\.openQotaFolioSettings) private var openSettings
-    @Environment(\.panelNow) private var panelNow
-    @Environment(\.sentenceStyle) private var style
-    @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.namesHidden) private var namesHidden
 
-    /// The words at the panel's moment, on the person's clock. A host that runs no clock reads the
-    /// wall clock once.
-    private var words: TimeWords {
-        TimeWords(locale: locale, timeZone: style.timeZone, now: panelNow ?? .now)
-    }
-
     var body: some View {
-        let words = words
-        let now = AccountNow(readings: store.readings[account.id] ?? [], words: words)
         VStack(alignment: .leading, spacing: 8) {
             summary(now, words)
             stateLine
