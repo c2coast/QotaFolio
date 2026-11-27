@@ -3,16 +3,19 @@
 # person reads, what then happened, and how often it was right. Or, with --draw, the graph at one
 # moment as a picture.
 #
-#   tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm>] [--account <id>] [usage-history.json]
-#   tools/forecast --draw <moment name | yyyy-MM-dd HH:mm> [--dark] [--increased-contrast]
+#   tools/forecast [--json] [--at <moment name | yyyy-MM-dd HH:mm | now>] [--account <id>] [usage-history.json | folder]
+#   tools/forecast --draw <moment name | yyyy-MM-dd HH:mm | now> [--dark] [--increased-contrast]
 #                  [--reduce-transparency] [--12-hour] [--width <points>] [--out <file.png>] [--account <id>]
-#                  [usage-history.json]
+#                  [usage-history.json | folder]
 #
 # With no path it reads the frozen record, kit/tests/fixtures/usage-history.json. Any history file
-# of version 1.0.0 works, such as a dated copy of the app's own. --json prints one line for each
-# poll and one for each score, with every number at full precision. --at prints one moment: a name
-# from moments.json beside the history file, such as after-banked-reset, or a day and a time in
-# the Mac's zone. --account keeps one account. --draw writes the graph's part of the card at the
+# of version 1.0.0 works, such as a dated copy of the app's own, and so does a folder of its files:
+# there the snapshots in usage-snapshots.json give each account's newest poll, read as the app reads
+# them. --json prints one line for each poll and one for each score, with every number at full
+# precision. --at prints one moment as the app says it: each account's rows, its two sentences, its
+# menu bar and any spent limit that is back. The moment is a name from moments.json beside the
+# history file, such as after-banked-reset, a day and a time in the Mac's zone, or now. --account
+# keeps one account. --draw writes the graph's part of the card at the
 # moment to a PNG, light unless --dark, with the chart 360 points wide unless --width says, into
 # the temporary folder unless --out names the file, and prints its sentences and the file's path.
 # Nothing opens on screen.
