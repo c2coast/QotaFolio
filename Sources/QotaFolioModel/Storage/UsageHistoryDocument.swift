@@ -25,7 +25,7 @@ public nonisolated func usageHistoryDate(_ epochSeconds: Int) -> Date {
 
 /// A percentage in hundredths of a percent, which is finer than any provider reports and
 /// finer than the panel can draw. Clamped to 0…100%: a reading past its own limit tells the
-/// verdict engine nothing it does not already know from the reading being at its limit.
+/// Engine nothing it does not already know from the reading being at its limit.
 public nonisolated func usageBasisPoints(fromPercent percent: Double) -> Int {
     guard percent.isFinite else { return 0 }
     return Int(max(0, min(10_000, (percent * 100).rounded())))
@@ -248,8 +248,7 @@ public nonisolated struct UsageSnapshotBook: UsageHistoryBookProtocol {
 
 /// One occurrence of a window that has ended, measured at the poll that saw it end.
 ///
-/// This is the record the verdict engine's second question reads: the median weekly cost of
-/// a completed short window. It is stored rather than derived because deriving it means
+/// Version 1.0.0 reads it for the median weekly cost of a completed short window. It is stored rather than derived because deriving it means
 /// reading a trace across a reset, and the last sample before a reset can be half an hour
 /// old — the app polls as slowly as every thirty minutes when nothing is on screen. The
 /// figures here come from the two polls that bracket the reset, which is the closest the app
@@ -346,11 +345,6 @@ public nonisolated struct UsageWindowTrace: Codable, Equatable, Sendable {
         }
     }
 
-    /// Where the occurrence now open began and ends, when the provider named an end.
-    public var currentOccurrence: (openedAt: Date, resetsAt: Date?) {
-        (usageHistoryDate(currentOpenedAt), currentResetsAt.map(usageHistoryDate))
-    }
-
     init(reading: UsageReading, observedAt: Int, weeklyUsedBasisPoints: Int?) {
         let period = PersistedUsagePeriod(reading.period)
         key = UsageHistoryPolicy.windowKey(scope: reading.scope, period: period)
@@ -373,8 +367,7 @@ public nonisolated struct UsageWindowTrace: Codable, Equatable, Sendable {
 
     /// A window's start, which the app needs before it has watched one begin.
     ///
-    /// The verdict engine damps the first tenth of an occurrence, so it needs a start on the
-    /// first poll after launch, not one occurrence later. The provider's reset instant minus
+    /// The ledger needs a start on the first poll after launch, not one occurrence later. The provider's reset instant minus
     /// the window's length is that start, exactly, whenever a reset instant was reported.
     private static func occurrenceStart(
         resetsAt: Int?,

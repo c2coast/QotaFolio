@@ -3,8 +3,7 @@ import Foundation
 /// One window's level: what is spent of it now, and when it comes back.
 ///
 /// A row on the panel is this and nothing else — the window's name as the provider gave it,
-/// the percentage used, the reset instant. Nothing here predicts. The projection lives behind
-/// a click, in the instrument, and is a different type (`WindowForecast`).
+/// the percentage used, the reset instant. Nothing here predicts: the forecast is Kit's.
 public nonisolated struct UsageWindowLevel: Hashable, Sendable, Identifiable {
     /// `UsageReading.id` — the provider's own name for the limit and its length. The same key
     /// the history keeps the window's trace under.
