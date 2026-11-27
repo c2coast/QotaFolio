@@ -9,16 +9,16 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | `Sources/` | The code of version 1.0.0: the app, the `qota` command and their libraries. |
 | `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it. The app reaches only its design values, through `QotaFolioKit`. |
 | `kit/design/` | The design values as Swift. `Tokens.swift` is generated from `design/tokens.json`, and `Design.swift` holds their shapes and `Level`, the three steps of a level. |
-| `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`, `Whole`. |
+| `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`, `Whole`, `AccountNow`, `SpentLimitBack`. |
 | `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
-| `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, and the account's score. |
+| `kit/engine/week/` | The week picture at any moment, the account's forecast, the two sentences that say them, the account now, a spent limit that is back, and the account's score. |
 | `kit/tests/` | The Swift tests of `kit/`, the `KitTests` target. `fixtures/` holds the frozen record, its named moments, and the answers of the prototype and of the chart page on it. |
 | `app/` | The app's code in the new tree. The app compiles `app/lease/`, `app/settings/legacy/` and `app/settings/hidden/`, and signs with the entitlements file in `app/main/`. `qota` compiles `app/settings/hidden/` too. Tools and tests link the other folders. |
 | `app/main/` | The app's entitlements file, and `tests/AppIdentityTests.swift`, the part of `AppTests` that pins the names `AppIdentity` derives. |
 | `app/lease/` | The lease. `tests/` holds its tests, in `AppTests`. |
 | `app/settings/legacy/` | The carry. `tests/` holds its tests, in `AppTests`. |
 | `app/settings/hidden/` | The hidden accounts: the key under which the app keeps the list in its preferences domain, and the filter that leaves them out of `qota status`. `tests/` holds its tests, in `AppTests`. |
-| `app/recorder/legacy/` | The reader of version 1.0.0's history file. It turns the file's bytes into readings. |
+| `app/recorder/legacy/` | The reader of version 1.0.0's books: the trace and the snapshots, as the files' bytes, into each account's readings. |
 | `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in every look from the design values, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
 | `design/` | `tokens.json`: the design values, every value that carries a decision of the look, each with its why. |
 | `Assets/` | The app icon. |
@@ -54,7 +54,9 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - **The account's forecast** is `AccountForecast`: which limit the account meets first, and when.
 - **The week picture** is `WeekPicture`: one account's week at one poll, as the graph draws it.
 - **The sentences** are the two lines under the graph: what the forecast says, and what the record shows.
-- **The time words** are `TimeWords`, and **whole numbers** are `Whole`. The sentences and the graph say every time and every number through them, so the two never disagree.
+- **The time words** are `TimeWords`, and **whole numbers** are `Whole`. The sentences, the rows and the graph say every time and every number through them, so they never disagree. The time words are said at a moment: a time seven days or more from its day says its date too, "Wed 26 Nov 21:00".
+- **The account now** is `AccountNow`: everything the app says of one account at one moment. A row for each limit of the newest reading, the week picture and its sentences, the menu bar's week, and each spent limit that is back. Kit builds it from the readings and the time words, on this week and the poll before it. A forecast for a week whose reset has passed is not said.
+- **A spent limit is back** is `SpentLimitBack`, the alert's condition: a limit read 100 percent, then less, or its reset passed. It is keyed by the account, the limit, the reset it was spent until, and how it came back.
 - **The frozen record** is `kit/tests/fixtures/usage-history.json`: nine days of the owner's two accounts in version 1.0.0's file, with every time moved by a whole number of weeks.
 - **A named moment** is a time of the frozen record with a name, such as `after-banked-reset`. `kit/tests/fixtures/moments.json` holds them.
 - **The chart page** is the web prototype whose graph the owner picked, and **the prototype** is the pace prototype. Their answers on the frozen record are `chart-page.json` and `prototype.json` in `kit/tests/fixtures/`. The Engine departs from them on one rule: the minutes after a reset are not blocked. `prototype-after-reset.json` and `chart-page-after-reset.json` hold their answers with that one line changed, at each poll where it moves them. Nothing in this repository writes them.
