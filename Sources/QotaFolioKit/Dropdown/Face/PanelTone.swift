@@ -1,3 +1,4 @@
+import Graph
 import Kit
 import QotaFolioCore
 import SwiftUI
@@ -32,18 +33,12 @@ struct PanelTone {
     // MARK: The level, in three steps
 
     func colour(_ level: Level) -> Color {
-        level.colour(dark: dark, increased: increased).color()
+        level.colour(dark: dark, increased: increased).color(dark: dark)
     }
 
-    /// A window's own level, from the share of it already spent: green under half used, amber
-    /// up to four fifths, red past it.
-    ///
-    /// The used percentage goes through the app's own used-to-remaining conversion first, which
-    /// is how every other surface arrives at a level. Deciding the step from the exact fraction
-    /// here instead would put this bar one step away from the battery drawn above it for the
-    /// same window, on the fractions the providers actually send.
+    /// A limit's own level, from the share of it used: Kit's one rule, the battery's and the graph's.
     func level(_ usedPercent: Double) -> Color {
-        colour(Level(remainingPercent: remainingPercent(fromUsedPercent: usedPercent) ?? 0))
+        colour(Level(used: usedPercent))
     }
 
     // MARK: Weights
@@ -55,7 +50,7 @@ struct PanelTone {
     /// the track TOWARD the bright fill lying in it, and Increase Contrast then moves it further,
     /// which is how the accessibility form ended up the least readable one in the app. A recess
     /// is also the ordinary reading of a meter — the track is the groove, the fill sits in it.
-    var track: Color { Tokens.Surface.track(dark: dark, increased: increased).color() }
+    var track: Color { Tokens.Surface.track(dark: dark, increased: increased).color(dark: dark) }
     /// Spent: the full red bar sits back — there is nothing to do about a window until it
     /// returns. A window merely nearly gone keeps full weight.
     var spent: Double { Tokens.Surface.spent(dark: dark, increased: increased) }
@@ -80,7 +75,7 @@ enum PanelSlab {
     /// 0.61; in dark, 0.39 against 0.38. Not a preference — the number the material next to
     /// ours already holds.
     static func tint(_ scheme: ColorScheme) -> Color {
-        Tokens.Surface.slabTint(dark: scheme == .dark, increased: false).color()
+        Tokens.Surface.slabTint(dark: scheme == .dark, increased: false).color(dark: scheme == .dark)
     }
 }
 
@@ -121,7 +116,7 @@ struct PanelPlate: View {
     /// it, so the plate turns to the surface's own ink and separates by depth instead.
     private var fill: AnyShapeStyle {
         let lift = isHovered ? Tokens.Surface.plateHoverLift(dark: dark, increased: increased) : 0
-        return AnyShapeStyle(look(Tokens.Surface.plateFill).color(lift: lift))
+        return AnyShapeStyle(look(Tokens.Surface.plateFill).color(dark: dark, lift: lift))
     }
 
     /// The plate's one edge: lit along the top where the material's own light comes from,
@@ -129,8 +124,8 @@ struct PanelPlate: View {
     /// light half disappears and the shadow is what holds the plate off the glass; over a dark
     /// one it is the other way round.
     private var edge: LinearGradient {
-        let top = look(Tokens.Surface.plateEdgeTop).color()
-        let bottom = look(Tokens.Surface.plateEdgeBottom).color()
+        let top = look(Tokens.Surface.plateEdgeTop).color(dark: dark)
+        let bottom = look(Tokens.Surface.plateEdgeBottom).color(dark: dark)
         return LinearGradient(colors: [top, bottom], startPoint: .top, endPoint: .bottom)
     }
 

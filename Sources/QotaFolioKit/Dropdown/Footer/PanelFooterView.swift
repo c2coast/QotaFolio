@@ -1,4 +1,6 @@
 import SwiftUI
+import Kit
+import Graph
 import QotaFolioCore
 
 /// The panel's own chrome, and one fact about the panel itself: when its readings were last
@@ -46,7 +48,7 @@ public struct PanelFooterView: View {
                     defaultValue: "Updated \(clock)",
                     comment: "Quiet footer note: the clock time of the newest reading across the accounts."
                 ))
-                .font(PanelType.captionFigures)
+                .font(Tokens.Typography.captionFigures.font)
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText())
                 .lineLimit(1)
@@ -208,7 +210,7 @@ struct PanelChromeButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(PanelType.glyph)
+                .font(Tokens.Typography.glyph.font)
                 .frame(width: PanelMetrics.glyphWell, height: PanelMetrics.glyphWell)
         }
         .buttonStyle(PanelChromeButtonStyle())
@@ -226,7 +228,7 @@ private struct PanelChromeGlyph: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(PanelType.glyph)
+            .font(Tokens.Typography.glyph.font)
             .foregroundStyle(.secondary)
             .frame(width: PanelMetrics.glyphWell, height: PanelMetrics.glyphWell)
             .background(

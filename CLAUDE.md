@@ -7,7 +7,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | Path | What it holds |
 |---|---|
 | `Sources/` | The code of version 1.0.0: the app, the `qota` command and their libraries. |
-| `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it. The app reaches only its design values, through `QotaFolioKit`. |
+| `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it. `QotaFolioKit` links it into the app, once. |
 | `kit/design/` | The design values as Swift. `Tokens.swift` is generated from `design/tokens.json`, and `Design.swift` holds their shapes and `Level`, the three steps of a level. |
 | `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`, `Whole`, `AccountNow`, `SpentLimitBack`. |
 | `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
@@ -19,7 +19,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | `app/settings/legacy/` | The carry. `tests/` holds its tests, in `AppTests`. |
 | `app/settings/hidden/` | The hidden accounts: the key under which the app keeps the list in its preferences domain, and the filter that leaves them out of `qota status`. `tests/` holds its tests, in `AppTests`. |
 | `app/recorder/legacy/` | The reader of version 1.0.0's books: the trace and the snapshots, as the files' bytes, into each account's readings. The app's history writer reads its books through it after each poll, and `qota` and `tools/forecast` read the files through it. |
-| `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in every look from the design values, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. `tools/forecast` links it, and the app does not. |
+| `app/views/panel/graph/` | The Ceiling graph, the `Graph` target: its geometry, its colours in every look from the design values, the view that draws them and what it says aloud. `tests/` holds its tests, the `GraphTests` target, and the worst weeks. It also holds the one turning of a design value into a colour or a font, which the panel draws with too. `QotaFolioKit` links it into the app beside Kit, and `tools/forecast` links its own. |
 | `design/` | `tokens.json`: the design values, every value that carries a decision of the look, each with its why. |
 | `Assets/` | The app icon. |
 | `project.yml` | The XcodeGen spec. XcodeGen writes `QotaFolio.xcodeproj` from it, and git ignores that project. |
@@ -66,7 +66,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 - **A look** is light or dark, with Increase Contrast or without, and with Reduce Transparency or without.
 - **The contrast** is measured in every look, on the plate and on the band: 3 to 1 for the ceiling, 4.5 to 1 for every word. `ContrastTests` holds it.
 - **A worst week** is a made-up week the record does not hold, run through the Engine. The header of `app/views/panel/graph/tests/WorstWeeks.swift` lists them.
-- **A design value** is one entry of `design/tokens.json`: one value, or a value in each look it varies over, with its why. Kit's `Tokens` holds them in Swift. The app turns them into colours, fonts and animations in `Sources/QotaFolioKit/Panel/PanelDesign.swift`. The graph turns them in `Palette.swift` and `ChartType.swift`. Each side builds a colour the way it drew it before the values had a home, because two ways of writing the same numbers can give different pixels.
+- **A design value** is one entry of `design/tokens.json`: one value, or a value in each look it varies over, with its why. Kit's `Tokens` holds them in Swift. The panel and the graph turn them into colours and fonts in one place, `Colour.color(dark:)` in `Palette.swift` and `TypeRole.font` in `ChartType.swift`, so the plate the contrast tests measure is the plate on screen. The menu bar turns a colour into a `CGColor`, and the panel a timing into an animation, in `Sources/QotaFolioKit/Panel/PanelDesign.swift`.
 - **A type role** is a size, a weight, and whether the digits are monospaced, such as `title` or `captionFigures`.
 - **A generated file** is written by `tools/gen` from its source and committed. `kit/design/Tokens.swift` is one.
 - **What the graph says aloud** is `SpokenGraph`: one VoiceOver element with the two sentences, and an audio graph of the week and the model's week.
@@ -98,7 +98,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 2. Run `tools/gen`. It writes `kit/design/Tokens.swift`. Commit both.
 3. Run `make check` and `make test`. A graph change shows in `tools/forecast --draw`. A change the app shows is proved on the app, as step 5 of "Proving a change" says.
 
-Never edit `Tokens.swift` by hand: `make check` refuses it and names the command. A new kind of value, such as a new shape of colour, is a case in `kit/design/Design.swift`, a form `tools/gen.mjs` reads, and a case where each side turns it into what it draws: `PanelDesign.swift` for the app, and `Palette.swift` or `ChartType.swift` for the graph.
+Never edit `Tokens.swift` by hand: `make check` refuses it and names the command. A new kind of value, such as a new shape of colour, is a case in `kit/design/Design.swift`, a form `tools/gen.mjs` reads, and a case where it is turned into what is drawn: `Palette.swift` or `ChartType.swift`, and `PanelDesign.swift` for the menu bar.
 
 ## Adding to the tree
 

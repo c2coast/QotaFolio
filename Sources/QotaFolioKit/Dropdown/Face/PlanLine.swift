@@ -1,4 +1,6 @@
 import SwiftUI
+import Kit
+import Graph
 import QotaFolioCore
 
 /// What an opened card shows under its rows: the plan, and the account's own numbers, the extra
@@ -13,11 +15,11 @@ struct PlanLine: View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             if let plan = face.planName {
                 Text(plan)
-                    .font(PanelType.label)
+                    .font(Tokens.Typography.label.font)
                 Text("·").foregroundStyle(.tertiary).accessibilityHidden(true)
             }
             Text(spendLine)
-                .font(PanelType.bodyFigures)
+                .font(Tokens.Typography.bodyFigures.font)
                 .foregroundStyle(.secondary)
             Spacer()
         }

@@ -1,4 +1,6 @@
 import SwiftUI
+import Kit
+import Graph
 import QotaFolioCore
 
 public struct MoreActionsMenu: View {
@@ -116,7 +118,7 @@ public struct MoreActionsMenu: View {
             .disabled(mutationBlocked)
         } label: {
             Image(systemName: "ellipsis.circle")
-                .font(PanelType.glyph)
+                .font(Tokens.Typography.glyph.font)
                 .foregroundStyle(isRaised || hoveredSelf ? AnyShapeStyle(.secondary) : AnyShapeStyle(.tertiary))
                 .frame(width: PanelMetrics.glyphWell, height: PanelMetrics.glyphWell)
                 .background(

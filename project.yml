@@ -55,9 +55,10 @@ targets:
       # through it, as qota and tools/forecast read the files.
       - app/recorder/legacy
     dependencies:
-      # XcodeGen does not link a static library into a framework unless it is asked. Kit is
-      # linked here once, and the app links it through this framework.
+      # XcodeGen does not link a static library into a framework unless it is asked. Kit and the
+      # graph are linked here once, and the app links them through this framework.
       - { target: Kit, link: true }
+      - { target: Graph, link: true }
       - { package: QotaFolioCore, product: QotaFolioCoreXcode }
       - { package: Sparkle, product: Sparkle }
     settings:
@@ -499,8 +500,9 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         GENERATE_INFOPLIST_FILE: "YES"
 
-  # The Ceiling graph: its geometry, its colours and the view that draws them. tools/forecast links
-  # it, and the app does not.
+  # The Ceiling graph: its geometry, its colours and the view that draws them, and the one turning of
+  # a design value into a colour or a font, which the panel draws with too. QotaFolioKit links it
+  # into the app beside Kit, and tools/forecast links its own.
   Graph:
     type: library.static
     platform: macOS

@@ -34,7 +34,8 @@ enum ChartType {
 }
 
 extension TypeRole {
-    var font: Font {
+    /// The one turning of a type role into a font, on the graph and on the panel.
+    public var font: Font {
         let font = Font.system(size: size, weight: fontWeight)
         return monospacedDigits ? font.monospacedDigit() : font
     }

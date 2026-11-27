@@ -1,5 +1,5 @@
-import Foundation
 import Kit
+import SwiftUI
 
 /// The graph's colours in one look: light or dark, each plain or with Increase Contrast, and with
 /// Reduce Transparency or without.
@@ -61,6 +61,16 @@ public struct Palette: Hashable, Sendable {
     private func rgba(_ colour: Colour) -> RGBA {
         let parts = colour.parts(dark: appearance.dark)
         return RGBA(parts.red, parts.green, parts.blue, parts.alpha)
+    }
+}
+
+extension Colour {
+    /// The one turning of a design colour into what is drawn, on the graph and on the panel: its
+    /// parts in the look, the look's ink black on light and white on dark at its weight. A lift adds
+    /// to the weight, as a hovered plate's does.
+    public func color(dark: Bool, lift: Double = 0) -> Color {
+        let parts = parts(dark: dark)
+        return Color(.sRGB, red: parts.red, green: parts.green, blue: parts.blue, opacity: parts.alpha + lift)
     }
 }
 

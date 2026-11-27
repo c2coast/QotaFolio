@@ -1,4 +1,6 @@
 import SwiftUI
+import Kit
+import Graph
 import QotaFolioCore
 
 /// One window, one level row.
@@ -21,15 +23,15 @@ struct WindowRow: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text(level.title)
-                    .font(PanelType.label)
+                    .font(Tokens.Typography.label.font)
                     .lineLimit(1)
                     .frame(width: PanelMetrics.nameColumn, alignment: .leading)
                 Text(PanelWords.percent(level.wholePercentUsed, style: style))
-                    .font(PanelType.figure)
+                    .font(Tokens.Typography.figure.font)
                     .contentTransition(.numericText())
                     .frame(width: PanelMetrics.percentColumn, alignment: .trailing)
                 Text(qfLocalized("face.used", defaultValue: "used", comment: "The word after a window's percentage on the panel: 38% used."))
-                    .font(PanelType.body)
+                    .font(Tokens.Typography.body.font)
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
                 Spacer(minLength: 8)
@@ -72,7 +74,7 @@ struct ResetLabel: View {
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText(countsDown: true))
         }
-        .font(PanelType.captionFigures)
+        .font(Tokens.Typography.captionFigures.font)
         .lineLimit(1)
     }
 }
