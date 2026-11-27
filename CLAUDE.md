@@ -7,7 +7,7 @@ QotaFolio is a macOS menu-bar app that shows how much usage each AI account has 
 | Path | What it holds |
 |---|---|
 | `Sources/` | The code of version 1.0.0: the app, the `qota` command and their libraries. |
-| `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it, and the app does not. |
+| `kit/` | The new tree's pure Swift, the `Kit` target. It uses Foundation only and has no clock and no files: the time comes in as a parameter. `tools/forecast` links it. The app reaches only its design values, through `QotaFolioKit`. |
 | `kit/design/` | The design values as Swift. `Tokens.swift` is generated from `design/tokens.json`, and `Design.swift` holds their shapes and `Level`, the three steps of a level. |
 | `kit/model/` | The values: `Percent`, `ResetTime`, `Limit`, `Reading`, `Verdict`, `Fall`, `Forecast`, `AccountForecast`, `WeekPicture`, `TimeWords`, `Whole`. |
 | `kit/engine/forecast/` | The Engine: the verdicts of the week and the model's week at every poll, the falls, and the score against what then happened. |
