@@ -9,7 +9,12 @@ extension AccountNow {
     /// passed is not said: the rows say the reset, and the week has no picture.
     public init?(readings: [Reading], words: TimeWords) {
         let now = words.now
-        let known = Array(readings.prefix { $0.at <= now })
+        var end = readings.startIndex, high = readings.endIndex
+        while end < high {
+            let mid = (end + high) / 2
+            if readings[mid].at <= now { end = mid + 1 } else { high = mid }
+        }
+        let known = readings[..<end]
         guard let newest = known.last, !newest.limits.isEmpty else { return nil }
         let forecast = Forecast(readings: Array(Self.lastWeek(of: known)))
         let poll = forecast.poll(at: now)
@@ -23,20 +28,20 @@ extension AccountNow {
             reset ? Week(picture: nil, sentences: Sentences(forecast: said.weekReset(picture.resets), record: nil))
                 : Week(picture: picture, sentences: picture.sentences(in: words))
         }
-        let back = known.count < 2 ? [] : SpentLimitBack.between(known[known.count - 2], newest)
+        let back = known.count < 2 ? [] : SpentLimitBack.between(known[known.endIndex - 2], newest)
         self.init(account: newest.account, read: newest.at, readWords: words.day(newest.at), rows: rows, week: week,
                   menuBar: said.menuBar(limits, now: now), back: back)
     }
 
     /// The readings of the week in force at the last of them, with the reading of the week before
     /// that last carries the week. Every verdict and picture of that week is the same as on the
-    /// whole history, because the Engine reads no further back.
-    static func lastWeek(of readings: [Reading]) -> ArraySlice<Reading> {
-        guard let p = readings.lastIndex(where: { $0.limit(.week)?.resets != nil }) else { return readings[...] }
+    /// whole history, because the Engine reads no further back. It is found from the end, so its
+    /// cost is the week's.
+    static func lastWeek(of readings: ArraySlice<Reading>) -> ArraySlice<Reading> {
+        guard let p = readings.lastIndex(where: { $0.limit(.week)?.resets != nil }) else { return readings }
         let start = min(readings[p].limit(.week)!.resets!.instant - 7 * 86400, readings[p].at)
-        let first = readings.firstIndex { $0.at >= start }!
-        let from = readings[..<first].lastIndex { $0.limit(.week)?.resets != nil } ?? first
-        return readings[from...]
+        guard let outside = readings[..<p].lastIndex(where: { $0.at < start }) else { return readings }
+        return readings[(readings[...outside].lastIndex { $0.limit(.week)?.resets != nil } ?? outside + 1)...]
     }
 
     /// The week first, then each model's week, then the rest as the reading has them.
