@@ -1,16 +1,10 @@
 import Foundation
 
-// The shapes of the design values. `Tokens.swift` holds the values, generated from
-// `design/tokens.json`. Each side that draws turns them into its own colours and fonts in one
-// place, keeping the construction it draws with.
-
-/// A colour as the design values write it.
 public enum Colour: Hashable, Sendable {
     /// An opaque sRGB colour, `0xRRGGBB`.
     case srgb(UInt32)
     /// Black at a weight from 0 to 1.
     case black(Double)
-    /// White at a weight.
     case white(Double)
     /// The look's own ink at a weight: black on light, white on dark.
     case ink(Double)
@@ -92,19 +86,15 @@ public struct Timing: Hashable, Sendable {
     }
 }
 
-/// How much of a limit is left, in three steps: more than half, more than a fifth, or less. Every
-/// surface draws a level in its step's colour.
 public enum Level: Hashable, Sendable, CaseIterable {
     case plenty, low, nearlyGone
 
-    /// The step of a whole share left, 0 to 100. Each surface works the share out from what is used
-    /// as `floor(100 - used)`.
+    /// The step of a whole share left, 0 to 100.
     public init(remainingPercent: Int) {
         self = remainingPercent <= Tokens.Level.nearlyGoneAtOrBelow ? .nearlyGone
             : remainingPercent > Tokens.Level.plentyAbove ? .plenty : .low
     }
 
-    /// The step's colour in each look.
     public var colour: Looks<Colour> {
         switch self {
         case .plenty: Tokens.Level.plenty

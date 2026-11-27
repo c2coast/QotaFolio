@@ -3,10 +3,6 @@ import Kit
 
 /// The graph's colours in one look: light or dark, each plain or with Increase Contrast, and with
 /// Reduce Transparency or without.
-///
-/// Every colour is a design value, read from `Tokens`: the panel's neutrals, plate and recess,
-/// the three levels, and the graph's own words and ceiling. Each neutral is a weight of black on a
-/// light plate and of white on a dark one, so it leans with whatever is under the plate.
 public struct Palette: Hashable, Sendable {
     public let appearance: Appearance
 
@@ -39,8 +35,7 @@ public struct Palette: Hashable, Sendable {
     /// plate and darker on a dark one.
     public var hole: RGBA { rgba(Tokens.Chart.hole) }
 
-    /// The faint band over a stretch nobody watched: the app's recess, the track under a bar, so
-    /// white words on it keep their contrast.
+    /// The faint band over a stretch nobody watched.
     public var band: RGBA { rgba(Tokens.Surface.track) }
 
     /// The card's plate: white at a weight on glass, or a weight of ink with Reduce Transparency.

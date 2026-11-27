@@ -65,7 +65,6 @@ nonisolated struct BatteryOptions: Hashable, Sendable {
 
 /// Where the batteries sit relative to each other.
 nonisolated struct BatteryLayout: Hashable, Sendable {
-    /// Ink edge to ink edge, the same between every pair.
     var gap: CGFloat = Tokens.MenuBar.gap
 }
 
@@ -137,8 +136,6 @@ nonisolated func drawBattery(
         return
     }
 
-    // A length floor of 1.2 pt: a bar the eye cannot see is not a reading, and a battery still
-    // holding one per cent is not the same picture as one holding none.
     let width = min(box.width, max(Tokens.MenuBar.smallestFill, box.width * figure.fraction))
     let rect = CGRect(x: box.minX, y: box.minY, width: width, height: box.height)
     ctx.addPath(

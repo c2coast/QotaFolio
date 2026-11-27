@@ -4,8 +4,6 @@ import SwiftUI
 /// The Ceiling graph of a week picture: a canvas that works out the geometry at its own size and
 /// strokes it. It holds no state, and nothing moves.
 public struct CeilingChart: View {
-    /// The chart's size in the panel: the plot, 128 points high and as wide as a card's content,
-    /// 360 points, and the axis's words under it.
     public nonisolated static let size = CGSize(
         width: Tokens.Panel.width - 2 * Tokens.Panel.padding - 2 * Tokens.Panel.cardPadding, height: 128 + Ceiling.axisBand)
 

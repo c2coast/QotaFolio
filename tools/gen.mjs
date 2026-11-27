@@ -1,5 +1,3 @@
-// What tools/gen writes: each generated file of the repository, from its source. A generated file is
-// committed, and checks/generated.test.mjs refuses one that differs from what this makes of its source.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -8,10 +6,7 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 const TOKENS = "design/tokens.json";
 
-// Each generated file: its path from the repository's root, its source, and what makes its text.
 export const generated = [{ path: "kit/design/Tokens.swift", source: TOKENS, make: () => tokensSwift(JSON.parse(read(TOKENS))) }];
-
-// ---- design/tokens.json to Swift ----
 
 const fail = (path, message) => {
   throw new Error(`${TOKENS}: ${path.join(".")} ${message}`);
@@ -25,7 +20,6 @@ const SHAPES = [
   { keys: FOUR, four: (v) => FOUR.map((k) => v[k]) },
 ];
 
-// The values of a token in the looks it varies over: one value, or four, one for each look.
 function looks(token, path) {
   const keys = Object.keys(token).filter((k) => !["why", "unit", "reduceTransparency"].includes(k));
   const shape = SHAPES.find((s) => s.keys.length === keys.length && s.keys.every((k) => keys.includes(k)));
@@ -55,12 +49,10 @@ function colour(c, path) {
 }
 
 const UNITS = { percent: "Int", points: "Double", weight: "Double" };
-// A literal number says nothing of its type, so a number's declaration names it.
 const SCALARS = { Int: true, Double: true };
 const WEIGHTS = ["regular", "medium", "semibold"];
 const CURVES = ["smooth", "easeOut", "easeInOut"];
 
-// One token as Swift: its type and the expression of its value.
 function swiftToken(token, path) {
   if (typeof token.why !== "string" || !token.why) fail(path, "has no why. Each value carries the reason it is what it is.");
   if ("size" in token) {
@@ -87,7 +79,6 @@ function swiftToken(token, path) {
   return Array.isArray(values) ? { type: `Looks<${type}>`, value: all(values, "") } : { type, value: write(values, path) };
 }
 
-// A why as doc comment lines, wrapped to the width of the file.
 function doc(text, indent) {
   const lines = [];
   let line = "";
@@ -124,7 +115,6 @@ function tokensSwift(json) {
   return out.join("\n");
 }
 
-// Run as a program, it writes every generated file.
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   for (const { path, make } of generated) {
     writeFileSync(new URL(path, root), make());

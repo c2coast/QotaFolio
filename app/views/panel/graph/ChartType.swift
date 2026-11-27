@@ -1,9 +1,6 @@
 import Kit
 import SwiftUI
 
-/// The chart's words as they are set: the system font in the chart's type roles, with figures of
-/// one width, in the weight each word asks for. The geometry measures a word here, and the canvas
-/// draws the very line it measured, so a word's box in the geometry is where the word is drawn.
 enum ChartType {
     /// A word's width in points.
     static func width(_ text: String, _ weight: Weight) -> Double {
@@ -21,7 +18,6 @@ enum ChartType {
         CTLineDraw(line, cg)
     }
 
-    /// The role of a word in the chart, by the weight the geometry gives it.
     private static func role(_ weight: Weight) -> TypeRole {
         switch weight {
         case .regular: Tokens.Typography.axis
@@ -37,15 +33,12 @@ enum ChartType {
     }
 }
 
-/// The graph's one place where a type role becomes a font.
 extension TypeRole {
-    /// The role as SwiftUI sets it.
     var font: Font {
         let font = Font.system(size: size, weight: fontWeight)
         return monospacedDigits ? font.monospacedDigit() : font
     }
 
-    /// The role as AppKit sets it, for a word the canvas measures and draws itself.
     var nsFont: NSFont {
         monospacedDigits ? .monospacedDigitSystemFont(ofSize: size, weight: nsWeight) : .systemFont(ofSize: size, weight: nsWeight)
     }

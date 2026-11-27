@@ -280,7 +280,6 @@ public enum Tone: Hashable, Sendable {
 }
 
 extension Level {
-    /// The step of a share used, 0 to 100, from the whole share left.
     public init(used: Double) {
         self.init(remainingPercent: Int(min(100, max(0, 100 - used)).rounded(.down)))
     }

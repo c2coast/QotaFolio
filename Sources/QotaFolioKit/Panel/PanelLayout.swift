@@ -1,6 +1,5 @@
 import Kit
 
-/// The panel window's numbers, design values each, with their reasons in `design/tokens.json`.
 public nonisolated enum PanelLayout {
     public static let width: Double = Tokens.Panel.width
     public static let preferredMaxHeight: Double = Tokens.Panel.maxHeight

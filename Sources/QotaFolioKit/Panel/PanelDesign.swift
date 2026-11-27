@@ -2,14 +2,7 @@ import CoreGraphics
 import Kit
 import SwiftUI
 
-// The panel's one place where the design values, Kit's `Tokens`, become colours, fonts and
-// animations. Each colour keeps the construction the panel drew it with before the values had a
-// home, because two ways of writing the same numbers can give different pixels: a weight of black
-// or white is `Color.black` or `Color.white` at an opacity, the look's own ink is `Color.primary`,
-// and a level is an sRGB colour.
-
 extension Colour {
-    /// The colour as the panel draws it, its weight raised by `lift` when a plate is hovered.
     nonisolated func color(lift: Double = 0) -> Color {
         switch self {
         case .srgb:
@@ -22,14 +15,12 @@ extension Colour {
         }
     }
 
-    /// The colour as the menu-bar strip draws it into its bitmap, on a dark bar or a light one.
     nonisolated func cgColor(darkBar: Bool) -> CGColor {
         let parts = self.parts(dark: darkBar)
         return CGColor(red: parts.red, green: parts.green, blue: parts.blue, alpha: parts.alpha)
     }
 }
 
-/// The panel's type: each role of the type scale as SwiftUI sets it.
 nonisolated enum PanelType {
     static let title = font(Tokens.Typography.title)
     static let label = font(Tokens.Typography.label)
@@ -58,7 +49,6 @@ nonisolated enum PanelType {
 }
 
 extension Timing {
-    /// The motion as SwiftUI runs it.
     nonisolated var animation: Animation {
         switch curve {
         case .smooth: .smooth(duration: duration)

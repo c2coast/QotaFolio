@@ -2,10 +2,6 @@ import Kit
 import QotaFolioCore
 import SwiftUI
 
-/// The panel's fixed numbers, design values each, with their reasons in `design/tokens.json`.
-///
-/// The cards sit inside the panel by its padding, so their corner is the panel's less the
-/// padding: outer radius = inner radius + padding, the concentric rule.
 nonisolated enum PanelMetrics {
     static let panelRadius: CGFloat = PanelLayout.cornerRadius
     static let panelPadding: CGFloat = PanelLayout.panelPadding
@@ -36,7 +32,6 @@ struct PanelTone {
 
     // MARK: The level, in three steps
 
-    /// One step's colour on this panel, in the appearance and contrast it is drawn under.
     func colour(_ level: Level) -> Color {
         level.colour(dark: dark, increased: increased).color()
     }
@@ -137,7 +132,6 @@ enum PanelChrome {
     /// The wash under a hovered control. One number, so every control on the panel lifts by
     /// the same amount.
     static func hoverWash(_ contrast: ColorSchemeContrast) -> Double {
-        // The wash is the same weight in light and dark: the ink it weighs is what changes.
         Tokens.Surface.hoverWash(dark: false, increased: contrast == .increased)
     }
 }
@@ -192,7 +186,6 @@ struct PanelPlate: View {
     /// Under Reduce Transparency the slab has gone opaque and a white plate would vanish into
     /// it, so the plate turns to the surface's own ink and separates by depth instead.
     private var fill: AnyShapeStyle {
-        // A hovered plate lifts a step; nothing moves.
         let lift = isHovered ? Tokens.Surface.plateHoverLift(dark: dark, increased: increased) : 0
         return AnyShapeStyle(look(Tokens.Surface.plateFill).color(lift: lift))
     }
