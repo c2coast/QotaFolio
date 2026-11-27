@@ -1,4 +1,5 @@
 import Foundation
+import Kit
 import QotaFolioModel
 
 // `qota` — QotaFolio's terminal command.
@@ -21,8 +22,9 @@ nonisolated func usage() -> String {
            qota --version
            qota --help
 
-    Prints every account's current usage as QotaFolio last saw it: each window the provider
-    reports, the percentage used, when it resets, and the app's own note for the window.
+    Prints every account's current usage as QotaFolio last saw it, in the words of its card: each
+    limit the provider reports, the percentage used, when it resets, and for the week and the
+    model's week whether it lasts.
     --json prints the same as one document (schema \(StatusReport.schemaVersion)).
     """
 }
@@ -95,19 +97,40 @@ nonisolated func run(arguments: [String]) -> Never {
         reading = value.hiding(hidden)
     }
 
-    var recommendation: RecommendationDocument?
-    if case .loaded(let data) = container.readBytes(.recommendation) {
-        recommendation = RecommendationCodec.decode(data)
+    // The readings the app's card reads, from the same two books through the same reader. A book
+    // that is absent is no history; one this build cannot read is said so.
+    let readings: [[Reading]]
+    switch (container.readBytes(.traces), container.readBytes(.snapshots)) {
+    case (.unreadable, _), (_, .unreadable):
+        fail("qota: QotaFolio's history at \(container.directoryURL.path) cannot be read by this build.", .unreadable)
+    case (let history, let snapshots):
+        do {
+            readings = try LegacyHistory.readings(
+                history: history.data,
+                snapshots: snapshots.data
+            )
+        } catch {
+            fail("qota: QotaFolio's history at \(container.directoryURL.path) cannot be read by this build: \(error)", .unreadable)
+        }
     }
 
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = .current
+    let words = TimeWords(calendar: calendar, twelveHour: Locale.current.clockIsTwelveHour, now: now)
+    let accounts = StatusReport.said(reading, readings, words: words)
+
     if wantsJSON {
-        print(StatusReport.json(StatusReport.document(reading: reading, recommendation: recommendation)))
+        print(StatusReport.json(StatusReport.document(accounts, newest: readings, observedAt: reading.observedAt)))
     } else if reading.accounts.isEmpty {
         print("No accounts yet. Open QotaFolio to add one.")
     } else {
-        print(StatusReport.text(reading: reading, recommendation: recommendation, now: now))
+        print(StatusReport.text(accounts, observedAt: reading.observedAt, words: words))
     }
     exit(QotaExit.ok.rawValue)
+}
+
+private extension SharedFileRead {
+    nonisolated var data: Data? { if case .loaded(let data) = self { data } else { nil } }
 }
 
 run(arguments: CommandLine.arguments)

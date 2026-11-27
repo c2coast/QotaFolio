@@ -88,8 +88,9 @@ targets:
         SKIP_INSTALL: "YES"
 
   # `qota`: the terminal command. Reads the three group files by path and the hidden accounts
-  # from the app's preferences domain, links the Model target statically, and ships inside the
-  # app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
+  # from the app's preferences domain, and says each account in Kit's words through the reader
+  # the app uses. It links the Model target and Kit statically, into its own binary, and ships
+  # inside the app at Contents/MacOS/qota. No daemon, no socket, no network, never a token.
   qota:
     type: tool
     platform: macOS
@@ -97,8 +98,10 @@ targets:
       - Sources/Qota
       - path: app/settings/hidden
         excludes: ["tests/**"]
+      - app/recorder/legacy
     dependencies:
       - { package: QotaFolioCore, product: QotaFolioModel }
+      - { target: Kit }
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(QOTAFOLIO_BUNDLE_ID).qota

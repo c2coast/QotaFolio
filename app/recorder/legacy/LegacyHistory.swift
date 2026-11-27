@@ -30,9 +30,10 @@ public nonisolated enum LegacyHistory {
     }
 
     /// One array for each account, each in time order: the trace's accounts in its order, then any
-    /// account only the snapshots hold. With no snapshots, the trace alone.
-    public static func readings(history: Data, snapshots: Data?) throws -> [[Reading]] {
-        var accounts = try decode(TraceBook.self, history, "a usage history").accounts.map(trace).filter { !$0.isEmpty }
+    /// account only the snapshots hold. With no snapshots, the trace alone, and with no trace, the
+    /// snapshots alone.
+    public static func readings(history: Data?, snapshots: Data?) throws -> [[Reading]] {
+        var accounts = try history.map { try decode(TraceBook.self, $0, "a usage history").accounts.map(trace).filter { !$0.isEmpty } } ?? []
         guard let snapshots else { return accounts }
         for snapshot in try decode(SnapshotBook.self, snapshots, "a snapshot book").accounts {
             let newest = try snapshot.reading()
