@@ -116,7 +116,7 @@ enum ForecastTool {
             print("\(name.map { "\($0). " } ?? "")Account \(picture.account.rawValue) at \(day(at, zone)), "
                 + "the poll of \(day(poll.reading.at, zone)). Times are \(zone.identifier).")
             for kind in kinds {
-                guard let verdict = poll.verdicts[kind], let used = poll.reading.limit(kind)?.used else { continue }
+                guard let verdict = poll.verdicts[kind], let used = poll.used[kind] else { continue }
                 print("  \(pad(label(kind), 5))  \(pad(percent(used.value), 6))  \(said(verdict, zone))")
             }
             let sentences = picture.sentences(in: TimeWords(calendar: calendar(zone)))
@@ -137,7 +137,7 @@ enum ForecastTool {
             for (i, poll) in forecast.polls.enumerated() {
                 let head = [poll.reading.account.rawValue, day(poll.reading.at, zone)]
                 for (k, kind) in kinds.enumerated() {
-                    guard let verdict = poll.verdicts[kind], let used = poll.reading.limit(kind)?.used else { continue }
+                    guard let verdict = poll.verdicts[kind], let used = poll.used[kind] else { continue }
                     let then = outcomes[k][i]
                     print((head + [pad(label(kind), 5), pad(percent(used.value), 6), pad(said(verdict, zone), 54), happened(then, zone), judged(verdict, then)])
                         .joined(separator: "  ").trimmingCharacters(in: .whitespaces))

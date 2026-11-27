@@ -10,9 +10,10 @@ import Kit
 /// Occurrences of any other period do not run back to back, so a sample before the open one has no
 /// reset.
 ///
-/// A reading joins the samples of one second, and the Engine reads a model's week only where every
-/// reading carries it. So a file whose model's week was sampled at other seconds than the week is
-/// refused, rather than read as an account with no model's week.
+/// A reading joins the samples of one second. Version 1.0.0 spaces each limit's samples on its own,
+/// so a model's week missed by one poll is sampled at other seconds than the week from then on.
+/// Each reading keeps the limits sampled at its time, and the Engine reads the model's week from
+/// the readings that carry it.
 public enum LegacyHistory {
     public struct Unreadable: Error, CustomStringConvertible {
         public let description: String
@@ -32,10 +33,6 @@ public enum LegacyHistory {
         }
         return try file.accounts.map { account in
             let id = AccountID(account.account.rawValue)
-            if let week = account.windows.first(where: { $0.kind == .week }),
-               let off = account.windows.first(where: { $0.kind.model != nil && $0.kind.period == .week && $0.sampleTimes != week.sampleTimes }) {
-                throw Unreadable(description: "\(id.rawValue) \(off.key): sampled at other times than the week, \(week.key)")
-            }
             var limits: [Int: [Limit]] = [:]
             for window in account.windows {
                 guard window.sampleTimes.count == window.sampleUsedBasisPoints.count else {

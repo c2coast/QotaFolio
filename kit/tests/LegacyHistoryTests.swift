@@ -40,10 +40,11 @@ struct LegacyHistoryTests {
         #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(from: Data(file.utf8)) }
     }
 
-    /// The Engine reads a model's week only where every reading carries it. Read on, this file
-    /// would give a forecast with no Fable, and nobody would be told.
-    @Test("A model's week sampled at other times than the week is refused, by its name")
-    func refusesModelWeekOffTheWeek() {
+    /// Version 1.0.0 spaces each limit's samples on its own: here the week at 100 and 200, Fable at
+    /// 100 and 250. The file reads as one account, with a reading at each time and the limits
+    /// sampled at it.
+    @Test("A model's week sampled at other times than the week reads, each reading with its own limits")
+    func modelWeekOffTheWeek() throws {
         let file = """
             {"schemaVersion": 1, "accounts": [{"account": {"rawValue": "A"}, "lastRecordedAt": 250, "windows": [
               {"key": "weekly", "period": {"weekly": {}}, "sampleTimes": [100, 200], "sampleUsedBasisPoints": [100, 200],
@@ -52,7 +53,11 @@ struct LegacyHistoryTests {
                "sampleUsedBasisPoints": [100, 300], "completed": [], "currentOpenedAt": 0, "currentResetsAt": 604800,
                "lastObservedAt": 250}]}]}
             """
-        let error = #expect(throws: LegacyHistory.Unreadable.self) { try LegacyHistory.readings(from: Data(file.utf8)) }
-        #expect(error?.description.contains("Fable|weekly") == true)
+        let accounts = try LegacyHistory.readings(from: Data(file.utf8))
+        #expect(accounts.count == 1)
+        let readings = try #require(accounts.first)
+        #expect(readings.map(\.at.timeIntervalSince1970) == [100, 200, 250])
+        #expect(readings.map { $0.limits.map(\.kind) } == [[.week, Record.fable], [.week], [Record.fable]])
+        #expect(readings[2].limit(Record.fable)?.used == Percent(3))
     }
 }
