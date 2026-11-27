@@ -12,7 +12,7 @@ func cumulative(at x: Double, poll i: Int, _ c: [Double], _ m: Meters) -> Double
     let start = m.reset(i) - secondsPerWeek
     if x <= start { return 0.0 }
     var ta = start, ca = 0.0
-    for k in 0...i where m.t[k] >= start {
+    for k in min(m.opens[i], i + 1)..<(i + 1) {
         let tb = m.t[k], cb = c[k]
         if ta <= x && x <= tb {
             return tb > ta ? ca + (cb - ca) * (x - ta) / (tb - ta) : cb
@@ -30,7 +30,7 @@ func cumulative(at x: Double, poll i: Int, _ c: [Double], _ m: Meters) -> Double
 /// inside it: then the new week's first minutes count as blocked.
 func blocked(from x0: Double, poll i: Int, _ meter: Meters.Meter, _ m: Meters) -> Double {
     var total = 0.0
-    for k in 0..<i {
+    for k in min(max(0, m.opens[i] - 1), i)..<i {
         let a = max(m.t[k], x0), b = m.t[k + 1]
         if b <= a { continue }
         if m.pinned(meter, k) { total += b - a }

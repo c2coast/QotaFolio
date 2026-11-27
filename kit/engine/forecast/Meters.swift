@@ -21,6 +21,9 @@ struct Meters {
     let model: [Double]
     let modelKind: Limit.Kind?
     let resets: [ResetTime]
+    /// For each poll, the first poll at or after its week's start. The method reads nothing of a
+    /// week before it but the poll just before, so a verdict's cost is the week's, not the history's.
+    let opens: [Int]
 
     init(_ all: [Reading]) {
         // A reading the Engine can place in a week carries the week and the week's reset.
@@ -31,10 +34,20 @@ struct Meters {
         }
         self.readings = readings
         self.modelKind = modelKind
-        t = readings.map { $0.at.timeIntervalSince1970 }
+        let times = readings.map { $0.at.timeIntervalSince1970 }
+        t = times
         week = readings.map { $0.limit(.week)!.used.value }
         model = readings.map { reading in modelKind.map { reading.limit($0)!.used.value } ?? 0 }
         resets = readings.map { $0.limit(.week)!.resets! }
+        opens = resets.map { reset in
+            let start = reset.instant.timeIntervalSince1970 - secondsPerWeek
+            var low = 0, high = times.count
+            while low < high {
+                let mid = (low + high) / 2
+                if times[mid] < start { low = mid + 1 } else { high = mid }
+            }
+            return low
+        }
     }
 
     func used(_ meter: Meter) -> [Double] {
