@@ -23,6 +23,12 @@ export const walls = [
     calls: [],
   },
   {
+    folder: "app/views/panel/",
+    imports: ["Graph", "Kit", "SwiftUI"],
+    importFix: "The panel's views lay out Kit's value in the design values. The old tree's card hands them the value and the words.",
+    calls: pure("The panel's views"),
+  },
+  {
     folder: "app/views/panel/graph/",
     imports: ["Foundation", "Kit", "SwiftUI"],
     importFix: "The graph draws a week picture it is handed. What it needs from the Mac comes in as plain values.",

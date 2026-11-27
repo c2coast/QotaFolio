@@ -1,11 +1,12 @@
-import SwiftUI
-import Kit
 import Graph
+import Kit
 import QotaFolioCore
+import SwiftUI
 
-/// One account, one card: the provider's mark, the person's name for the account, the plan,
-/// and one row per window the provider reports. Nothing on it directs. Behind a click the card
-/// grows in place to show its plan and spend, with its chrome pinned.
+/// One account, one card: the provider's mark, the person's name for the account, the plan, and
+/// a row for each limit as Kit says it at the panel's moment, with its verdict. Nothing on it
+/// directs. Behind a click the card grows in place to show the account's week as the Ceiling graph
+/// with its two sentences, then its plan and spend, with its chrome pinned.
 ///
 /// The card speaks to VoiceOver as one informational sentence (`AccountAccessibilityPresentation`)
 /// and keeps its controls — the actions menu and the state's own affordance — as their own
@@ -15,7 +16,6 @@ struct AccountCard: View {
     let face: AccountFace
     let store: any AccountsStoring
     let addFlow: any AddFlowPresenting
-    let tone: PanelTone
     let isExpanded: Bool
     let isHovered: Bool
     let toggleExpanded: @MainActor () -> Void
@@ -33,15 +33,28 @@ struct AccountCard: View {
     @Environment(\.openQotaFolioSettings) private var openSettings
     @Environment(\.panelNow) private var panelNow
     @Environment(\.sentenceStyle) private var style
+    @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.namesHidden) private var namesHidden
 
+    /// The words at the panel's moment, on the person's clock. A host that runs no clock reads the
+    /// wall clock once.
+    private var words: TimeWords {
+        TimeWords(locale: locale, calendar: style.calendar, timeZone: style.timeZone, now: panelNow ?? .now)
+    }
+
     var body: some View {
+        let words = words
+        let now = AccountNow(readings: store.readings[account.id] ?? [], words: words)
         VStack(alignment: .leading, spacing: 8) {
-            summary
+            summary(now, words)
             stateLine
             if isExpanded {
-                PlanLine(face: face, snapshot: store.snapshots[account.id])
+                VStack(alignment: .leading, spacing: 12) {
+                    if let week = now?.week { OpenedWeek(week: week, words: words) }
+                    PlanLine(face: face, snapshot: store.snapshots[account.id])
+                }
+                .padding(.top, 4)
                 // A dissolve, in place. The opened part is laid out where it will rest and fades
                 // in under the rows while the card grows over it; closing runs the same film
                 // backwards. Nothing slides: a move would carry it up across the rows, and the
@@ -88,15 +101,13 @@ struct AccountCard: View {
 
     /// The header and the rows, spoken as one sentence. The actions menu floats beside the
     /// header as its own element, and the state's affordance sits under the rows as another.
-    private var summary: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            header
-            if case .windows(let levels) = face.body {
-                VStack(alignment: .leading, spacing: 7) {
-                    ForEach(levels) { level in
-                        WindowRow(level: level, tone: tone)
-                    }
-                }
+    private func summary(_ now: AccountNow?, _ words: TimeWords) -> some View {
+        let note = headerNote(now, words)
+        let spoken = spoken(now, note)
+        return VStack(alignment: .leading, spacing: 8) {
+            header(note: note.shown)
+            if case .windows = face.body, let now {
+                LimitRows(rows: now.rows)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -118,7 +129,7 @@ struct AccountCard: View {
     ///
     /// Room is left for the `…` that floats beside it; the header is part of the face the card
     /// is carried by (`summary`).
-    private var header: some View {
+    private func header(note: String?) -> some View {
         HStack(alignment: .center, spacing: 10) {
             HStack(alignment: .center, spacing: 10) {
                 ProviderMark(provider: account.provider)
@@ -137,7 +148,7 @@ struct AccountCard: View {
                     }
                 }
                 Spacer(minLength: 8)
-                if let note = headerNote {
+                if let note {
                     Text(note)
                         .font(Tokens.Typography.note.font)
                         .foregroundStyle(.secondary)
@@ -159,25 +170,20 @@ struct AccountCard: View {
             .onEnded { liftEnded($0.translation.height) }
     }
 
-    private var headerNote: String? {
+    /// The one thing a resting card says of its state, shown and spoken: a spent account's return,
+    /// or the time its last-known numbers were read. Each carries its day, in Kit's words.
+    private func headerNote(_ now: AccountNow?, _ words: TimeWords) -> (shown: String?, backAt: String?, asOf: String?) {
         if face.isSpent {
             guard let back = face.returnsAt else {
-                return qfLocalized("face.spent", defaultValue: "Spent", comment: "Header note on an account with nothing spendable now and no return time reported.")
+                return (qfLocalized("face.spent", defaultValue: "Spent", comment: "Header note on an account with nothing spendable now and no return time reported."), nil, nil)
             }
-            return qfLocalized(
-                "face.backAt",
-                defaultValue: "Back at \(PanelWords.clock(back, style: style))",
-                comment: "Header note on an account with nothing spendable now: the clock time it comes back."
-            )
+            let day = words.day(back)
+            return (qfLocalized("face.backAt", defaultValue: "Back at \(day)", comment: "Header note on an account with nothing spendable now: the day and time it comes back."), day, nil)
         }
-        if face.isLastKnown, let observedAt = face.observedAt {
-            return qfLocalized(
-                "face.asOf",
-                defaultValue: "As of \(PanelWords.clock(observedAt, style: style))",
-                comment: "Header note when the numbers on the card are the last known ones: the clock time they were true at."
-            )
+        if face.isLastKnown, let read = now?.readWords ?? face.observedAt.map(words.day) {
+            return (qfLocalized("face.asOf", defaultValue: "As of \(read)", comment: "Header note when the numbers on the card are the last known ones: the day and time they were read."), nil, read)
         }
-        return nil
+        return (nil, nil, nil)
     }
 
     // MARK: The state's own line and affordance
@@ -280,12 +286,13 @@ struct AccountCard: View {
 
     // MARK: One sentence for VoiceOver
 
-    private var spoken: AccountAccessibilityPresentation {
+    private func spoken(_ now: AccountNow?, _ note: (shown: String?, backAt: String?, asOf: String?)) -> AccountAccessibilityPresentation {
         AccountAccessibilityPresentation.make(
             account: account,
             face: face,
-            now: panelNow ?? .now,
-            style: style,
+            rows: now?.rows.map(\.spoken) ?? [],
+            backAt: note.backAt,
+            asOf: note.asOf,
             namesHidden: namesHidden
         )
     }

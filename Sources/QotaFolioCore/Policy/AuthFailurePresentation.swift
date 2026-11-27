@@ -4,7 +4,7 @@ import Foundation
 // DeviceCodeStartFailure.rateLimited retry gate — is projected here, as a pure function of (failure, provider, now).
 //
 // Every comparable projection in this app (StatusStripModel, AccountAccessibilityPresentation, AccountFace,
-// ResetCountdown, RetryCountdown) is a pure nonisolated function in Policy, and so is this one.
+// RetryCountdown) is a pure nonisolated function in Policy, and so is this one.
 //
 // The retry gate's deadline is not held here. AddFlowView renders every `.failed` phase from ONE ViewBuilder branch, so
 // SwiftUI reuses the view identity across successive failures and a `@State` initial value is discarded for an identity

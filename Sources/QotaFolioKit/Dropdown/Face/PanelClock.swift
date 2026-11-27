@@ -3,8 +3,8 @@ import QotaFolioCore
 
 /// The instant every countdown on the panel is drawn for.
 ///
-/// One `TimelineView` at the top of the card list sets it once a second; every reset label and
-/// every spoken sentence below reads it. `nil` is a host that runs no clock — a test laying one
+/// One `TimelineView` at the top of the card list sets it at each minute, the finest step the
+/// panel's words take; every row and every spoken sentence below reads it. `nil` is a host that runs no clock — a test laying one
 /// card out, a preview — and such a host reads the wall clock once.
 private struct PanelNowKey: EnvironmentKey {
     static let defaultValue: Date? = nil
@@ -48,7 +48,7 @@ struct PanelClock<Content: View>: View {
 
     var body: some View {
         if surfaceIsOnScreen {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
+            TimelineView(.everyMinute) { context in
                 content.environment(\.panelNow, context.date)
             }
         } else {

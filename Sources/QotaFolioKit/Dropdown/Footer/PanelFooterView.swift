@@ -16,6 +16,7 @@ public struct PanelFooterView: View {
 
     @Environment(\.openQotaFolioSettings) private var openSettings
     @Environment(\.sentenceStyle) private var style
+    @Environment(\.locale) private var locale
 
     public init(
         catalog: any AccountCataloging,
@@ -42,11 +43,11 @@ public struct PanelFooterView: View {
     public var body: some View {
         HStack(alignment: .center, spacing: 8) {
             if let updated = lastUpdated {
-                let clock = PanelWords.clock(updated, style: style)
+                let clock = TimeWords(locale: locale, calendar: style.calendar, timeZone: style.timeZone, now: .now).day(updated)
                 Text(qfLocalized(
                     "footer.updated",
                     defaultValue: "Updated \(clock)",
-                    comment: "Quiet footer note: the clock time of the newest reading across the accounts."
+                    comment: "Quiet footer note: the day and time of the newest reading across the accounts."
                 ))
                 .font(Tokens.Typography.captionFigures.font)
                 .foregroundStyle(.secondary)
@@ -55,7 +56,7 @@ public struct PanelFooterView: View {
                 .accessibilityLabel(qfLocalized(
                     "footer.updated.ax",
                     defaultValue: "Readings updated at \(clock)",
-                    comment: "VoiceOver label for the footer's updated time. The argument is a clock time."
+                    comment: "VoiceOver label for the footer's updated time. The argument is a day and a clock time."
                 ))
             }
 

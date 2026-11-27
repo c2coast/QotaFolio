@@ -18,44 +18,6 @@ nonisolated enum PanelMetrics {
     static let headerHeight: CGFloat = Tokens.Panel.headerHeight
 }
 
-/// The panel's colour language.
-///
-/// One palette, the strip's: green while there is plenty, amber as it gets low, red at a fifth
-/// or less. A card's bar is a LEVEL, not a verdict — it says how much of that window is gone
-/// and nothing about what to do with it.
-struct PanelTone {
-    let scheme: ColorScheme
-    let contrast: ColorSchemeContrast
-
-    var increased: Bool { contrast == .increased }
-    private var dark: Bool { scheme == .dark }
-
-    // MARK: The level, in three steps
-
-    func colour(_ level: Level) -> Color {
-        level.colour(dark: dark, increased: increased).color(dark: dark)
-    }
-
-    /// A limit's own level, from the share of it used: Kit's one rule, the battery's and the graph's.
-    func level(_ usedPercent: Double) -> Color {
-        colour(Level(used: usedPercent))
-    }
-
-    // MARK: Weights
-
-    /// The bar's neutral track: the whole window, unspent.
-    ///
-    /// A recess in the plate, in both appearances, and Increase Contrast deepens it. The panel's
-    /// ink would be the obvious choice, and on a dark plate it is the wrong one: white ink moves
-    /// the track TOWARD the bright fill lying in it, and Increase Contrast then moves it further,
-    /// which is how the accessibility form ended up the least readable one in the app. A recess
-    /// is also the ordinary reading of a meter — the track is the groove, the fill sits in it.
-    var track: Color { Tokens.Surface.track(dark: dark, increased: increased).color(dark: dark) }
-    /// Spent: the full red bar sits back — there is nothing to do about a window until it
-    /// returns. A window merely nearly gone keeps full weight.
-    var spent: Double { Tokens.Surface.spent(dark: dark, increased: increased) }
-}
-
 /// The panel's own chrome, outside a card: the footer's buttons and the cards' actions menu.
 enum PanelChrome {
     /// The wash under a hovered control. One number, so every control on the panel lifts by

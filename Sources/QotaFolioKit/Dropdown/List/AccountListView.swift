@@ -95,8 +95,6 @@ public struct AccountListView: View {
         }
     }
 
-    private var tone: PanelTone { PanelTone(scheme: colorScheme, contrast: contrast) }
-
     private func rowsContent() -> some View {
         let accounts = presentedAccounts
         return VStack(spacing: PanelMetrics.cardGap) {
@@ -151,7 +149,6 @@ public struct AccountListView: View {
             face: face,
             store: store,
             addFlow: addFlow,
-            tone: tone,
             isExpanded: expanded == account.id,
             isHovered: hovered == account.id,
             toggleExpanded: { toggle(account.id) },

@@ -87,10 +87,7 @@ public struct WeekGraph: View {
                 .foregroundStyle(Color(palette.secondaryInk))
             CeilingChart(picture: picture, words: words, palette: palette)
                 .frame(width: width, height: CeilingChart.size.height)
-            Text("\(Text(sentences.forecast).foregroundStyle(Color(palette.colour(.ink))))\(Text(sentences.record.map { " " + $0 } ?? "").foregroundStyle(Color(palette.secondaryInk)))")
-                .font(Tokens.Typography.bodyFigures.font)
-                .lineSpacing(2)
-                .fixedSize(horizontal: false, vertical: true)
+            WeekSentences(sentences: sentences, palette: palette)
         }
         .frame(width: width, alignment: .leading)
         .accessibilityElement(children: .ignore)
@@ -98,6 +95,25 @@ public struct WeekGraph: View {
         .accessibilityValue(spoken.value)
         .accessibilityCustomContent(AccessibilityCustomContentKey("What the record shows"), spoken.record.map { Text($0) }, importance: .high)
         .accessibilityChartDescriptor(spoken)
+    }
+}
+
+/// The two sentences: what the forecast says, in ink, and what the record shows after it, in the
+/// secondary ink. Under the graph, or alone once the week has reset with nothing read since.
+public struct WeekSentences: View {
+    let sentences: Sentences
+    let palette: Palette
+
+    public init(sentences: Sentences, palette: Palette) {
+        self.sentences = sentences
+        self.palette = palette
+    }
+
+    public var body: some View {
+        Text("\(Text(sentences.forecast).foregroundStyle(Color(palette.colour(.ink))))\(Text(sentences.record.map { " " + $0 } ?? "").foregroundStyle(Color(palette.secondaryInk)))")
+            .font(Tokens.Typography.bodyFigures.font)
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
