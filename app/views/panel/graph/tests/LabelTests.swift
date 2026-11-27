@@ -127,6 +127,36 @@ struct LabelTests {
     /// ring of now.
     static let noPlaceByTheDot: Set = ["record-starts-mid-week at 280 points, 12-hour"]
 
+    /// Where the axis ends in a fold, the reset lies past the fold, and its time under the fold's end
+    /// is the one word that says where the limit ends. It is placed before the hours, so it is kept.
+    @Test("An axis that ends in a fold keeps the reset's time", arguments: Week.all, [false, true])
+    func resetKept(_ week: Week, twelveHour: Bool) {
+        for width in Week.widths {
+            let ceiling = week.ceiling(width: width, twelveHour: twelveHour)
+            guard ceiling.axis.pieces.contains(where: { $0.fold != nil && $0.fold != .atLimit }) else { continue }
+            #expect(ceiling.ticks.contains { $0.kind == .resetTime },
+                    "\(week.name) at \(Int(width)) points\(twelveHour ? ", 12-hour" : ""): \(ceiling.ticks.map(\.text))")
+        }
+    }
+
+    /// A limit out within minutes ends its forecast on the mark of now. A dot there would read as one
+    /// smudge with the mark, so the mark of now is the forecast's mark, and no forecast's dot
+    /// touches a mark of now.
+    @Test("No forecast's dot touches a mark of now", arguments: Week.all)
+    func dotsApart(_ week: Week) {
+        for width in Week.widths {
+            let ceiling = week.ceiling(width: width, twelveHour: false)
+            guard let ring = ceiling.dots.first(where: \.ring) else { continue }
+            let nows = ceiling.dots.filter { $0.center.x == ring.center.x }
+            for dot in ceiling.dots where dot.center.x != ring.center.x {
+                for now in nows {
+                    let apart = hypot(dot.center.x - now.center.x, dot.center.y - now.center.y)
+                    #expect(apart >= dot.radius + now.radius + 1, "\(week.name) at \(Int(width)) points: a dot \(apart) from the mark of now")
+                }
+            }
+        }
+    }
+
     /// A forecast's label that says when its limit runs out, "Weekly · Wed 7:15 PM" or the time
     /// alone, and the sentence under the graph say the same time in the same words, on either clock.
     @Test("The forecast's label and its sentence say the time the same way", arguments: Week.all, [false, true])

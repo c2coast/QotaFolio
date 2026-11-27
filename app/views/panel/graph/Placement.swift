@@ -154,6 +154,11 @@ struct Ticks {
                                         box: CGRect(x: a, y: h + 4, width: wide, height: 11)))
         }
 
+        // The reset's time goes first where the axis ends in a fold: it names where the limit ends,
+        // and an hour beside it is the word that can go.
+        if axis.pieces.contains(where: { $0.fold.map { $0 != .atLimit } ?? false }) {
+            put(width, words.day(picture.resets.instant), current: false, .end, kind: .resetTime)
+        }
         if let step = [3, 6, 12].first(where: { Double($0) * hour / axis.secondsPerPoint >= 40 }) {
             for piece in axis.open {
                 if piece.from > picture.start {
@@ -194,7 +199,6 @@ struct Ticks {
             }
             let marks = slashes(piece.x0 + 2) + (fold == .atLimit ? slashes(piece.x1 - 2) : [])
             strokes.append(Ceiling.Stroke(part: .foldBreak, lines: marks, width: 1, dash: [], tone: .chartInk, opacity: 1, round: false))
-            if fold != .atLimit { put(width, words.day(picture.resets.instant), current: false, .end, kind: .resetTime) }
         }
         strokes.removeAll { $0.lines.isEmpty }
     }

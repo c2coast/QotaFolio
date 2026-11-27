@@ -181,6 +181,12 @@ public struct Ceiling: Sendable {
         var dots: [Dot] = []
         var ends: [(point: CGPoint, name: String, said: String, strong: Bool, kind: Limit.Kind)] = []
         let nowWeek = now.week.work, nowModel = modelWork(now)
+        // A forecast whose dot would touch the mark of now, a limit out within minutes, would read
+        // as one smudge with it. Then the mark of now is the forecast's mark too, and its word
+        // sits by it.
+        func apart(_ end: CGPoint, _ from: CGPoint, _ dot: Double, _ mark: Double) -> Bool {
+            hypot(end.x - from.x, end.y - from.y) >= dot + mark + 1
+        }
         // What a forecast's end says: the time it runs out, or what it leaves at the reset.
         func said(_ path: (out: Date?, rate: Double, landing: Double)) -> String {
             path.out.map(words.quarterDay) ?? "~\(Whole.left(path.landing))% left"
@@ -194,9 +200,11 @@ public struct Ceiling: Sendable {
                     let end = path.out ?? reset
                     let value = path.out != nil ? modelCeiling(now) : nowModel + (path.landing - (now.model?.used ?? 0)) / 2
                     let tone = first?.kind == model ? red : .chartInk
-                    let point = at(end, value)
-                    stroke(.forecast(model), [[at(now.at, nowModel), point]], 1.25, tone, dash: [3, 3], round: true)
-                    dots.append(Dot(center: point, radius: 2.5, tone: tone, ring: false))
+                    let point = at(end, value), from = at(now.at, nowModel)
+                    if apart(point, from, 2.5, 2.5) {
+                        stroke(.forecast(model), [[from, point]], 1.25, tone, dash: [3, 3], round: true)
+                        dots.append(Dot(center: point, radius: 2.5, tone: tone, ring: false))
+                    }
                     ends.append((point, name, said(path), first?.kind == model, model))
                 }
             }
@@ -204,9 +212,11 @@ public struct Ceiling: Sendable {
                 let end = path.out ?? reset
                 let value = path.out != nil ? weekCeiling(now) : nowWeek + (path.landing - now.week.used)
                 let tone = first?.kind == .week ? red : .chartInk
-                let point = at(end, value)
-                stroke(.forecast(.week), [[at(now.at, nowWeek), point]], 1.5, tone, dash: [3, 3], round: true)
-                dots.append(Dot(center: point, radius: 3, tone: tone, ring: false))
+                let point = at(end, value), from = at(now.at, nowWeek)
+                if apart(point, from, 3, 4.5) {
+                    stroke(.forecast(.week), [[from, point]], 1.5, tone, dash: [3, 3], round: true)
+                    dots.append(Dot(center: point, radius: 3, tone: tone, ring: false))
+                }
                 ends.append((point, "Weekly", said(path), first?.kind == .week, .week))
             }
         }
