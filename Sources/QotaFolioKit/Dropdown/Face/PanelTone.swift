@@ -21,8 +21,7 @@ nonisolated enum PanelMetrics {
 ///
 /// One palette, the strip's: green while there is plenty, amber as it gets low, red at a fifth
 /// or less. A card's bar is a LEVEL, not a verdict — it says how much of that window is gone
-/// and nothing about what to do with it. Forecast tones live only in the instrument behind a
-/// click.
+/// and nothing about what to do with it.
 struct PanelTone {
     let scheme: ColorScheme
     let contrast: ColorSchemeContrast
@@ -47,29 +46,7 @@ struct PanelTone {
         colour(Level(remainingPercent: remainingPercent(fromUsedPercent: usedPercent) ?? 0))
     }
 
-    // MARK: The instrument's verdicts (nothing on the resting card)
-
-    /// The instrument's tone for a verdict. On course wears the green of a window with room
-    /// left in it; cutting it close and running out take the amber and the red of the same
-    /// three steps; spent is that red at rest. Every tone has the sentence under the chart
-    /// beside it, so nothing rides on colour alone.
-    ///
-    /// A silence draws no projection at all, so this tone is never on screen; it is named
-    /// anyway, because the alternative — leaving the case to a hierarchical style — paints the
-    /// whole instrument in the system's accent colour.
-    func verdict(_ verdict: WindowVerdict) -> Color {
-        switch verdict {
-        case .onCourse: colour(.plenty)
-        case .cuttingItClose: colour(.low)
-        case .runningOut, .spent: colour(.nearlyGone)
-        case .silent: chartInk
-        }
-    }
-
     // MARK: Weights
-
-    /// The instrument's band — how far the window could reach.
-    var range: Double { Tokens.Chart.range(dark: dark, increased: increased) }
 
     /// The bar's neutral track: the whole window, unspent.
     ///
@@ -82,49 +59,6 @@ struct PanelTone {
     /// Spent: the full red bar sits back — there is nothing to do about a window until it
     /// returns. A window merely nearly gone keeps full weight.
     var spent: Double { Tokens.Surface.spent(dark: dark, increased: increased) }
-
-    // MARK: The instrument's chrome
-
-    // Three weights of neutral for everything in the chart that is not the data: the ground
-    // under it, the landmarks across it, and its own small print.
-    //
-    // Every one of them is written down here, because inside a `Chart` a hierarchical style has
-    // no ink to step down from. It steps down the plot's content style instead, and for a chart
-    // that names no style of its own that is the accent colour — which this app never set, so it
-    // is the system's blue. The grid, the rules and the labels all come out blue, and worst on
-    // a new account, whose forecast is silent and whose data line therefore has no colour of its
-    // own either.
-    //
-    // Black on a light plate and white on a dark one, at a stated weight — the same form as
-    // `track` above, and for the same reason. The chart lies on a plate that lies on glass, so
-    // the surface under these tones moves with the desktop; a weight of ink follows it, where a
-    // fixed grey would be a firm line over one wallpaper and invisible over the next. Increase
-    // Contrast deepens all three.
-    //
-    // The weights are set against the plate as it actually renders, sampled off the panel on
-    // this Mac: the grid lands at 1.4 to 1.5 against it in both appearances, the reset's rule at
-    // 2.1 to 2.4, and the small print near 6, which is where a secondary label sits.
-
-    /// The ruled ground: the guide lines at half and full, and the hours under them. The
-    /// faintest thing on the plate — it is there to be measured against, not read.
-    var chartGrid: Color { Tokens.Chart.grid(dark: dark, increased: increased).color() }
-
-    /// A landmark across the plot: the reset, where the window ends.
-    var chartRule: Color { Tokens.Chart.rule(dark: dark, increased: increased).color() }
-
-    /// The chart's own words — the hour labels and the reset's clock — and the line under the
-    /// cursor, which is read as closely as they are.
-    var chartInk: Color { Tokens.Chart.smallPrint(dark: dark, increased: increased).color() }
-
-    /// The hole through the point under the cursor, which is what makes that point a ring.
-    ///
-    /// It is drawn over the dot, so what shows through is the window's own colour taken toward
-    /// the plate: lightened on a light plate, darkened on a dark one. Naming a colour for it is
-    /// the obvious move and it does not work — the plate carries the desktop through the glass,
-    /// so it has a chroma nothing can predict, and a grey of exactly the right lightness still
-    /// reads as a smudge in the middle of the dot rather than a hole through it. A weight leans
-    /// the way the plate leans and can never arrive as a foreign colour.
-    var chartHole: Color { Tokens.Chart.hole(dark: dark, increased: increased).color() }
 }
 
 /// The panel's own chrome, outside a card: the footer's buttons and the cards' actions menu.

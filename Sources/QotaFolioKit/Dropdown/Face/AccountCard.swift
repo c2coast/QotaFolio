@@ -3,7 +3,7 @@ import QotaFolioCore
 
 /// One account, one card: the provider's mark, the person's name for the account, the plan,
 /// and one row per window the provider reports. Nothing on it directs. Behind a click the card
-/// grows in place into the instrument, with its chrome pinned.
+/// grows in place to show its plan and spend, with its chrome pinned.
 ///
 /// The card speaks to VoiceOver as one informational sentence (`AccountAccessibilityPresentation`)
 /// and keeps its controls — the actions menu and the state's own affordance — as their own
@@ -39,18 +39,11 @@ struct AccountCard: View {
             summary
             stateLine
             if isExpanded {
-                AccountInstrument(
-                    account: account,
-                    face: face,
-                    snapshot: store.snapshots[account.id],
-                    assessment: store.assessment?.assessment(for: account.id),
-                    store: store,
-                    tone: tone
-                )
-                // A dissolve, in place. The instrument is laid out where it will rest and fades
+                PlanLine(face: face, snapshot: store.snapshots[account.id])
+                // A dissolve, in place. The opened part is laid out where it will rest and fades
                 // in under the rows while the card grows over it; closing runs the same film
-                // backwards. Nothing slides: a move would carry the instrument up across the
-                // rows, and the card would seem to lift its own contents.
+                // backwards. Nothing slides: a move would carry it up across the rows, and the
+                // card would seem to lift its own contents.
                 //
                 // The dissolve carries its own curve only where the card's own motion has none:
                 // under Reduce Motion the panel takes its new height in one frame, and this fade
@@ -61,7 +54,7 @@ struct AccountCard: View {
         .padding(PanelMetrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background { surface }
-        // The card's edge is the reveal. While the height animates, the instrument is shown only
+        // The card's edge is the reveal. While the height animates, the opened part is shown only
         // where the tile already is — never over the neighbour below, never past the tile's own
         // bottom.
         .clipShape(RoundedRectangle(cornerRadius: PanelMetrics.cardRadius, style: .continuous))
