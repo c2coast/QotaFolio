@@ -72,7 +72,7 @@ public nonisolated struct AccountFace: Hashable, Sendable {
     }
 
     /// Apple turns a battery red at a fifth of its charge left. The strip reads that off what
-    /// can be spent right now (`StatusStripModel.lowRemainingPercent` — twenty percent left);
+    /// can be spent right now (`AccountLevel.lowRemainingPercent` — twenty percent left);
     /// a row reads it off its own window, in the used-language the row is written in: eighty
     /// percent used is a fifth left. A level statement about now, never a prediction.
     public static let lowUsedPercent: Double = 80

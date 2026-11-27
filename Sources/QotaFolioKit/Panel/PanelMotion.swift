@@ -11,3 +11,13 @@ public nonisolated enum PanelMotion {
 
     static let hover: Animation = Tokens.Motion.hover.animation
 }
+
+extension Timing {
+    nonisolated var animation: Animation {
+        switch curve {
+        case .smooth: .smooth(duration: duration)
+        case .easeOut: .easeOut(duration: duration)
+        case .easeInOut: .easeInOut(duration: duration)
+        }
+    }
+}

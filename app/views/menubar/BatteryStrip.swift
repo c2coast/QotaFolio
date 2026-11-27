@@ -1,8 +1,5 @@
-import AppKit
 import CoreGraphics
 import Kit
-
-import QotaFolioCore
 
 // ============================================================================
 // THE STRIP — one Apple battery per account, in the panel's order.
@@ -37,14 +34,11 @@ nonisolated struct BatteryTheme: Hashable, Sendable {
         )
     }
 
-    /// What a battery with this share of its quantity left is drawn in: green with plenty of
-    /// it, amber as it gets low, red at a fifth or less. One palette for every surface.
-    func level(_ remainingPercent: Int) -> CGColor {
-        Level(remainingPercent: remainingPercent).colour(dark: darkBar, increased: increasedContrast).cgColor(darkBar: darkBar)
+    /// What a level is drawn in: green with plenty, amber as it gets low, red at a fifth or less.
+    /// One palette for every surface.
+    func colour(_ level: Level) -> CGColor {
+        level.colour(dark: darkBar, increased: increasedContrast).cgColor(darkBar: darkBar)
     }
-
-    /// Nothing left of the quantity being shown — the red a level runs out in.
-    var nothingToSpend: CGColor { level(0) }
 }
 
 nonisolated func batteryFade(_ colour: CGColor, _ alpha: CGFloat) -> CGColor {
@@ -59,8 +53,6 @@ nonisolated struct BatteryOptions: Hashable, Sendable {
     var fillRadius: CGFloat = Tokens.MenuBar.fillRadius
     /// Differentiate Without Colour: every hue becomes the ink.
     var mono = false
-    /// Which quantity the fill is drawn to — the person's own choice, from Settings.
-    var shows: StripShows = .session
 }
 
 /// Where the batteries sit relative to each other.
@@ -83,30 +75,25 @@ nonisolated struct BatteryWeights: Hashable, Sendable {
 /// drawing is the outline of an account that is not answering, so the eye can tell "no
 /// reading" from "empty" without any other mark.
 nonisolated func batteryWeights(
-    for cell: BatteryCell,
+    for battery: Battery,
     dim: CGFloat
 ) -> BatteryWeights {
-    switch cell.state {
-    case .noReading:
-        return BatteryWeights(fill: 1.0, wall: dim)
-    case .low, .spent, .reading:
-        return BatteryWeights(fill: 1.0, wall: 1.0)
-    }
+    BatteryWeights(fill: 1.0, wall: battery.fill == nil ? dim : 1.0)
 }
 
 /// Draws one account's battery, with its origin at the bottom-left of the body.
 nonisolated func drawBattery(
     _ ctx: CGContext,
-    _ cell: BatteryCell,
+    _ battery: Battery,
     at origin: CGPoint,
     _ theme: BatteryTheme,
     _ options: BatteryOptions
 ) {
     let body = options.body
-    let weights = batteryWeights(for: cell, dim: theme.dim)
+    let weights = batteryWeights(for: battery, dim: theme.dim)
     drawAppleBody(ctx, body, origin: origin, ink: batteryFade(theme.ink, weights.wall))
 
-    if case .noReading = cell.state { return }
+    guard let fill = battery.fill else { return }
 
     // WHICH quantity the battery is drawn to is the person's own choice, and everything else
     // about the picture follows from that one figure: one fill, at that window's own length, in
@@ -115,28 +102,24 @@ nonisolated func drawBattery(
     // healthier of the two, and when it is not, a long pale bar behind a short bright one says
     // "plenty" and "nearly out" in one glance. Differentiate Without Colour drops the colour and
     // leaves the length.
-    let figure = cell.figure(showing: options.shows)
-    let hue = batteryFade(
-        options.mono ? theme.ink : theme.level(figure.remainingPercent),
-        weights.fill
-    )
+    let hue = batteryFade(options.mono ? theme.ink : theme.colour(fill.level), weights.fill)
 
     ctx.saveGState()
     defer { ctx.restoreGState() }
     ctx.translateBy(x: origin.x, y: origin.y)
     let box = batteryFillBox(body, inset: options.inset)
 
-    if figure.isSpent {
+    if fill.left <= 0 {
         // SPENT — Apple's residual: the hairline at the leading edge, in the colour a level runs
         // out in. The reset time lives in the tooltip and the panel, never in the strip.
         let hairline = CGRect(x: box.minX, y: box.minY, width: 1.0, height: box.height)
         ctx.addPath(CGPath(roundedRect: hairline, cornerWidth: 0.5, cornerHeight: 0.5, transform: nil))
-        ctx.setFillColor(batteryFade(options.mono ? theme.ink : theme.nothingToSpend, weights.fill))
+        ctx.setFillColor(batteryFade(options.mono ? theme.ink : theme.colour(.nearlyGone), weights.fill))
         ctx.fillPath()
         return
     }
 
-    let width = min(box.width, max(Tokens.MenuBar.smallestFill, box.width * figure.fraction))
+    let width = min(box.width, max(Tokens.MenuBar.smallestFill, box.width * Double(fill.left) / 100))
     let rect = CGRect(x: box.minX, y: box.minY, width: width, height: box.height)
     ctx.addPath(
         CGPath(
@@ -157,7 +140,7 @@ nonisolated func drawBattery(
 @discardableResult
 nonisolated func drawStrip(
     _ ctx: CGContext,
-    _ cells: [BatteryCell],
+    _ batteries: [Battery],
     at x0: CGFloat,
     midY: CGFloat,
     _ theme: BatteryTheme,
@@ -167,11 +150,11 @@ nonisolated func drawStrip(
     let body = options.body
     let y = (midY - body.h / 2).rounded()
     var x = x0
-    for (index, cell) in cells.enumerated() {
+    for (index, battery) in batteries.enumerated() {
         if index > 0 { x += layout.gap }
         drawBattery(
             ctx,
-            cell,
+            battery,
             at: CGPoint(x: x.rounded(), y: y),
             theme,
             options

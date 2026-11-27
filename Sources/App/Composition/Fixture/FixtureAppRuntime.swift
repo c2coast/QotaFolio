@@ -89,7 +89,7 @@ final class FixtureAppRuntime: AppRuntime {
     struct Options {
         var appearance: NSAppearance.Name?
         /// Which quantity the batteries are drawn to.
-        var stripShows: StripShows = .session
+        var stripShows: StripShows = .standard
         var opensPanel = false
         var keys: [FixtureKey] = []
         var takesKeyboardFocus = false
@@ -149,7 +149,7 @@ final class FixtureAppRuntime: AppRuntime {
         default: break
         }
         options.stripShows = environment["QOTAFOLIO_UI_STRIP"]
-            .flatMap(StripShows.init(rawValue:)) ?? .session
+            .flatMap(StripShows.init(rawValue:)) ?? .standard
         options.opensPanel = environment["QOTAFOLIO_UI_OPEN_PANEL"] == "1"
         options.keys = environment["QOTAFOLIO_UI_KEYS", default: ""]
             .split(separator: ",")
@@ -499,20 +499,12 @@ final class FixtureAppRuntime: AppRuntime {
     /// and a `.darkAqua` panel — the Mac's appearance is never switched.
     private func showBackdrop(dark: Bool) {
         guard let screen = statusSurface.statusButtonScreenFrame.flatMap(screenContaining) ?? NSScreen.main else { return }
-        let strip = StatusStripModel.make(
-            catalog: projectedVisibleAccounts(catalog.accounts, using: visibility),
-            loadState: catalog.loadState,
-            snapshots: store.snapshots,
-            pollStatus: store.pollStatus,
-            now: scheduler.now
-        )
         let accommodations = DebugAccommodations()
         let stripImage = StatusStripRenderer().image(
-            for: strip.cells,
+            for: statusItem.strip?.batteries ?? [],
             appearance: dark ? .darkAqua : .aqua,
             increaseContrast: accommodations.increaseContrast,
-            differentiateWithoutColor: accommodations.differentiateWithoutColor,
-            showing: options.stripShows
+            differentiateWithoutColor: accommodations.differentiateWithoutColor
         )
         let image = FixtureBackdrop.image(
             dark: dark,

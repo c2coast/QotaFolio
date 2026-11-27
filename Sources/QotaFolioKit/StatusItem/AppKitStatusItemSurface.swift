@@ -9,9 +9,8 @@ import QotaFolioCore
 
     private let renderer: StatusStripRenderer
     private let appearanceProbe: EffectiveAppearanceProbe
-    private var lastStrip: StatusStripModel?
+    private var lastStrip: Strip?
     private var lastColourless = false
-    private var lastShows: StripShows = .session
     private var isRemoved = false
     private var placementSettleTimer: Timer?
     public var onPlacementChange: (() -> Void)?
@@ -101,14 +100,12 @@ import QotaFolioCore
     }
 
     public func apply(
-        _ strip: StatusStripModel,
+        _ strip: Strip,
         appearance: MenuBarAppearance,
-        colourless: Bool,
-        showing: StripShows
+        colourless: Bool
     ) {
         lastStrip = strip
         lastColourless = colourless
-        lastShows = showing
         guard let button = statusItem.button else { return }
 
         // Read here, at the call site, and handed to the renderer as two plain arguments —
@@ -124,18 +121,17 @@ import QotaFolioCore
         #endif
 
         button.image = renderer.image(
-            for: strip.cells,
+            for: strip.batteries,
             appearance: appearance,
             increaseContrast: increaseContrast,
-            differentiateWithoutColor: differentiateWithoutColor || colourless,
-            showing: showing
+            differentiateWithoutColor: differentiateWithoutColor || colourless
         )
         button.imageScaling = .scaleNone
-        statusItem.length = StatusStripRenderer.itemLength(cellCount: strip.cells.count)
-        button.toolTip = strip.toolTip
+        statusItem.length = StatusStripRenderer.itemLength(cellCount: strip.batteries.count)
+        button.toolTip = strip.tooltip
         // The whole strip is one sentence, and it is re-read on every render,
         // because every render is a new set of numbers.
-        button.setAccessibilityLabel(strip.accessibilityLabel)
+        button.setAccessibilityLabel(strip.spoken)
     }
 
     public func showPanel() {
@@ -228,7 +224,7 @@ import QotaFolioCore
     private func refreshAppearance(invalidateCache: Bool) {
         guard let lastStrip, !isRemoved else { return }
         if invalidateCache { renderer.invalidate() }
-        apply(lastStrip, appearance: currentAppearance, colourless: lastColourless, showing: lastShows)
+        apply(lastStrip, appearance: currentAppearance, colourless: lastColourless)
     }
 
     private func prepareForRemoval() {

@@ -2,47 +2,20 @@ import Foundation
 
 /// Which quantity the menu-bar batteries are drawn to.
 ///
-/// A battery shows one length, and there are two worth showing. What this five-hour session
-/// still holds is what you can act on in the next minute. What the week still holds is what you
-/// are budgeting across the days. Both are true of the same account at the same instant, each on
-/// its own budget, and which one belongs on the bar depends on how a person works — so it is
-/// theirs to choose.
+/// A battery shows one length. What the week still holds is what a person budgets across the
+/// days, and every account has a week. What a five-hour session still holds is what can be spent
+/// in the next minute, and only some accounts have one. So the week is the default, and the
+/// session is a choice: an account with an open session then draws the session, and an account
+/// with none draws its week.
 ///
-/// The choice is a drawing choice and nothing else. The words say both figures in both modes:
-/// the tooltip, what VoiceOver reads and the panel's cards are unchanged by it. So the strip is never the whole answer on its own, in either mode.
+/// The choice is a drawing choice and nothing else. The tooltip, what VoiceOver reads and the
+/// panel's cards are unchanged by it.
 public nonisolated enum StripShows: String, CaseIterable, Sendable {
-    /// This five-hour session's own remaining share. The default, because a battery is read to
-    /// know whether to start something.
+    /// This five-hour session's own remaining share, for an account that has one.
     case session
     /// The week's own remaining share.
     case week
-}
 
-/// The length one battery is drawn to, once the choice is made.
-///
-/// The two modes are mirror images: each draws one fill, of its own quantity, in the colour of
-/// its own quantity, and nothing stands behind it. A second length behind the first is
-/// invisible whenever the drawn window is the healthier of the two, and
-/// when it is not, a long pale bar behind a short bright one says "plenty" and "nearly out" in
-/// the same glance. Apple's battery language then applies to whatever is drawn: the palette
-/// takes it red at a fifth or less, and nothing at all is the residual hairline.
-///
-/// It lives in the model, beside the level it is drawn from.
-public nonisolated struct StripFigure: Hashable, Sendable {
-    /// The share still held of the quantity that was asked for, 0…100. The battery's length, and
-    /// the number its colour is chosen from.
-    public let remainingPercent: Int
-    /// Nothing of it left: Apple's residual hairline at the leading edge.
-    public let isSpent: Bool
-
-    public init(showing: StripShows, weeklyRemainingPercent: Int, sessionRemainingPercent: Int) {
-        remainingPercent = switch showing {
-        case .session: sessionRemainingPercent
-        case .week: weeklyRemainingPercent
-        }
-        isSpent = remainingPercent <= 0
-    }
-
-    /// The length as a share of the fill box.
-    public var fraction: Double { Double(remainingPercent) / 100 }
+    /// The default, written here and nowhere else.
+    public static let standard: StripShows = .week
 }

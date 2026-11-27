@@ -29,6 +29,18 @@ export const walls = [
     calls: pure("The panel's views"),
   },
   {
+    folder: "app/views/menubar/",
+    imports: ["AppKit", "CoreGraphics", "Kit"],
+    importFix: "The menu bar's strip draws Kit's value in the design values. The old tree's controller hands it each account and the words of one with no reading.",
+    calls: pure("The menu bar's strip"),
+  },
+  {
+    folder: "app/views/menubar/tests/",
+    imports: ["Foundation", "Kit", "Testing"],
+    importFix: "The strip's tests run it on made-up readings, and need nothing else.",
+    calls: [],
+  },
+  {
     folder: "app/views/panel/graph/",
     imports: ["Foundation", "Kit", "SwiftUI"],
     importFix: "The graph draws a week picture it is handed. What it needs from the Mac comes in as plain values.",

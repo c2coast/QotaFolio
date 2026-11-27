@@ -57,6 +57,9 @@ targets:
       # The panel's views on Kit's value: the rows and the tapped part. The graph is its own target.
       - path: app/views/panel
         excludes: ["graph/**", "tests/**"]
+      # The menu bar's strip on Kit's value: the batteries and their words.
+      - path: app/views/menubar
+        excludes: ["tests/**"]
     dependencies:
       # XcodeGen does not link a static library into a framework unless it is asked. Kit and the
       # graph are linked here once, and the app links them through this framework.
@@ -546,8 +549,11 @@ targets:
       - app/settings/legacy
       - app/settings/hidden
       - app/main/tests
+      - app/views/menubar/Strip.swift
+      - app/views/menubar/tests
     dependencies:
       - { package: QotaFolioCore, product: QotaFolioModel }
+      - { target: Kit }
     settings:
       base:
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
