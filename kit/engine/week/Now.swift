@@ -39,7 +39,7 @@ extension AccountNow {
     /// cost is the week's.
     static func lastWeek(of readings: ArraySlice<Reading>) -> ArraySlice<Reading> {
         guard let p = readings.lastIndex(where: { $0.limit(.week)?.resets != nil }) else { return readings }
-        let start = min(readings[p].limit(.week)!.resets!.instant - 7 * 86400, readings[p].at)
+        let start = min(readings[p].limit(.week)!.resets!.instant - secondsPerWeek, readings[p].at)
         guard let outside = readings[..<p].lastIndex(where: { $0.at < start }) else { return readings }
         return readings[(readings[...outside].lastIndex { $0.limit(.week)?.resets != nil } ?? outside + 1)...]
     }
